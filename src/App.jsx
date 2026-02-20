@@ -53,18 +53,15 @@ const GROUP_MATCHES = [
   { id:"gd5", group:"D", team1:"Karmine Corp",      team2:"Vitality",            startTime:"2026-02-21T02:00:00Z", phase:"Group Stage" },
   { id:"gd6", group:"D", team1:"Twisted Minds",     team2:"Spacestation Gaming", startTime:"2026-02-21T02:00:00Z", phase:"Group Stage" },
 ];
-
-// Playoffs — admin sets team names via the Admin panel
 const PLAYOFF_MATCHES = [
-  { id:"p1", group:null, team1:"TBD", team2:"TBD", startTime:"2026-02-21T21:00:00Z", phase:"Playoffs", round:"Upper Bracket R1", bo:7 },
-  { id:"p2", group:null, team1:"TBD", team2:"TBD", startTime:"2026-02-21T22:30:00Z", phase:"Playoffs", round:"Upper Bracket R1", bo:7 },
-  { id:"p3", group:null, team1:"TBD", team2:"TBD", startTime:"2026-02-22T00:00:00Z", phase:"Playoffs", round:"Lower Bracket R1", bo:7 },
-  { id:"p4", group:null, team1:"TBD", team2:"TBD", startTime:"2026-02-22T01:30:00Z", phase:"Playoffs", round:"Lower Bracket R1", bo:7 },
+  { id:"p1", group:null, team1:"TBD", team2:"TBD", startTime:"2026-02-21T21:00:00Z", phase:"Playoffs", round:"Upper Bracket R1",    bo:7 },
+  { id:"p2", group:null, team1:"TBD", team2:"TBD", startTime:"2026-02-21T22:30:00Z", phase:"Playoffs", round:"Upper Bracket R1",    bo:7 },
+  { id:"p3", group:null, team1:"TBD", team2:"TBD", startTime:"2026-02-22T00:00:00Z", phase:"Playoffs", round:"Lower Bracket R1",    bo:7 },
+  { id:"p4", group:null, team1:"TBD", team2:"TBD", startTime:"2026-02-22T01:30:00Z", phase:"Playoffs", round:"Lower Bracket R1",    bo:7 },
   { id:"p5", group:null, team1:"TBD", team2:"TBD", startTime:"2026-02-22T21:00:00Z", phase:"Playoffs", round:"Upper Bracket Final", bo:7 },
-  { id:"p6", group:null, team1:"TBD", team2:"TBD", startTime:"2026-02-22T22:30:00Z", phase:"Playoffs", round:"Lower Bracket R2", bo:7 },
-  { id:"p7", group:null, team1:"TBD", team2:"TBD", startTime:"2026-02-23T00:00:00Z", phase:"Playoffs", round:"Grand Final", bo:7 },
+  { id:"p6", group:null, team1:"TBD", team2:"TBD", startTime:"2026-02-22T22:30:00Z", phase:"Playoffs", round:"Lower Bracket R2",    bo:7 },
+  { id:"p7", group:null, team1:"TBD", team2:"TBD", startTime:"2026-02-23T00:00:00Z", phase:"Playoffs", round:"Grand Final",         bo:7 },
 ];
-
 const ALL_MATCHES = [...GROUP_MATCHES, ...PLAYOFF_MATCHES];
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -110,13 +107,8 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
 
   const [s1,  setS1]  = useState(pred?.score1 ?? "");
   const [s2,  setS2]  = useState(pred?.score2 ?? "");
-  // Admin inputs — always editable even when result exists
   const [as1, setAs1] = useState(result?.score1 ?? "");
   const [as2, setAs2] = useState(result?.score2 ?? "");
-  const [at1, setAt1] = useState(result?.winner === match.team1 ? match.team1 : result?.winner === match.team2 ? match.team2 : "");
-  // Playoff team name editing
-  const [pt1, setPt1] = useState(match.team1 === "TBD" ? "" : match.team1);
-  const [pt2, setPt2] = useState(match.team2 === "TBD" ? "" : match.team2);
 
   useEffect(() => { setS1(pred?.score1 ?? ""); setS2(pred?.score2 ?? ""); }, [pred?.score1, pred?.score2]);
   useEffect(() => { setAs1(result?.score1 ?? ""); setAs2(result?.score2 ?? ""); }, [result?.score1, result?.score2]);
@@ -125,36 +117,25 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
     const n1 = parseInt(s1), n2 = parseInt(s2);
     onPredict(match.id, { winner, score1:isNaN(n1)?null:n1, score2:isNaN(n2)?null:n2 });
   };
-
-  const submitResult = (forceWinner) => {
+  const submitResult = () => {
     const n1 = parseInt(as1), n2 = parseInt(as2);
     if (isNaN(n1)||isNaN(n2)) return;
-    const winner = forceWinner || (n1>n2?match.team1:match.team2);
-    onSetResult(match.id, { winner, score1:n1, score2:n2 });
+    onSetResult(match.id, { winner:n1>n2?match.team1:match.team2, score1:n1, score2:n2 });
   };
 
-  const borderCol = score===3?"#00c77a30":score===1?"#f5c51830":score===0&&result?"#e74c3c20":"#1e1e1e";
-
   return (
-    <div style={{ background:"linear-gradient(135deg,#0d0d0d,#111)", border:`1px solid ${borderCol}`, borderRadius:12, padding:"14px 16px", position:"relative" }}>
+    <div style={{ background:"linear-gradient(135deg,#0d0d0d,#111)", border:`1px solid ${score===3?"#00c77a30":score===1?"#f5c51830":score===0&&result?"#e74c3c20":"#1e1e1e"}`, borderRadius:12, padding:"14px 16px", position:"relative" }}>
       {score !== null && (
-        <div style={{ position:"absolute", top:10, right:10, borderRadius:6, padding:"2px 9px", background:score===3?"#00c77a":score===1?"#f5c518":"#e74c3c", color:"#000", fontWeight:900, fontSize:12, fontFamily:F.main }}>
-          +{score} pts
-        </div>
+        <div style={{ position:"absolute", top:10, right:10, borderRadius:6, padding:"2px 9px", background:score===3?"#00c77a":score===1?"#f5c518":"#e74c3c", color:"#000", fontWeight:900, fontSize:12, fontFamily:F.main }}>+{score} pts</div>
       )}
       {locked && !result && score===null && !isAdmin && (
         <div style={{ position:"absolute", top:10, right:10, background:"#1a1a1a", color:"#444", fontSize:10, borderRadius:6, padding:"2px 9px", fontFamily:F.main }}>🔒 LOCKED</div>
       )}
-
       <div style={{ fontSize:10, color:"#333", marginBottom:10, fontFamily:F.main, letterSpacing:1, textTransform:"uppercase" }}>
-        {match.group?`Group ${match.group} · `:""}
-        {match.round || match.phase} · Bo{match.bo||5} · {fmtTime(match.startTime)}
+        {match.group?`Group ${match.group} · `:""}{match.round||match.phase} · Bo{match.bo||5} · {fmtTime(match.startTime)}
       </div>
-
-      {/* Teams row */}
       <div style={{ display:"flex", alignItems:"center", gap:8 }}>
         <div style={{ flex:1 }}><TeamBadge name={match.team1} /></div>
-
         {result ? (
           <div style={{ display:"flex", alignItems:"center", gap:6, background:"#0a0a0a", borderRadius:8, padding:"4px 14px", flexShrink:0 }}>
             <span style={{ fontSize:22, fontWeight:900, fontFamily:F.main, color:result.winner===match.team1?"#00c77a":"#444" }}>{result.score1}</span>
@@ -176,121 +157,164 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
             )}
           </div>
         )}
-
         <div style={{ flex:1, display:"flex", justifyContent:"flex-end" }}><TeamBadge name={match.team2} /></div>
       </div>
-
-      {/* Win buttons */}
       {!locked && !result && playerId && !isTBD && !readOnly && (
         <div style={{ display:"flex", gap:6, marginTop:10 }}>
           {[{team:match.team1,t:t1},{team:match.team2,t:t2}].map(({team,t})=>(
-            <button key={team} onClick={()=>submitPred(team)} style={{
-              flex:1, padding:"7px 0", borderRadius:7, border:"none", cursor:"pointer",
-              background:pred?.winner===team?t.color:"#181818", color:pred?.winner===team?"#000":"#555",
-              fontFamily:F.main, fontWeight:800, fontSize:11, letterSpacing:0.5, textTransform:"uppercase", transition:"all 0.15s",
-            }}>{team.split(" ").slice(-1)[0]} wins</button>
+            <button key={team} onClick={()=>submitPred(team)} style={{ flex:1, padding:"7px 0", borderRadius:7, border:"none", cursor:"pointer", background:pred?.winner===team?t.color:"#181818", color:pred?.winner===team?"#000":"#555", fontFamily:F.main, fontWeight:800, fontSize:11, letterSpacing:0.5, textTransform:"uppercase", transition:"all 0.15s" }}>{team.split(" ").slice(-1)[0]} wins</button>
           ))}
         </div>
       )}
-
-      {/* Current prediction hint */}
       {pred && !result && !readOnly && (
         <div style={{ marginTop:8, fontSize:10, color:"#333", fontFamily:F.main }}>
           YOUR PICK: <span style={{ color:"#555" }}>{pred.winner?.split(" ").slice(-1)[0]}{pred.score1!=null?` (${pred.score1}–${pred.score2})`:""}</span>
         </div>
       )}
-
-      {/* Read-only view (Others page) */}
       {readOnly && pred && (
         <div style={{ marginTop:10, display:"flex", alignItems:"center", gap:8 }}>
           <div style={{ fontSize:11, color:"#444", fontFamily:F.main }}>PREDICTION:</div>
-          <div style={{ background:"#181818", borderRadius:6, padding:"3px 10px", fontSize:12, fontFamily:F.main, fontWeight:800,
-            color:result?(calcScore(pred,result)===3?"#00c77a":calcScore(pred,result)===1?"#f5c518":"#e74c3c"):"#888" }}>
+          <div style={{ background:"#181818", borderRadius:6, padding:"3px 10px", fontSize:12, fontFamily:F.main, fontWeight:800, color:result?(calcScore(pred,result)===3?"#00c77a":calcScore(pred,result)===1?"#f5c518":"#e74c3c"):"#888" }}>
             {pred.winner?.split(" ").slice(-1)[0]}{pred.score1!=null?` · ${pred.score1}–${pred.score2}`:""}
           </div>
-          {result && <div style={{ fontSize:10, fontFamily:F.main, color:"#444" }}>
-            {calcScore(pred,result)===3?"✓ EXACT":calcScore(pred,result)===1?"✓ WINNER":"✗ WRONG"}
-          </div>}
+          {result && <div style={{ fontSize:10, fontFamily:F.main, color:"#444" }}>{calcScore(pred,result)===3?"✓ EXACT":calcScore(pred,result)===1?"✓ WINNER":"✗ WRONG"}</div>}
         </div>
       )}
-
-      {/* ── ADMIN PANEL ── always editable even if result exists */}
       {isAdmin && match.team1 !== "TBD" && (
         <div style={{ marginTop:12, paddingTop:10, borderTop:"1px solid #1a1a1a" }}>
-          {/* Playoff team name setter */}
-          {match.phase === "Playoffs" && (
-            <div style={{ display:"flex", gap:6, marginBottom:8, alignItems:"center", flexWrap:"wrap" }}>
-              <span style={{ fontSize:10, color:"#555", fontFamily:F.main }}>TEAMS:</span>
-              <input value={pt1} onChange={e=>setPt1(e.target.value)} placeholder="Team 1 name"
-                style={{ flex:1, minWidth:100, background:"#111", border:"1px solid #252525", borderRadius:5, color:"#ddd", fontSize:12, fontFamily:F.body, padding:"4px 8px" }} />
-              <input value={pt2} onChange={e=>setPt2(e.target.value)} placeholder="Team 2 name"
-                style={{ flex:1, minWidth:100, background:"#111", border:"1px solid #252525", borderRadius:5, color:"#ddd", fontSize:12, fontFamily:F.body, padding:"4px 8px" }} />
-              <button onClick={()=>onSetResult(match.id, { ...result, teamOverride:{ team1:pt1||"TBD", team2:pt2||"TBD" } })}
-                style={{ padding:"4px 10px", borderRadius:5, border:"none", cursor:"pointer", background:"#333", color:"#aaa", fontFamily:F.main, fontWeight:800, fontSize:10 }}>SET TEAMS</button>
-            </div>
-          )}
-
-          {/* Score setter — always shown, even if result already set */}
           <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
-            <span style={{ fontSize:10, color:result?"#f5c518":"#555", fontFamily:F.main }}>
-              {result?"✎ EDIT RESULT:":"SET RESULT:"}
-            </span>
+            <span style={{ fontSize:10, color:result?"#f5c518":"#555", fontFamily:F.main }}>{result?"✎ EDIT RESULT:":"SET RESULT:"}</span>
             <input type="number" min={0} max={maxScore} value={as1} onChange={e=>setAs1(e.target.value)} placeholder="T1"
               style={{ width:40, background:"#1a1a1a", border:`1px solid ${result?"#f5c51840":"#252525"}`, borderRadius:5, color:"#ddd", fontSize:13, fontFamily:F.main, padding:"4px 6px" }} />
             <span style={{ color:"#333" }}>–</span>
             <input type="number" min={0} max={maxScore} value={as2} onChange={e=>setAs2(e.target.value)} placeholder="T2"
               style={{ width:40, background:"#1a1a1a", border:`1px solid ${result?"#f5c51840":"#252525"}`, borderRadius:5, color:"#ddd", fontSize:13, fontFamily:F.main, padding:"4px 6px" }} />
-            <button onClick={()=>submitResult()} style={{ padding:"5px 12px", borderRadius:5, border:"none", cursor:"pointer", background:"#f5c518", color:"#000", fontFamily:F.main, fontWeight:900, fontSize:11 }}>
-              {result?"UPDATE ✓":"SET ✓"}
-            </button>
-            {result && (
-              <button onClick={()=>onSetResult(match.id, null)} style={{ padding:"5px 10px", borderRadius:5, border:"none", cursor:"pointer", background:"#1a0000", color:"#e74c3c", fontFamily:F.main, fontWeight:800, fontSize:11 }}>
-                CLEAR ✕
-              </button>
-            )}
+            <button onClick={submitResult} style={{ padding:"5px 12px", borderRadius:5, border:"none", cursor:"pointer", background:"#f5c518", color:"#000", fontFamily:F.main, fontWeight:900, fontSize:11 }}>{result?"UPDATE ✓":"SET ✓"}</button>
+            {result && <button onClick={()=>onSetResult(match.id,null)} style={{ padding:"5px 10px", borderRadius:5, border:"none", cursor:"pointer", background:"#1a0000", color:"#e74c3c", fontFamily:F.main, fontWeight:800, fontSize:11 }}>CLEAR ✕</button>}
           </div>
-          {result && (
-            <div style={{ fontSize:10, color:"#555", fontFamily:F.main, marginTop:6 }}>
-              Current: {match.team1} {result.score1}–{result.score2} {match.team2} · Winner: {result.winner}
-            </div>
-          )}
+          {result && <div style={{ fontSize:10, color:"#555", fontFamily:F.main, marginTop:6 }}>Current: {match.team1} {result.score1}–{result.score2} {match.team2} · Winner: {result.winner}</div>}
         </div>
       )}
     </div>
   );
 }
 
-// ─── PLAYOFFS BRACKET VIEW ────────────────────────────────────────────────────
+// ─── PLAYOFFS PAGE ────────────────────────────────────────────────────────────
 function PlayoffsPage({ predictions, results, playerId, onPredict, onSetResult, isAdmin }) {
   const rounds = [
-    { label:"Upper Bracket R1",    matches: PLAYOFF_MATCHES.filter(m=>m.round==="Upper Bracket R1") },
-    { label:"Lower Bracket R1",    matches: PLAYOFF_MATCHES.filter(m=>m.round==="Lower Bracket R1") },
-    { label:"Upper Bracket Final", matches: PLAYOFF_MATCHES.filter(m=>m.round==="Upper Bracket Final") },
-    { label:"Lower Bracket R2",    matches: PLAYOFF_MATCHES.filter(m=>m.round==="Lower Bracket R2") },
-    { label:"Grand Final 🏆",      matches: PLAYOFF_MATCHES.filter(m=>m.round==="Grand Final") },
+    { label:"Upper Bracket R1",    matches:PLAYOFF_MATCHES.filter(m=>m.round==="Upper Bracket R1") },
+    { label:"Lower Bracket R1",    matches:PLAYOFF_MATCHES.filter(m=>m.round==="Lower Bracket R1") },
+    { label:"Upper Bracket Final", matches:PLAYOFF_MATCHES.filter(m=>m.round==="Upper Bracket Final") },
+    { label:"Lower Bracket R2",    matches:PLAYOFF_MATCHES.filter(m=>m.round==="Lower Bracket R2") },
+    { label:"Grand Final 🏆",      matches:PLAYOFF_MATCHES.filter(m=>m.round==="Grand Final") },
   ];
-
   return (
     <div>
       <div style={{ fontSize:11, color:"#333", marginBottom:20, fontFamily:F.main, letterSpacing:1, textTransform:"uppercase" }}>
-        Playoffs · Feb 21–22 · All matches Bo7 · Top 4 groups → Upper Bracket · 5th–8th → Lower Bracket
+        Playoffs · Feb 21–22 · All Bo7
+      </div>
+      {rounds.map(r=>r.matches.length>0&&(
+        <div key={r.label} style={{ marginBottom:28 }}>
+          <div style={{ fontSize:13, fontWeight:800, fontFamily:F.main, color:"#f5c518", letterSpacing:1, textTransform:"uppercase", marginBottom:10, paddingBottom:6, borderBottom:"1px solid #181818" }}>{r.label}</div>
+          <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+            {r.matches.map(m=>(
+              <MatchCard key={m.id} match={m} playerId={playerId} predictions={predictions}
+                results={results} onPredict={onPredict} onSetResult={onSetResult} isAdmin={isAdmin} readOnly={false} />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── BONUS POINTS PANEL (Admin) ───────────────────────────────────────────────
+function BonusPointsPanel({ players, bonusPoints, onAdd, onDelete }) {
+  const [selectedPlayer, setSelectedPlayer] = useState("");
+  const [amount,         setAmount]         = useState("");
+  const [reason,         setReason]         = useState("");
+  const [error,          setError]          = useState("");
+
+  const getBonusTotal = (pid) => bonusPoints.filter(b=>b.player_id===pid).reduce((t,b)=>t+b.amount,0);
+
+  const handleAdd = () => {
+    const amt = parseInt(amount);
+    if (!selectedPlayer) { setError("Select a player"); return; }
+    if (isNaN(amt) || amt === 0) { setError("Enter a non-zero number (use negative to subtract)"); return; }
+    onAdd(selectedPlayer, amt, reason.trim());
+    setAmount(""); setReason(""); setError("");
+  };
+
+  return (
+    <div>
+      <div style={{ fontSize:13, fontWeight:800, fontFamily:F.main, color:"#f5c518", letterSpacing:1, marginBottom:6 }}>⭐ BONUS / PENALTY POINTS</div>
+      <div style={{ fontSize:11, color:"#555", fontFamily:F.main, marginBottom:16 }}>
+        Manually add or subtract points from any player. Use negative numbers to deduct (e.g. -5). All adjustments are shown on the leaderboard.
       </div>
 
-      {rounds.map(round => (
-        round.matches.length > 0 && (
-          <div key={round.label} style={{ marginBottom:28 }}>
-            <div style={{ fontSize:13, fontWeight:800, fontFamily:F.main, color:"#f5c518", letterSpacing:1, textTransform:"uppercase", marginBottom:10, paddingBottom:6, borderBottom:"1px solid #181818" }}>
-              {round.label}
-            </div>
-            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-              {round.matches.map(m => (
-                <MatchCard key={m.id} match={m} playerId={playerId} predictions={predictions}
-                  results={results} onPredict={onPredict} onSetResult={onSetResult} isAdmin={isAdmin} readOnly={false} />
-              ))}
-            </div>
+      {/* Add form */}
+      <div style={{ background:"#0d0d0d", border:"1px solid #1a1a1a", borderRadius:12, padding:"16px 18px", marginBottom:20 }}>
+        <div style={{ fontSize:11, color:"#555", fontFamily:F.main, letterSpacing:1, marginBottom:12, textTransform:"uppercase" }}>Add Adjustment</div>
+        <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"flex-end" }}>
+          {/* Player select */}
+          <div style={{ flex:1, minWidth:130 }}>
+            <div style={{ fontSize:10, color:"#444", fontFamily:F.main, marginBottom:4 }}>PLAYER</div>
+            <select value={selectedPlayer} onChange={e=>setSelectedPlayer(e.target.value)}
+              style={{ width:"100%", background:"#111", border:"1px solid #252525", borderRadius:7, color:"#ddd", padding:"9px 10px", fontSize:13, fontFamily:F.main, cursor:"pointer" }}>
+              <option value="">— Select —</option>
+              {players.map(p=><option key={p.id} value={p.id}>{p.nickname}</option>)}
+            </select>
           </div>
-        )
-      ))}
+          {/* Amount */}
+          <div style={{ width:90 }}>
+            <div style={{ fontSize:10, color:"#444", fontFamily:F.main, marginBottom:4 }}>POINTS</div>
+            <input type="number" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="+5 or -3"
+              style={{ width:"100%", background:"#111", border:"1px solid #252525", borderRadius:7, color: parseInt(amount)<0?"#e74c3c":parseInt(amount)>0?"#00c77a":"#ddd", padding:"9px 10px", fontSize:14, fontFamily:F.main, fontWeight:800, boxSizing:"border-box" }} />
+          </div>
+          {/* Reason */}
+          <div style={{ flex:2, minWidth:150 }}>
+            <div style={{ fontSize:10, color:"#444", fontFamily:F.main, marginBottom:4 }}>REASON (optional)</div>
+            <input value={reason} onChange={e=>setReason(e.target.value)} placeholder="e.g. Tiebreaker bonus"
+              onKeyDown={e=>e.key==="Enter"&&handleAdd()}
+              style={{ width:"100%", background:"#111", border:"1px solid #252525", borderRadius:7, color:"#ddd", padding:"9px 10px", fontSize:13, fontFamily:F.body, boxSizing:"border-box" }} />
+          </div>
+          {/* Submit */}
+          <button onClick={handleAdd} style={{ padding:"9px 18px", background:"#f5c518", border:"none", borderRadius:7, cursor:"pointer", color:"#000", fontFamily:F.main, fontWeight:900, fontSize:13, whiteSpace:"nowrap" }}>
+            ADD ✓
+          </button>
+        </div>
+        {error && <div style={{ color:"#e74c3c", fontSize:11, fontFamily:F.main, marginTop:8 }}>⚠ {error}</div>}
+      </div>
+
+      {/* Existing adjustments per player */}
+      {players.map(p => {
+        const myBonus = bonusPoints.filter(b=>b.player_id===p.id);
+        const total   = getBonusTotal(p.id);
+        if (myBonus.length === 0) return null;
+        return (
+          <div key={p.id} style={{ background:"#0d0d0d", border:"1px solid #1a1a1a", borderRadius:12, padding:"14px 16px", marginBottom:10 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+              <div style={{ fontSize:13, fontWeight:800, fontFamily:F.main }}>{p.nickname}</div>
+              <div style={{ fontSize:13, fontWeight:900, fontFamily:F.main, color:total>0?"#00c77a":total<0?"#e74c3c":"#555" }}>
+                {total>0?"+":""}{total} bonus pts
+              </div>
+            </div>
+            {myBonus.map(b=>(
+              <div key={b.id} style={{ display:"flex", alignItems:"center", gap:10, paddingTop:6, borderTop:"1px solid #141414" }}>
+                <div style={{ fontSize:14, fontWeight:900, fontFamily:F.main, width:42, textAlign:"center", color:b.amount>0?"#00c77a":"#e74c3c" }}>
+                  {b.amount>0?"+":""}{b.amount}
+                </div>
+                <div style={{ flex:1, fontSize:12, color:"#555", fontFamily:F.body }}>{b.reason||<span style={{ color:"#333", fontStyle:"italic" }}>No reason given</span>}</div>
+                <div style={{ fontSize:10, color:"#333", fontFamily:F.main }}>{new Date(b.created_at).toLocaleDateString()}</div>
+                <button onClick={()=>onDelete(b.id)} style={{ background:"#1a0000", border:"1px solid #e74c3c20", borderRadius:5, color:"#e74c3c", fontFamily:F.main, fontWeight:800, fontSize:10, padding:"3px 8px", cursor:"pointer" }}>✕</button>
+              </div>
+            ))}
+          </div>
+        );
+      })}
+      {bonusPoints.length === 0 && (
+        <div style={{ textAlign:"center", color:"#2a2a2a", padding:30, fontFamily:F.main, fontSize:12 }}>No adjustments yet</div>
+      )}
     </div>
   );
 }
@@ -303,12 +327,12 @@ function LoginScreen({ players, onLogin, onAdminLogin }) {
   const [error, setError] = useState("");
 
   const handlePlayerLogin = () => {
-    const match = players.find(p => p.nickname.toLowerCase() === name.trim().toLowerCase());
+    const match = players.find(p=>p.nickname.toLowerCase()===name.trim().toLowerCase());
     if (!match) { setError("Name not found. Ask the admin to add you first."); return; }
     onLogin(match.id);
   };
   const handleAdminLogin = () => {
-    if (pass === ADMIN_PASSWORD) onAdminLogin();
+    if (pass===ADMIN_PASSWORD) onAdminLogin();
     else setError("Wrong password.");
   };
 
@@ -372,164 +396,153 @@ function LoadingScreen() {
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App() {
-  const [loading,      setLoading]      = useState(true);
-  const [players,      setPlayers]      = useState([]);
-  const [predictions,  setPredictions]  = useState({});
-  const [results,      setResults]      = useState({});
-  const [authId,       setAuthId]       = useState(() => localStorage.getItem("rlcs_auth") || null);
-  const [isAdmin,      setIsAdmin]      = useState(() => localStorage.getItem("rlcs_admin") === "1");
-  const [page,         setPage]         = useState("predict");
-  const [filterPhase,  setFilterPhase]  = useState("Group Stage");
-  const [filterGroup,  setFilterGroup]  = useState("all");
-  const [viewingPlayer,setViewingPlayer]= useState(null);
-  const [newNick,      setNewNick]      = useState("");
-  const [editNick,     setEditNick]     = useState({});
+  const [loading,       setLoading]       = useState(true);
+  const [players,       setPlayers]       = useState([]);
+  const [predictions,   setPredictions]   = useState({});
+  const [results,       setResults]       = useState({});
+  const [bonusPoints,   setBonusPoints]   = useState([]);  // [{id, player_id, amount, reason, created_at}]
+  const [authId,        setAuthId]        = useState(() => localStorage.getItem("rlcs_auth") || null);
+  const [isAdmin,       setIsAdmin]       = useState(() => localStorage.getItem("rlcs_admin") === "1");
+  const [page,          setPage]          = useState("predict");
+  const [filterGroup,   setFilterGroup]   = useState("all");
+  const [viewingPlayer, setViewingPlayer] = useState(null);
+  const [newNick,       setNewNick]       = useState("");
+  const [editNick,      setEditNick]      = useState({});
+  const [adminTab,      setAdminTab]      = useState("players"); // "players" | "results" | "bonus"
 
-  // Use a ref to track my own player ID in realtime handler to avoid stale closures
   const myIdRef = useRef(authId);
   useEffect(() => { myIdRef.current = authId; }, [authId]);
 
-  // ── Load all data ──
+  // ── Load data ──
   useEffect(() => {
     (async () => {
-      const [{ data:pls }, { data:preds }, { data:res }] = await Promise.all([
+      const [{ data:pls }, { data:preds }, { data:res }, { data:bon }] = await Promise.all([
         supabase.from("players").select("*").order("created_at"),
         supabase.from("predictions").select("*"),
         supabase.from("results").select("*"),
+        supabase.from("bonus_points").select("*").order("created_at"),
       ]);
-      setPlayers(pls || []);
-
-      // Build prediction map
+      setPlayers(pls||[]);
       const predMap = {};
-      (preds||[]).forEach(p => {
-        if (!predMap[p.player_id]) predMap[p.player_id] = {};
-        predMap[p.player_id][p.match_id] = { winner:p.winner, score1:p.score1, score2:p.score2 };
-      });
+      (preds||[]).forEach(p=>{ if(!predMap[p.player_id])predMap[p.player_id]={}; predMap[p.player_id][p.match_id]={winner:p.winner,score1:p.score1,score2:p.score2}; });
       setPredictions(predMap);
-
-      // Also save my predictions to localStorage as backup
       const myId = localStorage.getItem("rlcs_auth");
       if (myId && predMap[myId]) localStorage.setItem(`rlcs_preds_${myId}`, JSON.stringify(predMap[myId]));
-
       const resMap = {};
-      (res||[]).forEach(r => { resMap[r.match_id] = { winner:r.winner, score1:r.score1, score2:r.score2 }; });
+      (res||[]).forEach(r=>{ resMap[r.match_id]={winner:r.winner,score1:r.score1,score2:r.score2}; });
       setResults(resMap);
+      setBonusPoints(bon||[]);
       setLoading(false);
     })();
   }, []);
 
-  // ── Realtime — FIX: only update OTHER players' predictions, never overwrite mine ──
+  // ── Realtime ──
   useEffect(() => {
     const ch = supabase.channel("rlcs-live")
-      .on("postgres_changes", { event:"*", schema:"public", table:"players" }, ({ eventType:et, new:n, old:o }) => {
-        setPlayers(prev => et==="INSERT"?[...prev,n]:et==="UPDATE"?prev.map(p=>p.id===n.id?n:p):prev.filter(p=>p.id!==o.id));
+      .on("postgres_changes", {event:"*",schema:"public",table:"players"}, ({eventType:et,new:n,old:o})=>{
+        setPlayers(prev=>et==="INSERT"?[...prev,n]:et==="UPDATE"?prev.map(p=>p.id===n.id?n:p):prev.filter(p=>p.id!==o.id));
       })
-      .on("postgres_changes", { event:"*", schema:"public", table:"predictions" }, ({ eventType:et, new:p }) => {
-        if (et==="INSERT"||et==="UPDATE") {
-          // ✅ FIX: never overwrite my own predictions from realtime (I already updated optimistically)
-          if (p.player_id === myIdRef.current) return;
-          setPredictions(prev => ({
-            ...prev,
-            [p.player_id]: { ...(prev[p.player_id]||{}), [p.match_id]: { winner:p.winner, score1:p.score1, score2:p.score2 } },
-          }));
+      .on("postgres_changes", {event:"*",schema:"public",table:"predictions"}, ({eventType:et,new:p})=>{
+        if ((et==="INSERT"||et==="UPDATE") && p.player_id!==myIdRef.current) {
+          setPredictions(prev=>({...prev,[p.player_id]:{...(prev[p.player_id]||{}),[p.match_id]:{winner:p.winner,score1:p.score1,score2:p.score2}}}));
         }
       })
-      .on("postgres_changes", { event:"*", schema:"public", table:"results" }, ({ eventType:et, new:r, old:o }) => {
+      .on("postgres_changes", {event:"*",schema:"public",table:"results"}, ({eventType:et,new:r,old:o})=>{
         if (et==="INSERT"||et==="UPDATE") setResults(prev=>({...prev,[r.match_id]:{winner:r.winner,score1:r.score1,score2:r.score2}}));
-        else setResults(prev=>{ const n={...prev}; delete n[o.match_id]; return n; });
+        else setResults(prev=>{const n={...prev};delete n[o.match_id];return n;});
+      })
+      .on("postgres_changes", {event:"*",schema:"public",table:"bonus_points"}, ({eventType:et,new:b,old:o})=>{
+        if (et==="INSERT") setBonusPoints(prev=>[...prev,b]);
+        else if (et==="DELETE") setBonusPoints(prev=>prev.filter(x=>x.id!==o.id));
       })
       .subscribe();
-    return () => supabase.removeChannel(ch);
+    return ()=>supabase.removeChannel(ch);
   }, []);
 
-  // ── Persist auth ──
-  useEffect(() => {
-    if (authId) localStorage.setItem("rlcs_auth", authId);
-    else localStorage.removeItem("rlcs_auth");
-    if (isAdmin) localStorage.setItem("rlcs_admin","1");
-    else localStorage.removeItem("rlcs_admin");
-  }, [authId, isAdmin]);
+  useEffect(()=>{ if(authId)localStorage.setItem("rlcs_auth",authId); else localStorage.removeItem("rlcs_auth"); },[authId]);
+  useEffect(()=>{ if(isAdmin)localStorage.setItem("rlcs_admin","1"); else localStorage.removeItem("rlcs_admin"); },[isAdmin]);
 
-  const logout = () => { setAuthId(null); setIsAdmin(false); setPage("predict"); };
-
-  // ── Predict — optimistic + localStorage backup ──
-  const handlePredict = useCallback(async (matchId, pred) => {
-    if (!authId || authId==="admin") return;
-    // Optimistic update
-    setPredictions(prev => {
-      const updated = { ...prev, [authId]:{ ...(prev[authId]||{}), [matchId]:pred } };
-      // Save to localStorage as backup
-      localStorage.setItem(`rlcs_preds_${authId}`, JSON.stringify(updated[authId]));
-      return updated;
-    });
-    // Push to Supabase
-    const { error } = await supabase.from("predictions").upsert(
-      { player_id:authId, match_id:matchId, winner:pred.winner, score1:pred.score1, score2:pred.score2, updated_at:new Date().toISOString() },
-      { onConflict:"player_id,match_id" }
-    );
-    if (error) console.error("Prediction save error:", error);
-  }, [authId]);
-
-  // Restore from localStorage if Supabase is missing predictions on load
-  useEffect(() => {
-    if (!authId || loading) return;
+  // Restore predictions from localStorage backup
+  useEffect(()=>{
+    if (!authId||loading) return;
     const backup = localStorage.getItem(`rlcs_preds_${authId}`);
     if (!backup) return;
     try {
-      const backupPreds = JSON.parse(backup);
-      setPredictions(prev => {
-        const mine = prev[authId] || {};
-        const merged = { ...backupPreds, ...mine }; // DB wins if both exist
-        return { ...prev, [authId]: merged };
-      });
+      const bp = JSON.parse(backup);
+      setPredictions(prev=>({...prev,[authId]:{...bp,...(prev[authId]||{})}}));
     } catch {}
-  }, [authId, loading]);
+  },[authId,loading]);
 
-  // ── Set result ──
-  const handleSetResult = useCallback(async (matchId, result) => {
-    if (result === null) {
-      setResults(prev => { const n={...prev}; delete n[matchId]; return n; });
-      await supabase.from("results").delete().eq("match_id", matchId);
+  const logout = ()=>{ setAuthId(null); setIsAdmin(false); setPage("predict"); };
+
+  const handlePredict = useCallback(async (matchId, pred) => {
+    if (!authId||authId==="admin") return;
+    setPredictions(prev=>{
+      const updated={...prev,[authId]:{...(prev[authId]||{}),[matchId]:pred}};
+      localStorage.setItem(`rlcs_preds_${authId}`,JSON.stringify(updated[authId]));
+      return updated;
+    });
+    await supabase.from("predictions").upsert(
+      {player_id:authId,match_id:matchId,winner:pred.winner,score1:pred.score1,score2:pred.score2,updated_at:new Date().toISOString()},
+      {onConflict:"player_id,match_id"}
+    );
+  },[authId]);
+
+  const handleSetResult = useCallback(async (matchId, result)=>{
+    if (result===null) {
+      setResults(prev=>{const n={...prev};delete n[matchId];return n;});
+      await supabase.from("results").delete().eq("match_id",matchId);
     } else {
-      const clean = { winner:result.winner, score1:result.score1, score2:result.score2 };
-      setResults(prev => ({ ...prev, [matchId]:clean }));
-      await supabase.from("results").upsert({ match_id:matchId, ...clean, set_at:new Date().toISOString() }, { onConflict:"match_id" });
+      const clean={winner:result.winner,score1:result.score1,score2:result.score2};
+      setResults(prev=>({...prev,[matchId]:clean}));
+      await supabase.from("results").upsert({match_id:matchId,...clean,set_at:new Date().toISOString()},{onConflict:"match_id"});
     }
-  }, []);
+  },[]);
 
-  const handleAddPlayer = async () => {
-    const nick = newNick.trim(); if (!nick) return;
-    const id = `p_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
-    await supabase.from("players").insert({ id, nickname:nick });
+  const handleAddBonus = async (playerId, amount, reason)=>{
+    const {data,error} = await supabase.from("bonus_points").insert({player_id:playerId,amount,reason:reason||null}).select().single();
+    if (!error && data) setBonusPoints(prev=>[...prev,data]);
+  };
+
+  const handleDeleteBonus = async (id)=>{
+    setBonusPoints(prev=>prev.filter(b=>b.id!==id));
+    await supabase.from("bonus_points").delete().eq("id",id);
+  };
+
+  const handleAddPlayer = async ()=>{
+    const nick=newNick.trim(); if(!nick)return;
+    const id=`p_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
+    await supabase.from("players").insert({id,nickname:nick});
     setNewNick("");
   };
-  const handleDeletePlayer = async (id) => {
-    if (!window.confirm("Delete this player and all their predictions?")) return;
-    await supabase.from("players").delete().eq("id", id);
+  const handleDeletePlayer = async (id)=>{
+    if(!window.confirm("Delete this player and all their data?"))return;
+    await supabase.from("players").delete().eq("id",id);
   };
-  const handleRename = async (id, nickname) => {
+  const handleRename = async (id,nickname)=>{
     setPlayers(prev=>prev.map(p=>p.id===id?{...p,nickname}:p));
-    await supabase.from("players").update({ nickname }).eq("id", id);
+    await supabase.from("players").update({nickname}).eq("id",id);
     setEditNick(n=>{const c={...n};delete c[id];return c;});
   };
 
-  const getScore = (pid) => ALL_MATCHES.reduce((t,m)=>t+calcScore(predictions[pid]?.[m.id],results[m.id]),0);
-  const leaderboard = [...players].map(p=>({...p,score:getScore(p.id)})).sort((a,b)=>b.score-a.score);
+  // Score = prediction points + bonus points
+  const getPredScore  = (pid) => ALL_MATCHES.reduce((t,m)=>t+calcScore(predictions[pid]?.[m.id],results[m.id]),0);
+  const getBonusTotal = (pid) => bonusPoints.filter(b=>b.player_id===pid).reduce((t,b)=>t+b.amount,0);
+  const getTotalScore = (pid) => getPredScore(pid) + getBonusTotal(pid);
+
+  const leaderboard = [...players].map(p=>({...p,score:getTotalScore(p.id),predScore:getPredScore(p.id),bonus:getBonusTotal(p.id)})).sort((a,b)=>b.score-a.score);
   const myPlayer = players.find(p=>p.id===authId);
 
-  const filteredMatches = GROUP_MATCHES.filter(m => {
-    if (filterGroup !== "all" && m.group !== filterGroup) return false;
-    return true;
-  });
+  const filteredGroupMatches = GROUP_MATCHES.filter(m=>filterGroup==="all"||m.group===filterGroup);
 
   if (loading) return <LoadingScreen />;
   if (!authId && !isAdmin) return <LoginScreen players={players} onLogin={id=>{setAuthId(id);setIsAdmin(false);}} onAdminLogin={()=>{setIsAdmin(true);setAuthId(null);}} />;
 
   const NAV = [
-    { id:"predict",     icon:"🎯", label:"Group Stage" },
-    { id:"playoffs",    icon:"🏆", label:"Playoffs"    },
-    { id:"leaderboard", icon:"📊", label:"Standings"   },
-    { id:"others",      icon:"👁",  label:"Others' Picks"},
+    {id:"predict",     icon:"🎯", label:"Group Stage"},
+    {id:"playoffs",    icon:"🏆", label:"Playoffs"},
+    {id:"leaderboard", icon:"📊", label:"Standings"},
+    {id:"others",      icon:"👁",  label:"Others' Picks"},
     ...(isAdmin?[{id:"admin",icon:"⚙️",label:"Admin"}]:[]),
   ];
 
@@ -555,12 +568,7 @@ export default function App() {
           </div>
           <div style={{ display:"flex", gap:2, flexWrap:"wrap" }}>
             {NAV.map(n=>(
-              <button key={n.id} onClick={()=>setPage(n.id)} style={{
-                padding:"7px 14px", borderRadius:6, border:"none", cursor:"pointer",
-                background:page===n.id?"#161616":"transparent", color:page===n.id?"#ddd":"#444",
-                fontFamily:F.main, fontWeight:800, fontSize:12, letterSpacing:0.5, textTransform:"uppercase",
-                borderBottom:page===n.id?"2px solid #f5c518":"2px solid transparent", transition:"color 0.15s",
-              }}>{n.icon} {n.label}</button>
+              <button key={n.id} onClick={()=>setPage(n.id)} style={{ padding:"7px 14px", borderRadius:6, border:"none", cursor:"pointer", background:page===n.id?"#161616":"transparent", color:page===n.id?"#ddd":"#444", fontFamily:F.main, fontWeight:800, fontSize:12, letterSpacing:0.5, textTransform:"uppercase", borderBottom:page===n.id?"2px solid #f5c518":"2px solid transparent", transition:"color 0.15s" }}>{n.icon} {n.label}</button>
             ))}
           </div>
         </div>
@@ -568,8 +576,8 @@ export default function App() {
 
       <div style={{ maxWidth:860, margin:"0 auto", padding:"20px 16px" }}>
 
-        {/* ══ GROUP STAGE ══ */}
-        {page==="predict" && (
+        {/* GROUP STAGE */}
+        {page==="predict"&&(
           <div>
             <div style={{ display:"flex", gap:6, marginBottom:14, flexWrap:"wrap" }}>
               {["all","A","B","C","D"].map(g=>(
@@ -579,7 +587,7 @@ export default function App() {
               ))}
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-              {filteredMatches.map(m=>(
+              {filteredGroupMatches.map(m=>(
                 <MatchCard key={m.id} match={m} playerId={isAdmin?null:authId} predictions={predictions}
                   results={results} onPredict={handlePredict} onSetResult={handleSetResult} isAdmin={false} readOnly={isAdmin} />
               ))}
@@ -587,17 +595,17 @@ export default function App() {
           </div>
         )}
 
-        {/* ══ PLAYOFFS ══ */}
-        {page==="playoffs" && (
+        {/* PLAYOFFS */}
+        {page==="playoffs"&&(
           <PlayoffsPage predictions={predictions} results={results} playerId={isAdmin?null:authId}
             onPredict={handlePredict} onSetResult={handleSetResult} isAdmin={false} />
         )}
 
-        {/* ══ LEADERBOARD ══ */}
-        {page==="leaderboard" && (
+        {/* LEADERBOARD */}
+        {page==="leaderboard"&&(
           <div>
             <div style={{ fontSize:11, color:"#333", marginBottom:16, fontFamily:F.main, letterSpacing:1, textTransform:"uppercase" }}>
-              🟢 3 pts = exact score · 🟡 1 pt = correct winner · 🔴 0 pts = wrong
+              🟢 3 pts = exact score · 🟡 1 pt = correct winner · ⭐ bonus points added by admin
             </div>
             {leaderboard.map((p,i)=>(
               <div key={p.id} style={{ background:i===0?"linear-gradient(135deg,#1a1400,#0e0e0e)":"#0d0d0d", border:`1px solid ${p.id===authId?"#00d4ff25":i===0?"#f5c51820":"#181818"}`, borderRadius:12, padding:"14px 18px", marginBottom:8, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
@@ -610,13 +618,17 @@ export default function App() {
                       {p.nickname}
                       {p.id===authId&&<span style={{ fontSize:9, color:"#00d4ff", background:"#00d4ff15", padding:"1px 7px", borderRadius:4 }}>YOU</span>}
                     </div>
-                    <div style={{ fontSize:10, color:"#333", fontFamily:F.main, marginTop:2 }}>
-                      {Object.keys(predictions[p.id]||{}).length} / {ALL_MATCHES.length} predicted
+                    <div style={{ fontSize:10, color:"#333", fontFamily:F.main, marginTop:2, display:"flex", gap:8 }}>
+                      <span>{Object.keys(predictions[p.id]||{}).length}/{ALL_MATCHES.length} predicted</span>
+                      {p.bonus!==0&&<span style={{ color:p.bonus>0?"#00c77a":"#e74c3c" }}>{p.bonus>0?"+":""}{p.bonus} bonus</span>}
                     </div>
                   </div>
                 </div>
-                <div style={{ fontSize:30, fontWeight:900, fontFamily:F.main, color:i===0?"#f5c518":"#ddd" }}>
-                  {p.score}<span style={{ fontSize:12, color:"#444", marginLeft:4 }}>pts</span>
+                <div style={{ textAlign:"right" }}>
+                  <div style={{ fontSize:30, fontWeight:900, fontFamily:F.main, color:i===0?"#f5c518":"#ddd" }}>
+                    {p.score}<span style={{ fontSize:12, color:"#444", marginLeft:4 }}>pts</span>
+                  </div>
+                  {p.bonus!==0&&<div style={{ fontSize:10, color:"#444", fontFamily:F.main }}>{p.predScore} pred + {p.bonus>0?"+":""}{p.bonus} bonus</div>}
                 </div>
               </div>
             ))}
@@ -638,13 +650,16 @@ export default function App() {
                         <tr key={m.id} style={{ borderBottom:"1px solid #0f0f0f" }}>
                           <td style={{ padding:"5px 8px", color:"#555", maxWidth:130, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{m.team1.split(" ").pop()} vs {m.team2.split(" ").pop()}</td>
                           <td style={{ textAlign:"center", padding:"5px 8px", color:"#444" }}>{results[m.id].score1}–{results[m.id].score2}</td>
-                          {players.map(p=>{
-                            const s=calcScore(predictions[p.id]?.[m.id],results[m.id]);
-                            const has=!!predictions[p.id]?.[m.id];
-                            return <td key={p.id} style={{ textAlign:"center", padding:"5px 8px", fontWeight:900, color:!has?"#222":s===3?"#00c77a":s===1?"#f5c518":"#e74c3c" }}>{has?`+${s}`:"—"}</td>;
-                          })}
+                          {players.map(p=>{const s=calcScore(predictions[p.id]?.[m.id],results[m.id]);const has=!!predictions[p.id]?.[m.id];return <td key={p.id} style={{ textAlign:"center", padding:"5px 8px", fontWeight:900, color:!has?"#222":s===3?"#00c77a":s===1?"#f5c518":"#e74c3c" }}>{has?`+${s}`:"—"}</td>;})}
                         </tr>
                       ))}
+                      {/* Bonus row */}
+                      {players.some(p=>getBonusTotal(p.id)!==0)&&(
+                        <tr style={{ borderTop:"2px solid #1a1a1a" }}>
+                          <td colSpan={2} style={{ padding:"5px 8px", color:"#f5c518", fontFamily:F.main, fontSize:11 }}>⭐ Bonus / Penalty</td>
+                          {players.map(p=>{const b=getBonusTotal(p.id);return <td key={p.id} style={{ textAlign:"center", padding:"5px 8px", fontWeight:900, color:b>0?"#00c77a":b<0?"#e74c3c":"#333", fontFamily:F.main }}>{b!==0?(b>0?"+":"")+b:"—"}</td>;})}
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -653,20 +668,14 @@ export default function App() {
           </div>
         )}
 
-        {/* ══ OTHERS' PICKS ══ */}
+        {/* OTHERS' PICKS */}
         {page==="others"&&(
           <div>
-            <div style={{ fontSize:11, color:"#333", marginBottom:16, fontFamily:F.main, letterSpacing:1, textTransform:"uppercase" }}>
-              👁 Only visible for matches that have already started
-            </div>
+            <div style={{ fontSize:11, color:"#333", marginBottom:16, fontFamily:F.main, letterSpacing:1, textTransform:"uppercase" }}>👁 Only visible for matches that have already started</div>
             <div style={{ display:"flex", gap:8, marginBottom:20, flexWrap:"wrap" }}>
               {players.filter(p=>p.id!==authId).map(p=>(
-                <button key={p.id} onClick={()=>setViewingPlayer(viewingPlayer===p.id?null:p.id)} style={{
-                  padding:"8px 16px", borderRadius:8, border:`1px solid ${viewingPlayer===p.id?"#00d4ff40":"#1e1e1e"}`,
-                  background:viewingPlayer===p.id?"#00d4ff15":"#0d0d0d", color:viewingPlayer===p.id?"#00d4ff":"#555",
-                  fontFamily:F.main, fontWeight:800, fontSize:13, cursor:"pointer",
-                }}>
-                  {p.nickname} <span style={{ fontSize:10, color:viewingPlayer===p.id?"#00d4ff":"#333" }}>{getScore(p.id)} pts</span>
+                <button key={p.id} onClick={()=>setViewingPlayer(viewingPlayer===p.id?null:p.id)} style={{ padding:"8px 16px", borderRadius:8, border:`1px solid ${viewingPlayer===p.id?"#00d4ff40":"#1e1e1e"}`, background:viewingPlayer===p.id?"#00d4ff15":"#0d0d0d", color:viewingPlayer===p.id?"#00d4ff":"#555", fontFamily:F.main, fontWeight:800, fontSize:13, cursor:"pointer" }}>
+                  {p.nickname} <span style={{ fontSize:10, color:viewingPlayer===p.id?"#00d4ff":"#333" }}>{getTotalScore(p.id)} pts</span>
                 </button>
               ))}
               {players.filter(p=>p.id!==authId).length===0&&<div style={{ color:"#333", fontSize:13, fontFamily:F.main }}>No other players yet</div>}
@@ -677,8 +686,11 @@ export default function App() {
               return (
                 <div>
                   <div style={{ fontSize:14, fontWeight:800, fontFamily:F.main, color:"#ddd", marginBottom:4 }}>{vp?.nickname}'s predictions</div>
-                  <div style={{ fontSize:11, color:"#333", fontFamily:F.main, marginBottom:14 }}>{lockedMatches.filter(m=>predictions[viewingPlayer]?.[m.id]).length} predictions · {getScore(viewingPlayer)} pts</div>
-                  {lockedMatches.length===0&&<div style={{ textAlign:"center", color:"#333", padding:40, fontFamily:F.main }}>No matches have started yet!</div>}
+                  <div style={{ fontSize:11, color:"#333", fontFamily:F.main, marginBottom:14 }}>
+                    {lockedMatches.filter(m=>predictions[viewingPlayer]?.[m.id]).length} predictions · {getTotalScore(viewingPlayer)} pts total
+                    {getBonusTotal(viewingPlayer)!==0&&<span style={{ color:getBonusTotal(viewingPlayer)>0?"#00c77a":"#e74c3c" }}> (incl. {getBonusTotal(viewingPlayer)>0?"+":""}{getBonusTotal(viewingPlayer)} bonus)</span>}
+                  </div>
+                  {lockedMatches.length===0&&<div style={{ textAlign:"center", color:"#333", padding:40, fontFamily:F.main }}>No matches started yet!</div>}
                   <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                     {lockedMatches.map(m=>(
                       <MatchCard key={m.id} match={m} playerId={viewingPlayer} predictions={predictions}
@@ -694,63 +706,70 @@ export default function App() {
           </div>
         )}
 
-        {/* ══ ADMIN ══ */}
+        {/* ADMIN */}
         {page==="admin"&&isAdmin&&(
           <div>
-            {/* Manage Players */}
-            <div style={{ marginBottom:32 }}>
-              <div style={{ fontSize:13, fontWeight:800, fontFamily:F.main, color:"#f5c518", letterSpacing:1, marginBottom:14 }}>👥 MANAGE PLAYERS</div>
-              {players.map(p=>(
-                <div key={p.id} style={{ background:"#0d0d0d", border:"1px solid #181818", borderRadius:10, padding:"10px 14px", marginBottom:8, display:"flex", alignItems:"center", gap:10 }}>
-                  <div style={{ width:30, height:30, borderRadius:7, background:"#1a1a1a", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:13, color:"#f5c518", fontFamily:F.main, flexShrink:0 }}>
-                    {p.nickname[0].toUpperCase()}
-                  </div>
-                  {editNick[p.id]!==undefined?(
-                    <div style={{ flex:1, display:"flex", gap:6 }}>
-                      <input value={editNick[p.id]} onChange={e=>setEditNick(n=>({...n,[p.id]:e.target.value}))} autoFocus
-                        onKeyDown={e=>{if(e.key==="Enter")handleRename(p.id,editNick[p.id]||p.nickname);}}
-                        style={{ flex:1, background:"#111", border:"1px solid #2a2a2a", borderRadius:6, color:"#ddd", padding:"5px 10px", fontSize:13, fontFamily:F.body }} />
-                      <button onClick={()=>handleRename(p.id,editNick[p.id]||p.nickname)} style={{ background:"#00c77a", border:"none", borderRadius:6, color:"#000", fontWeight:900, padding:"5px 12px", fontFamily:F.main, cursor:"pointer", fontSize:11 }}>SAVE</button>
-                      <button onClick={()=>setEditNick(n=>{const c={...n};delete c[p.id];return c;})} style={{ background:"#181818", border:"none", borderRadius:6, color:"#555", fontWeight:800, padding:"5px 10px", fontFamily:F.main, cursor:"pointer" }}>✕</button>
-                    </div>
-                  ):(
-                    <>
-                      <div style={{ flex:1, fontSize:13, fontWeight:800, fontFamily:F.main }}>{p.nickname}<span style={{ color:"#333", fontWeight:400, fontSize:11, marginLeft:8 }}>{getScore(p.id)} pts</span></div>
-                      <button onClick={()=>setEditNick(n=>({...n,[p.id]:p.nickname}))} style={{ background:"#111", border:"1px solid #1e1e1e", borderRadius:6, color:"#555", fontFamily:F.main, fontWeight:800, fontSize:11, padding:"4px 10px", cursor:"pointer" }}>RENAME</button>
-                      <button onClick={()=>handleDeletePlayer(p.id)} style={{ background:"#1a0000", border:"1px solid #e74c3c20", borderRadius:6, color:"#e74c3c", fontFamily:F.main, fontWeight:800, fontSize:11, padding:"4px 10px", cursor:"pointer" }}>DELETE</button>
-                    </>
-                  )}
-                </div>
+            {/* Admin sub-tabs */}
+            <div style={{ display:"flex", gap:4, marginBottom:24, background:"#0d0d0d", borderRadius:10, padding:4 }}>
+              {[{id:"players",label:"👥 Players"},{id:"results",label:"🎯 Results"},{id:"bonus",label:"⭐ Bonus Points"}].map(t=>(
+                <button key={t.id} onClick={()=>setAdminTab(t.id)} style={{ flex:1, padding:"9px 0", borderRadius:7, border:"none", cursor:"pointer", background:adminTab===t.id?"#1a1a1a":"transparent", color:adminTab===t.id?"#f5c518":"#444", fontFamily:F.main, fontWeight:800, fontSize:12, transition:"all 0.15s" }}>{t.label}</button>
               ))}
-              <div style={{ display:"flex", gap:8, marginTop:10 }}>
-                <input value={newNick} onChange={e=>setNewNick(e.target.value)} placeholder="New player nickname…"
-                  onKeyDown={e=>{if(e.key==="Enter")handleAddPlayer();}}
-                  style={{ flex:1, background:"#0d0d0d", border:"1px dashed #222", borderRadius:10, color:"#ddd", padding:"10px 14px", fontSize:13, fontFamily:F.body }} />
-                <button onClick={handleAddPlayer} style={{ padding:"10px 20px", background:"#f5c518", border:"none", borderRadius:10, cursor:"pointer", color:"#000", fontFamily:F.main, fontWeight:900, fontSize:13 }}>+ ADD</button>
-              </div>
             </div>
 
-            {/* Set / Edit Results */}
-            <div>
-              <div style={{ fontSize:13, fontWeight:800, fontFamily:F.main, color:"#f5c518", letterSpacing:1, marginBottom:6 }}>🎯 SET / EDIT RESULTS</div>
-              <div style={{ fontSize:11, color:"#555", fontFamily:F.main, marginBottom:14 }}>You can update any result even after it's been set — just type new scores and hit UPDATE.</div>
-
-              {/* Group stage filter */}
-              <div style={{ display:"flex", gap:6, marginBottom:14, flexWrap:"wrap" }}>
-                {["all","A","B","C","D","Playoffs"].map(g=>(
-                  <button key={g} onClick={()=>setFilterGroup(g)} style={{ padding:"6px 14px", borderRadius:7, border:"none", cursor:"pointer", background:filterGroup===g?"#f5c518":"#111", color:filterGroup===g?"#000":"#555", fontFamily:F.main, fontWeight:800, fontSize:12 }}>
-                    {g==="all"?"All":g==="Playoffs"?"Playoffs":`Group ${g}`}
-                  </button>
+            {/* Players sub-tab */}
+            {adminTab==="players"&&(
+              <div>
+                {players.map(p=>(
+                  <div key={p.id} style={{ background:"#0d0d0d", border:"1px solid #181818", borderRadius:10, padding:"10px 14px", marginBottom:8, display:"flex", alignItems:"center", gap:10 }}>
+                    <div style={{ width:30, height:30, borderRadius:7, background:"#1a1a1a", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:13, color:"#f5c518", fontFamily:F.main, flexShrink:0 }}>{p.nickname[0].toUpperCase()}</div>
+                    {editNick[p.id]!==undefined?(
+                      <div style={{ flex:1, display:"flex", gap:6 }}>
+                        <input value={editNick[p.id]} onChange={e=>setEditNick(n=>({...n,[p.id]:e.target.value}))} autoFocus onKeyDown={e=>{if(e.key==="Enter")handleRename(p.id,editNick[p.id]||p.nickname);}}
+                          style={{ flex:1, background:"#111", border:"1px solid #2a2a2a", borderRadius:6, color:"#ddd", padding:"5px 10px", fontSize:13, fontFamily:F.body }} />
+                        <button onClick={()=>handleRename(p.id,editNick[p.id]||p.nickname)} style={{ background:"#00c77a", border:"none", borderRadius:6, color:"#000", fontWeight:900, padding:"5px 12px", fontFamily:F.main, cursor:"pointer", fontSize:11 }}>SAVE</button>
+                        <button onClick={()=>setEditNick(n=>{const c={...n};delete c[p.id];return c;})} style={{ background:"#181818", border:"none", borderRadius:6, color:"#555", fontWeight:800, padding:"5px 10px", fontFamily:F.main, cursor:"pointer" }}>✕</button>
+                      </div>
+                    ):(
+                      <>
+                        <div style={{ flex:1, fontSize:13, fontWeight:800, fontFamily:F.main }}>{p.nickname}<span style={{ color:"#333", fontWeight:400, fontSize:11, marginLeft:8 }}>{getTotalScore(p.id)} pts</span></div>
+                        <button onClick={()=>setEditNick(n=>({...n,[p.id]:p.nickname}))} style={{ background:"#111", border:"1px solid #1e1e1e", borderRadius:6, color:"#555", fontFamily:F.main, fontWeight:800, fontSize:11, padding:"4px 10px", cursor:"pointer" }}>RENAME</button>
+                        <button onClick={()=>handleDeletePlayer(p.id)} style={{ background:"#1a0000", border:"1px solid #e74c3c20", borderRadius:6, color:"#e74c3c", fontFamily:F.main, fontWeight:800, fontSize:11, padding:"4px 10px", cursor:"pointer" }}>DELETE</button>
+                      </>
+                    )}
+                  </div>
                 ))}
+                <div style={{ display:"flex", gap:8, marginTop:10 }}>
+                  <input value={newNick} onChange={e=>setNewNick(e.target.value)} placeholder="New player nickname…" onKeyDown={e=>{if(e.key==="Enter")handleAddPlayer();}}
+                    style={{ flex:1, background:"#0d0d0d", border:"1px dashed #222", borderRadius:10, color:"#ddd", padding:"10px 14px", fontSize:13, fontFamily:F.body }} />
+                  <button onClick={handleAddPlayer} style={{ padding:"10px 20px", background:"#f5c518", border:"none", borderRadius:10, cursor:"pointer", color:"#000", fontFamily:F.main, fontWeight:900, fontSize:13 }}>+ ADD</button>
+                </div>
               </div>
+            )}
 
-              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                {(filterGroup==="Playoffs"?PLAYOFF_MATCHES:GROUP_MATCHES.filter(m=>filterGroup==="all"||m.group===filterGroup)).map(m=>(
-                  <MatchCard key={m.id} match={m} playerId={null} predictions={predictions}
-                    results={results} onPredict={()=>{}} onSetResult={handleSetResult} isAdmin={true} readOnly={false} />
-                ))}
+            {/* Results sub-tab */}
+            {adminTab==="results"&&(
+              <div>
+                <div style={{ fontSize:11, color:"#555", fontFamily:F.main, marginBottom:14 }}>Type new scores and hit UPDATE to correct any result.</div>
+                <div style={{ display:"flex", gap:6, marginBottom:14, flexWrap:"wrap" }}>
+                  {["all","A","B","C","D","Playoffs"].map(g=>(
+                    <button key={g} onClick={()=>setFilterGroup(g)} style={{ padding:"6px 14px", borderRadius:7, border:"none", cursor:"pointer", background:filterGroup===g?"#f5c518":"#111", color:filterGroup===g?"#000":"#555", fontFamily:F.main, fontWeight:800, fontSize:12 }}>
+                      {g==="all"?"All":g==="Playoffs"?"Playoffs":`Group ${g}`}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                  {(filterGroup==="Playoffs"?PLAYOFF_MATCHES:GROUP_MATCHES.filter(m=>filterGroup==="all"||m.group===filterGroup)).map(m=>(
+                    <MatchCard key={m.id} match={m} playerId={null} predictions={predictions}
+                      results={results} onPredict={()=>{}} onSetResult={handleSetResult} isAdmin={true} readOnly={false} />
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Bonus Points sub-tab */}
+            {adminTab==="bonus"&&(
+              <BonusPointsPanel players={players} bonusPoints={bonusPoints} onAdd={handleAddBonus} onDelete={handleDeleteBonus} />
+            )}
           </div>
         )}
       </div>
