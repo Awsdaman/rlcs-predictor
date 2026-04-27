@@ -6,6 +6,19 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "YOUR_SUPABA
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const ADMIN_PASSWORD = "rlcs2026";
 
+// ─── BRAND COLORS ─────────────────────────────────────────────────────────────
+const C = {
+  red:       '#E8001D',
+  blue:      '#0066FF',
+  purple:    '#6B35FF',
+  navy:      '#07071a',
+  navyLight: '#0d0d2a',
+  white:     '#FFFFFF',
+  muted:     '#8899BB',
+  dim:       '#334466',
+  green:     '#00FF88',
+};
+
 // ─── TEAMS ───────────────────────────────────────────────────────────────────
 const TEAMS = {
   "Vitality":            { abbr:"VIT",  color:"#f5c518", bg:"#1a1500", logo:"https://liquipedia.net/commons/images/thumb/b/bc/Team_Vitality_lightmode.png/120px-Team_Vitality_lightmode.png" },
@@ -61,22 +74,17 @@ const GROUP_MATCHES = [
 ];
 
 // ─── PLAYOFF MATCHES — teams set from bracket state in Supabase ──────────────
-// All TBD — admin sets teams via BracketEditor once they qualify.
 const DEFAULT_PLAYOFF = [
-  // Friday May 22 — LB Round 1 (09:00 UTC = 12:00 KSA)
   { id:"p_lb1",   label:"LB ROUND 1 M1",      round:"LBR1", startTime:"2026-05-22T09:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
   { id:"p_lb2",   label:"LB ROUND 1 M2",      round:"LBR1", startTime:"2026-05-22T09:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
   { id:"p_lb3",   label:"LB ROUND 1 M3",      round:"LBR1", startTime:"2026-05-22T09:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
   { id:"p_lb4",   label:"LB ROUND 1 M4",      round:"LBR1", startTime:"2026-05-22T09:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  // Friday May 22 — LB Round 2 + UB Quarter Finals (13:00 UTC = 16:00 KSA)
   { id:"p_lb5",   label:"LB ROUND 2 M1",      round:"LBR2", startTime:"2026-05-22T13:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
   { id:"p_lb6",   label:"LB ROUND 2 M2",      round:"LBR2", startTime:"2026-05-22T13:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
   { id:"p_ubqf1", label:"UB QUARTER FINAL 1",  round:"UBQF", startTime:"2026-05-22T13:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
   { id:"p_ubqf2", label:"UB QUARTER FINAL 2",  round:"UBQF", startTime:"2026-05-22T13:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  // Saturday May 23 — LB Quarter Finals (09:00 UTC = 12:00 KSA)
   { id:"p_lbqf1", label:"LB QUARTER FINAL 1",  round:"LBQF", startTime:"2026-05-23T09:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
   { id:"p_lbqf2", label:"LB QUARTER FINAL 2",  round:"LBQF", startTime:"2026-05-23T09:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  // Sunday May 24 — Semi Finals + Grand Final
   { id:"p_sf1",   label:"SEMI FINAL 1",         round:"SF",   startTime:"2026-05-24T09:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
   { id:"p_sf2",   label:"SEMI FINAL 2",         round:"SF",   startTime:"2026-05-24T11:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
   { id:"p_gf",    label:"GRAND FINAL",           round:"GF",   startTime:"2026-05-24T14:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
@@ -95,7 +103,17 @@ const isLocked  = (m)   => new Date() >= new Date(m.startTime);
 const fmtTime   = (iso) => new Date(iso).toLocaleString("en-US", { timeZone:"Asia/Riyadh", month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" });
 const teamStyle = (n)   => TEAMS[n] || { abbr:(n||"?").slice(0,3).toUpperCase(), color:"#888", bg:"#111", logo:null };
 const isTBDTeam = (n)   => !n || n === "TBD";
-const F = { main:"'Barlow Condensed', sans-serif", body:"'Barlow', sans-serif" };
+const F = { main:"'Rajdhani', sans-serif", body:"'Inter', sans-serif" };
+
+// ─── SHARED INPUT STYLE ───────────────────────────────────────────────────────
+const inputStyle = (extra={}) => ({
+  background:"rgba(255,255,255,0.05)",
+  border:"1px solid rgba(255,255,255,0.1)",
+  borderRadius:7,
+  color:C.white,
+  fontFamily:F.body,
+  ...extra,
+});
 
 // ─── TEAM BADGE ──────────────────────────────────────────────────────────────
 function TeamBadge({ name, size="sm" }) {
@@ -105,19 +123,24 @@ function TeamBadge({ name, size="sm" }) {
   const [err, setErr] = useState(false);
   return (
     <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-      <div style={{ width:sz, height:sz, borderRadius:6, background:isTBD?"#1a1a1a":t.bg, border:`2px solid ${isTBD?"#2a2a2a":t.color}25`, display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", flexShrink:0 }}>
+      <div style={{
+        width:sz, height:sz, borderRadius:6,
+        background:isTBD?C.navyLight:t.bg,
+        border:`2px solid ${isTBD?"rgba(255,255,255,0.1)":t.color+"60"}`,
+        display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", flexShrink:0,
+        boxShadow: isTBD ? "none" : `0 0 8px ${t.color}30`,
+      }}>
         {t.logo && !isTBD && !err
           ? <img src={t.logo} alt={name} style={{ width:"88%", height:"88%", objectFit:"contain" }} onError={()=>setErr(true)} />
-          : <span style={{ fontSize:sz*0.3, fontWeight:900, color:isTBD?"#444":t.color, fontFamily:F.main }}>{isTBD?"?":t.abbr}</span>
+          : <span style={{ fontSize:sz*0.3, fontWeight:700, color:isTBD?"rgba(255,255,255,0.2)":t.color, fontFamily:F.main }}>{isTBD?"?":t.abbr}</span>
         }
       </div>
-      <span style={{ fontSize:size==="lg"?14:11, fontWeight:800, color:isTBD?"#444":"#ddd", fontFamily:F.main, letterSpacing:0.5, textTransform:"uppercase" }}>{name||"TBD"}</span>
+      <span style={{ fontSize:size==="lg"?14:11, fontWeight:700, color:isTBD?"rgba(255,255,255,0.2)":C.white, fontFamily:F.main, letterSpacing:1, textTransform:"uppercase" }}>{name||"TBD"}</span>
     </div>
   );
 }
 
 // ─── BRACKET MATCH CARD ───────────────────────────────────────────────────────
-// Compact card used inside the bracket grid
 function BracketCard({ match, result, pred, onClick, isSelected }) {
   const t1 = match.team1, t2 = match.team2;
   const res = result;
@@ -125,49 +148,53 @@ function BracketCard({ match, result, pred, onClick, isSelected }) {
   const locked = isLocked(match);
   const t1TBD = isTBDTeam(t1), t2TBD = isTBDTeam(t2);
 
+  const borderColor = score===3 ? "rgba(0,255,136,0.4)" : score===1 ? "rgba(232,0,29,0.4)" : isSelected ? "rgba(0,102,255,0.6)" : "rgba(255,255,255,0.08)";
+  const glowShadow  = score===3 ? "0 0 15px rgba(0,255,136,0.2)" : score===1 ? "0 0 15px rgba(232,0,29,0.15)" : isSelected ? "0 0 20px rgba(0,102,255,0.2)" : "none";
+
   return (
     <div onClick={onClick} style={{
-      background: isSelected ? "#181818" : "#111",
-      border: `1px solid ${score===3?"#00c77a50":score===1?"#f5c51850":isSelected?"#f5c518":"#222"}`,
+      background:"rgba(8,8,28,0.9)",
+      border:`1px solid ${borderColor}`,
       borderRadius:8, overflow:"hidden", cursor:"pointer", transition:"all 0.15s", minWidth:180,
+      boxShadow: glowShadow,
     }}>
-      {/* Label */}
-      <div style={{ padding:"3px 10px", background:"#0a0a0a", borderBottom:"1px solid #1a1a1a" }}>
-        <span style={{ fontSize:9, color:"#444", fontFamily:F.main, letterSpacing:1, textTransform:"uppercase" }}>{match.label}</span>
-        {score !== null && <span style={{ float:"right", fontSize:9, fontWeight:900, fontFamily:F.main, color:score===3?"#00c77a":score===1?"#f5c518":"#e74c3c" }}>+{score}pts</span>}
-        {locked && !res && score===null && <span style={{ float:"right", fontSize:9, color:"#333", fontFamily:F.main }}>🔒</span>}
+      {/* Label bar */}
+      <div style={{ padding:"3px 10px", background:"rgba(4,4,20,0.9)", borderBottom:"1px solid rgba(255,255,255,0.06)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        <span style={{ fontSize:9, color:C.muted, fontFamily:F.main, letterSpacing:2, textTransform:"uppercase" }}>{match.label}</span>
+        {score !== null && <span style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:score===3?C.green:score===1?C.red:"rgba(255,255,255,0.3)" }}>+{score}pts</span>}
+        {locked && !res && score===null && <span style={{ fontSize:9, color:"rgba(255,255,255,0.2)", fontFamily:F.main }}>🔒</span>}
       </div>
       {/* Team 1 */}
-      <div style={{ padding:"6px 10px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid #161616", background: res?.winner===t1?"#001a0d":"transparent" }}>
+      <div style={{ padding:"6px 10px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid rgba(255,255,255,0.04)", background:res?.winner===t1?"rgba(0,255,136,0.06)":"transparent", borderLeft:res?.winner===t1?`2px solid ${C.green}`:"2px solid transparent" }}>
         <div style={{ display:"flex", alignItems:"center", gap:6 }}>
           {!t1TBD && (() => { const t=teamStyle(t1); const [e,setE]=useState(false); return (
-            <div style={{ width:18, height:18, borderRadius:4, background:t.bg, border:`1px solid ${t.color}30`, display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", flexShrink:0 }}>
-              {t.logo&&!e?<img src={t.logo} style={{ width:"90%", height:"90%", objectFit:"contain" }} onError={()=>setE(true)} alt="" />:<span style={{ fontSize:7, fontWeight:900, color:t.color, fontFamily:F.main }}>{t.abbr}</span>}
+            <div style={{ width:18, height:18, borderRadius:4, background:t.bg, border:`1px solid ${t.color}40`, display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", flexShrink:0 }}>
+              {t.logo&&!e?<img src={t.logo} style={{ width:"90%", height:"90%", objectFit:"contain" }} onError={()=>setE(true)} alt="" />:<span style={{ fontSize:7, fontWeight:700, color:t.color, fontFamily:F.main }}>{t.abbr}</span>}
             </div>
           )})()}
-          <span style={{ fontSize:11, fontWeight:800, fontFamily:F.main, color:t1TBD?"#333":res?.winner===t1?"#00c77a":"#bbb", textTransform:"uppercase" }}>{t1TBD?"TBD":t1}</span>
+          <span style={{ fontSize:11, fontWeight:700, fontFamily:F.main, color:t1TBD?"rgba(255,255,255,0.2)":res?.winner===t1?C.green:C.white, textTransform:"uppercase", letterSpacing:0.5 }}>{t1TBD?"TBD":t1}</span>
         </div>
-        {res && <span style={{ fontSize:13, fontWeight:900, fontFamily:F.main, color:res.winner===t1?"#00c77a":"#555" }}>{res.score1}</span>}
-        {!res && pred?.winner===t1 && <span style={{ fontSize:9, color:"#f5c518", fontFamily:F.main }}>★</span>}
+        {res && <span style={{ fontSize:13, fontWeight:700, fontFamily:F.main, color:res.winner===t1?C.green:C.dim }}>{res.score1}</span>}
+        {!res && pred?.winner===t1 && <span style={{ fontSize:9, color:C.red, fontFamily:F.main }}>★</span>}
       </div>
       {/* Team 2 */}
-      <div style={{ padding:"6px 10px", display:"flex", alignItems:"center", justifyContent:"space-between", background: res?.winner===t2?"#001a0d":"transparent" }}>
+      <div style={{ padding:"6px 10px", display:"flex", alignItems:"center", justifyContent:"space-between", background:res?.winner===t2?"rgba(0,255,136,0.06)":"transparent", borderLeft:res?.winner===t2?`2px solid ${C.green}`:"2px solid transparent" }}>
         <div style={{ display:"flex", alignItems:"center", gap:6 }}>
           {!t2TBD && (() => { const t=teamStyle(t2); const [e,setE]=useState(false); return (
-            <div style={{ width:18, height:18, borderRadius:4, background:t.bg, border:`1px solid ${t.color}30`, display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", flexShrink:0 }}>
-              {t.logo&&!e?<img src={t.logo} style={{ width:"90%", height:"90%", objectFit:"contain" }} onError={()=>setE(true)} alt="" />:<span style={{ fontSize:7, fontWeight:900, color:t.color, fontFamily:F.main }}>{t.abbr}</span>}
+            <div style={{ width:18, height:18, borderRadius:4, background:t.bg, border:`1px solid ${t.color}40`, display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", flexShrink:0 }}>
+              {t.logo&&!e?<img src={t.logo} style={{ width:"90%", height:"90%", objectFit:"contain" }} onError={()=>setE(true)} alt="" />:<span style={{ fontSize:7, fontWeight:700, color:t.color, fontFamily:F.main }}>{t.abbr}</span>}
             </div>
           )})()}
-          <span style={{ fontSize:11, fontWeight:800, fontFamily:F.main, color:t2TBD?"#333":res?.winner===t2?"#00c77a":"#bbb", textTransform:"uppercase" }}>{t2TBD?"TBD":t2}</span>
+          <span style={{ fontSize:11, fontWeight:700, fontFamily:F.main, color:t2TBD?"rgba(255,255,255,0.2)":res?.winner===t2?C.green:C.white, textTransform:"uppercase", letterSpacing:0.5 }}>{t2TBD?"TBD":t2}</span>
         </div>
-        {res && <span style={{ fontSize:13, fontWeight:900, fontFamily:F.main, color:res.winner===t2?"#00c77a":"#555" }}>{res.score2}</span>}
-        {!res && pred?.winner===t2 && <span style={{ fontSize:9, color:"#f5c518", fontFamily:F.main }}>★</span>}
+        {res && <span style={{ fontSize:13, fontWeight:700, fontFamily:F.main, color:res.winner===t2?C.green:C.dim }}>{res.score2}</span>}
+        {!res && pred?.winner===t2 && <span style={{ fontSize:9, color:C.red, fontFamily:F.main }}>★</span>}
       </div>
     </div>
   );
 }
 
-// ─── PREDICT PANEL (shown below bracket when card clicked) ───────────────────
+// ─── PREDICT PANEL ────────────────────────────────────────────────────────────
 function PredictPanel({ match, result, pred, onPredict, onClose }) {
   const locked = isLocked(match);
   const t1TBD = isTBDTeam(match.team1), t2TBD = isTBDTeam(match.team2);
@@ -184,44 +211,51 @@ function PredictPanel({ match, result, pred, onPredict, onClose }) {
   };
 
   return (
-    <div style={{ background:"#0d0d0d", border:"1px solid #252525", borderRadius:10, padding:"16px 18px", marginTop:12 }}>
+    <div style={{ background:"rgba(8,8,28,0.97)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"16px 18px", marginTop:12, boxShadow:"0 0 30px rgba(0,0,0,0.5)" }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-        <div style={{ fontSize:12, fontWeight:800, fontFamily:F.main, color:"#f5c518", letterSpacing:1 }}>{match.label} — Bo{match.bo}</div>
-        <button onClick={onClose} style={{ background:"none", border:"none", color:"#444", cursor:"pointer", fontSize:16 }}>✕</button>
+        <div style={{ fontSize:13, fontWeight:700, fontFamily:F.main, color:C.red, letterSpacing:2, textTransform:"uppercase" }}>{match.label} — Bo{match.bo}</div>
+        <button onClick={onClose} style={{ background:"none", border:"none", color:C.muted, cursor:"pointer", fontSize:16 }}>✕</button>
       </div>
-      <div style={{ fontSize:10, color:"#444", fontFamily:F.main, marginBottom:12 }}>{fmtTime(match.startTime)}</div>
+      <div style={{ fontSize:10, color:C.dim, fontFamily:F.main, letterSpacing:1, marginBottom:12 }}>{fmtTime(match.startTime)} · KSA</div>
 
       {result ? (
         <div style={{ textAlign:"center", padding:"10px 0" }}>
-          <div style={{ fontSize:11, color:"#555", fontFamily:F.main, marginBottom:6 }}>FINAL RESULT</div>
+          <div style={{ fontSize:10, color:C.muted, fontFamily:F.main, letterSpacing:2, marginBottom:8 }}>FINAL RESULT</div>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:16 }}>
-            <span style={{ fontSize:13, fontWeight:800, fontFamily:F.main, color:result.winner===match.team1?"#00c77a":"#555" }}>{match.team1}</span>
-            <span style={{ fontSize:28, fontWeight:900, fontFamily:F.main, color:"#ddd" }}>{result.score1}–{result.score2}</span>
-            <span style={{ fontSize:13, fontWeight:800, fontFamily:F.main, color:result.winner===match.team2?"#00c77a":"#555" }}>{match.team2}</span>
+            <span style={{ fontSize:13, fontWeight:700, fontFamily:F.main, color:result.winner===match.team1?C.green:C.dim, textTransform:"uppercase" }}>{match.team1}</span>
+            <span style={{ fontSize:30, fontWeight:700, fontFamily:F.main, color:C.white }}>{result.score1}–{result.score2}</span>
+            <span style={{ fontSize:13, fontWeight:700, fontFamily:F.main, color:result.winner===match.team2?C.green:C.dim, textTransform:"uppercase" }}>{match.team2}</span>
           </div>
-          {pred && <div style={{ marginTop:8, fontSize:11, fontFamily:F.main, color:"#555" }}>Your pick: {pred.winner} {pred.score1!=null?`(${pred.score1}–${pred.score2})`:""}</div>}
+          {pred && <div style={{ marginTop:8, fontSize:11, fontFamily:F.body, color:C.muted }}>Your pick: {pred.winner} {pred.score1!=null?`(${pred.score1}–${pred.score2})`:""}</div>}
         </div>
       ) : locked ? (
-        <div style={{ textAlign:"center", color:"#444", fontFamily:F.main, fontSize:12, padding:"10px 0" }}>🔒 Predictions locked</div>
+        <div style={{ textAlign:"center", color:C.muted, fontFamily:F.main, fontSize:12, padding:"10px 0", letterSpacing:1 }}>🔒 PREDICTIONS LOCKED</div>
       ) : t1TBD || t2TBD ? (
-        <div style={{ textAlign:"center", color:"#444", fontFamily:F.main, fontSize:12, padding:"10px 0" }}>Teams TBD — predictions open once teams are set</div>
+        <div style={{ textAlign:"center", color:C.muted, fontFamily:F.main, fontSize:12, padding:"10px 0" }}>Teams TBD — predictions open once teams are set</div>
       ) : (
         <div>
           <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12, justifyContent:"center" }}>
             <input type="number" min={0} max={4} value={s1} onChange={e=>setS1(e.target.value)} placeholder="–"
-              style={{ width:44, textAlign:"center", background:"#111", border:"1px solid #252525", borderRadius:6, color:"#ddd", fontSize:18, fontWeight:800, fontFamily:F.main, padding:"6px 0" }} />
-            <span style={{ color:"#333", fontSize:16 }}>:</span>
+              style={{ ...inputStyle({ width:48, textAlign:"center", fontSize:20, fontWeight:700, padding:"6px 0" }) }} />
+            <span style={{ color:"rgba(255,255,255,0.15)", fontSize:18 }}>:</span>
             <input type="number" min={0} max={4} value={s2} onChange={e=>setS2(e.target.value)} placeholder="–"
-              style={{ width:44, textAlign:"center", background:"#111", border:"1px solid #252525", borderRadius:6, color:"#ddd", fontSize:18, fontWeight:800, fontFamily:F.main, padding:"6px 0" }} />
+              style={{ ...inputStyle({ width:48, textAlign:"center", fontSize:20, fontWeight:700, padding:"6px 0" }) }} />
           </div>
           <div style={{ display:"flex", gap:8 }}>
             {[{team:match.team1,t:t1},{team:match.team2,t:t2}].map(({team,t})=>(
-              <button key={team} onClick={()=>submit(team)} style={{ flex:1, padding:"9px 0", borderRadius:7, border:"none", cursor:"pointer", background:pred?.winner===team?t.color:"#1a1a1a", color:pred?.winner===team?"#000":"#666", fontFamily:F.main, fontWeight:800, fontSize:12, textTransform:"uppercase", transition:"all 0.15s" }}>
+              <button key={team} onClick={()=>submit(team)} style={{
+                flex:1, padding:"9px 0", borderRadius:7, border:`1px solid ${pred?.winner===team?t.color:"rgba(255,255,255,0.1)"}`,
+                cursor:"pointer", fontFamily:F.main, fontWeight:700, fontSize:12, textTransform:"uppercase", letterSpacing:1,
+                background:pred?.winner===team?t.color:"rgba(255,255,255,0.04)",
+                color:pred?.winner===team?"#000":C.muted,
+                boxShadow:pred?.winner===team?`0 0 12px ${t.color}60`:"none",
+                transition:"all 0.15s",
+              }}>
                 {team.split(" ").slice(-1)[0]} wins
               </button>
             ))}
           </div>
-          {pred && <div style={{ marginTop:8, fontSize:10, color:"#444", fontFamily:F.main, textAlign:"center" }}>Current: {pred.winner} {pred.score1!=null?`(${pred.score1}–${pred.score2})`:""}</div>}
+          {pred && <div style={{ marginTop:8, fontSize:10, color:C.dim, fontFamily:F.main, textAlign:"center", letterSpacing:1 }}>CURRENT: {pred.winner} {pred.score1!=null?`(${pred.score1}–${pred.score2})`:""}</div>}
         </div>
       )}
     </div>
@@ -237,7 +271,7 @@ function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredic
 
   const renderSection = (label, matches) => (
     <div style={{ marginBottom:16 }}>
-      <div style={{ fontSize:9, color:"#555", fontFamily:F.main, letterSpacing:1, textTransform:"uppercase", marginBottom:6, paddingLeft:2 }}>{label}</div>
+      <div style={{ fontSize:9, color:C.muted, fontFamily:F.main, letterSpacing:2, textTransform:"uppercase", marginBottom:6, paddingLeft:2 }}>{label}</div>
       <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
         {matches.map(m => (
           <BracketCard key={m.id} match={m} result={results[m.id]} pred={predictions[playerId]?.[m.id]}
@@ -249,44 +283,39 @@ function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredic
 
   return (
     <div>
-      <div style={{ fontSize:11, color:"#333", marginBottom:16, fontFamily:F.main, letterSpacing:1, textTransform:"uppercase" }}>
+      <div style={{ fontSize:10, color:C.muted, marginBottom:16, fontFamily:F.main, letterSpacing:2, textTransform:"uppercase" }}>
         Playoffs · May 22–24 · All Bo7 · Click any match to predict
       </div>
 
-      {/* Bracket grid — scrollable horizontally on mobile */}
       <div style={{ overflowX:"auto", paddingBottom:8 }}>
         <div style={{ display:"flex", gap:0, minWidth:900, alignItems:"flex-start" }}>
 
-          {/* Col 0: LB Round 1 + UB Quarter Finals */}
           <div style={{ flex:1 }}>
             {renderSection("LB Round 1", byRound("LBR1"))}
             {renderSection("UB Quarter Finals", byRound("UBQF"))}
           </div>
 
           <div style={{ width:24, display:"flex", alignItems:"center", justifyContent:"center", paddingTop:80 }}>
-            <div style={{ width:24, height:2, background:"#222" }} />
+            <div style={{ width:24, height:1, background:"rgba(255,255,255,0.1)" }} />
           </div>
 
-          {/* Col 1: LB Round 2 + LB Quarter Finals */}
           <div style={{ flex:1 }}>
             {renderSection("LB Round 2", byRound("LBR2"))}
             {renderSection("LB Quarter Finals", byRound("LBQF"))}
           </div>
 
           <div style={{ width:24, display:"flex", alignItems:"center", justifyContent:"center", paddingTop:60 }}>
-            <div style={{ width:24, height:2, background:"#222" }} />
+            <div style={{ width:24, height:1, background:"rgba(255,255,255,0.1)" }} />
           </div>
 
-          {/* Col 2: Semi Finals */}
           <div style={{ flex:1 }}>
             {renderSection("Semi Finals", byRound("SF"))}
           </div>
 
           <div style={{ width:24, display:"flex", alignItems:"center", justifyContent:"center", paddingTop:40 }}>
-            <div style={{ width:24, height:2, background:"#222" }} />
+            <div style={{ width:24, height:1, background:"rgba(255,255,255,0.1)" }} />
           </div>
 
-          {/* Col 3: Grand Final */}
           <div style={{ flex:1 }}>
             {renderSection("Grand Final 🏆", byRound("GF"))}
           </div>
@@ -294,13 +323,12 @@ function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredic
         </div>
       </div>
 
-      {/* Predict panel — shown below bracket when a match is selected */}
       {selected && selectedMatch && playerId && (
         <PredictPanel match={selectedMatch} result={results[selected]} pred={predictions[playerId]?.[selected]}
           onPredict={onPredict} onClose={() => setSelected(null)} />
       )}
       {selected && !playerId && (
-        <div style={{ textAlign:"center", color:"#444", fontFamily:F.main, fontSize:12, marginTop:12 }}>Log in as a player to predict</div>
+        <div style={{ textAlign:"center", color:C.muted, fontFamily:F.main, fontSize:12, marginTop:12, letterSpacing:1 }}>Log in as a player to predict</div>
       )}
     </div>
   );
@@ -317,65 +345,102 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
   const [s2,  setS2]  = useState(pred?.score2??"");
   const [as1, setAs1] = useState(result?.score1??"");
   const [as2, setAs2] = useState(result?.score2??"");
+  const [hovered, setHovered] = useState(false);
+
   useEffect(()=>{ setS1(pred?.score1??""); setS2(pred?.score2??""); },[pred?.score1,pred?.score2]);
   useEffect(()=>{ setAs1(result?.score1??""); setAs2(result?.score2??""); },[result?.score1,result?.score2]);
+
   const submitPred=(winner)=>{ const n1=parseInt(s1),n2=parseInt(s2); onPredict(match.id,{winner,score1:isNaN(n1)?null:n1,score2:isNaN(n2)?null:n2}); };
   const submitResult=()=>{ const n1=parseInt(as1),n2=parseInt(as2); if(isNaN(n1)||isNaN(n2))return; onSetResult(match.id,{winner:n1>n2?match.team1:match.team2,score1:n1,score2:n2}); };
+
+  const borderColor = score===3 ? "rgba(0,255,136,0.4)" : score===1 ? "rgba(232,0,29,0.4)" : score===0&&result ? "rgba(100,100,150,0.3)" : hovered ? "rgba(0,102,255,0.4)" : "rgba(255,255,255,0.08)";
+  const glowShadow  = score===3 ? "0 0 15px rgba(0,255,136,0.2)" : score===1 ? "0 0 15px rgba(232,0,29,0.15)" : hovered && !result ? "0 0 20px rgba(0,102,255,0.15)" : "none";
+
   return (
-    <div style={{ background:"linear-gradient(135deg,#0d0d0d,#111)", border:`1px solid ${score===3?"#00c77a30":score===1?"#f5c51830":score===0&&result?"#e74c3c20":"#1e1e1e"}`, borderRadius:12, padding:"14px 16px", position:"relative" }}>
-      {score!==null&&<div style={{ position:"absolute",top:10,right:10,borderRadius:6,padding:"2px 9px",background:score===3?"#00c77a":score===1?"#f5c518":"#e74c3c",color:"#000",fontWeight:900,fontSize:12,fontFamily:F.main }}>+{score} pts</div>}
-      {locked&&!result&&score===null&&!isAdmin&&<div style={{ position:"absolute",top:10,right:10,background:"#1a1a1a",color:"#444",fontSize:10,borderRadius:6,padding:"2px 9px",fontFamily:F.main }}>🔒 LOCKED</div>}
-      <div style={{ fontSize:10,color:"#333",marginBottom:10,fontFamily:F.main,letterSpacing:1,textTransform:"uppercase" }}>
-        Group {match.group} · Bo5 · {fmtTime(match.startTime)}
+    <div
+      onMouseEnter={()=>setHovered(true)}
+      onMouseLeave={()=>setHovered(false)}
+      style={{ background:"linear-gradient(135deg, rgba(10,10,35,0.9), rgba(15,15,45,0.9))", border:`1px solid ${borderColor}`, borderRadius:8, padding:"14px 16px", position:"relative", transition:"all 0.2s", boxShadow:glowShadow }}
+    >
+      {/* Score badge */}
+      {score!==null&&<div style={{ position:"absolute",top:10,right:10,borderRadius:5,padding:"2px 9px",background:score===3?C.green:score===1?C.red:"rgba(100,100,150,0.4)",color:score===1?C.white:"#000",fontWeight:700,fontSize:11,fontFamily:F.main,letterSpacing:1 }}>+{score} PTS</div>}
+      {locked&&!result&&score===null&&!isAdmin&&<div style={{ position:"absolute",top:10,right:10,background:"rgba(255,255,255,0.06)",color:"rgba(255,255,255,0.25)",fontSize:10,borderRadius:5,padding:"2px 9px",fontFamily:F.main,letterSpacing:1 }}>🔒 LOCKED</div>}
+
+      {/* Match info */}
+      <div style={{ fontSize:10,color:C.muted,marginBottom:10,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase" }}>
+        Group {match.group} · Bo5 · {fmtTime(match.startTime)} KSA
       </div>
+
+      {/* Teams row */}
       <div style={{ display:"flex",alignItems:"center",gap:8 }}>
         <div style={{ flex:1 }}><TeamBadge name={match.team1} /></div>
         {result?(
-          <div style={{ display:"flex",alignItems:"center",gap:6,background:"#0a0a0a",borderRadius:8,padding:"4px 14px",flexShrink:0 }}>
-            <span style={{ fontSize:22,fontWeight:900,fontFamily:F.main,color:result.winner===match.team1?"#00c77a":"#444" }}>{result.score1}</span>
-            <span style={{ color:"#2a2a2a" }}>:</span>
-            <span style={{ fontSize:22,fontWeight:900,fontFamily:F.main,color:result.winner===match.team2?"#00c77a":"#444" }}>{result.score2}</span>
+          <div style={{ display:"flex",alignItems:"center",gap:6,background:"rgba(4,4,20,0.8)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:8,padding:"4px 14px",flexShrink:0 }}>
+            <span style={{ fontSize:22,fontWeight:700,fontFamily:F.main,color:result.winner===match.team1?C.green:C.dim }}>{result.score1}</span>
+            <span style={{ color:"rgba(255,255,255,0.08)" }}>:</span>
+            <span style={{ fontSize:22,fontWeight:700,fontFamily:F.main,color:result.winner===match.team2?C.green:C.dim }}>{result.score2}</span>
           </div>
         ):(
           <div style={{ display:"flex",alignItems:"center",gap:4,flexShrink:0 }}>
             {!locked&&playerId&&!readOnly?(
               <>
-                <input type="number" min={0} max={3} value={s1} onChange={e=>setS1(e.target.value)} placeholder="–" style={{ width:34,textAlign:"center",background:"#1a1a1a",border:"1px solid #252525",borderRadius:6,color:"#ddd",fontSize:16,fontWeight:800,fontFamily:F.main,padding:"4px 0" }} />
-                <span style={{ color:"#2a2a2a" }}>:</span>
-                <input type="number" min={0} max={3} value={s2} onChange={e=>setS2(e.target.value)} placeholder="–" style={{ width:34,textAlign:"center",background:"#1a1a1a",border:"1px solid #252525",borderRadius:6,color:"#ddd",fontSize:16,fontWeight:800,fontFamily:F.main,padding:"4px 0" }} />
+                <input type="number" min={0} max={3} value={s1} onChange={e=>setS1(e.target.value)} placeholder="–"
+                  style={{ ...inputStyle({ width:36, textAlign:"center", fontSize:16, fontWeight:700, padding:"4px 0" }) }} />
+                <span style={{ color:"rgba(255,255,255,0.08)" }}>:</span>
+                <input type="number" min={0} max={3} value={s2} onChange={e=>setS2(e.target.value)} placeholder="–"
+                  style={{ ...inputStyle({ width:36, textAlign:"center", fontSize:16, fontWeight:700, padding:"4px 0" }) }} />
               </>
             ):(
-              <span style={{ color:"#2a2a2a",fontFamily:F.main,fontSize:13,padding:"0 8px" }}>vs</span>
+              <span style={{ color:"rgba(255,255,255,0.08)",fontFamily:F.main,fontSize:14,padding:"0 8px" }}>vs</span>
             )}
           </div>
         )}
         <div style={{ flex:1,display:"flex",justifyContent:"flex-end" }}><TeamBadge name={match.team2} /></div>
       </div>
+
+      {/* Win buttons */}
       {!locked&&!result&&playerId&&!readOnly&&(
         <div style={{ display:"flex",gap:6,marginTop:10 }}>
           {[{team:match.team1,t:t1},{team:match.team2,t:t2}].map(({team,t})=>(
-            <button key={team} onClick={()=>submitPred(team)} style={{ flex:1,padding:"7px 0",borderRadius:7,border:"none",cursor:"pointer",background:pred?.winner===team?t.color:"#181818",color:pred?.winner===team?"#000":"#555",fontFamily:F.main,fontWeight:800,fontSize:11,letterSpacing:0.5,textTransform:"uppercase",transition:"all 0.15s" }}>{team.split(" ").slice(-1)[0]} wins</button>
+            <button key={team} onClick={()=>submitPred(team)} style={{
+              flex:1, padding:"7px 0", borderRadius:7, cursor:"pointer", fontFamily:F.main, fontWeight:700, fontSize:11, letterSpacing:1, textTransform:"uppercase", transition:"all 0.15s",
+              background:pred?.winner===team?t.color:"rgba(255,255,255,0.04)",
+              border:`1px solid ${pred?.winner===team?t.color:"rgba(255,255,255,0.1)"}`,
+              color:pred?.winner===team?"#000":C.muted,
+              boxShadow:pred?.winner===team?`0 0 12px ${t.color}60`:"none",
+            }}>{team.split(" ").slice(-1)[0]} wins</button>
           ))}
         </div>
       )}
-      {pred&&!result&&!readOnly&&<div style={{ marginTop:8,fontSize:10,color:"#333",fontFamily:F.main }}>YOUR PICK: <span style={{ color:"#555" }}>{pred.winner?.split(" ").slice(-1)[0]}{pred.score1!=null?` (${pred.score1}–${pred.score2})`:""}</span></div>}
-      {readOnly&&pred&&(
-        <div style={{ marginTop:10,display:"flex",alignItems:"center",gap:8 }}>
-          <div style={{ fontSize:11,color:"#444",fontFamily:F.main }}>PREDICTION:</div>
-          <div style={{ background:"#181818",borderRadius:6,padding:"3px 10px",fontSize:12,fontFamily:F.main,fontWeight:800,color:result?(calcScore(pred,result)===3?"#00c77a":calcScore(pred,result)===1?"#f5c518":"#e74c3c"):"#888" }}>
-            {pred.winner?.split(" ").slice(-1)[0]}{pred.score1!=null?` · ${pred.score1}–${pred.score2}`:""}
-          </div>
-          {result&&<div style={{ fontSize:10,fontFamily:F.main,color:"#444" }}>{calcScore(pred,result)===3?"✓ EXACT":calcScore(pred,result)===1?"✓ WINNER":"✗ WRONG"}</div>}
+
+      {pred&&!result&&!readOnly&&(
+        <div style={{ marginTop:8,fontSize:10,color:C.dim,fontFamily:F.main,letterSpacing:1 }}>
+          YOUR PICK: <span style={{ color:C.muted }}>{pred.winner?.split(" ").slice(-1)[0]}{pred.score1!=null?` (${pred.score1}–${pred.score2})`:""}</span>
         </div>
       )}
+
+      {readOnly&&pred&&(
+        <div style={{ marginTop:10,display:"flex",alignItems:"center",gap:8 }}>
+          <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:1 }}>PREDICTION:</div>
+          <div style={{ background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,padding:"3px 10px",fontSize:12,fontFamily:F.main,fontWeight:700,
+            color:result?(calcScore(pred,result)===3?C.green:calcScore(pred,result)===1?C.red:"rgba(255,255,255,0.3)"):C.muted }}>
+            {pred.winner?.split(" ").slice(-1)[0]}{pred.score1!=null?` · ${pred.score1}–${pred.score2}`:""}
+          </div>
+          {result&&<div style={{ fontSize:10,fontFamily:F.main,color:C.dim,letterSpacing:1 }}>{calcScore(pred,result)===3?"✓ EXACT":calcScore(pred,result)===1?"✓ WINNER":"✗ WRONG"}</div>}
+        </div>
+      )}
+
+      {/* Admin result setter */}
       {isAdmin&&(
-        <div style={{ marginTop:10,paddingTop:10,borderTop:"1px solid #1a1a1a",display:"flex",alignItems:"center",gap:6,flexWrap:"wrap" }}>
-          <span style={{ fontSize:10,color:result?"#f5c518":"#555",fontFamily:F.main }}>{result?"✎ EDIT:":"SET:"}</span>
-          <input type="number" min={0} max={3} value={as1} onChange={e=>setAs1(e.target.value)} placeholder="T1" style={{ width:40,background:"#1a1a1a",border:`1px solid ${result?"#f5c51840":"#252525"}`,borderRadius:5,color:"#ddd",fontSize:13,fontFamily:F.main,padding:"4px 6px" }} />
-          <span style={{ color:"#333" }}>–</span>
-          <input type="number" min={0} max={3} value={as2} onChange={e=>setAs2(e.target.value)} placeholder="T2" style={{ width:40,background:"#1a1a1a",border:`1px solid ${result?"#f5c51840":"#252525"}`,borderRadius:5,color:"#ddd",fontSize:13,fontFamily:F.main,padding:"4px 6px" }} />
-          <button onClick={submitResult} style={{ padding:"5px 12px",borderRadius:5,border:"none",cursor:"pointer",background:"#f5c518",color:"#000",fontFamily:F.main,fontWeight:900,fontSize:11 }}>{result?"UPDATE ✓":"SET ✓"}</button>
-          {result&&<button onClick={()=>onSetResult(match.id,null)} style={{ padding:"5px 10px",borderRadius:5,border:"none",cursor:"pointer",background:"#1a0000",color:"#e74c3c",fontFamily:F.main,fontWeight:800,fontSize:11 }}>CLEAR ✕</button>}
+        <div style={{ marginTop:10,paddingTop:10,borderTop:"1px solid rgba(255,255,255,0.06)",display:"flex",alignItems:"center",gap:6,flexWrap:"wrap" }}>
+          <span style={{ fontSize:10,color:result?C.red:C.muted,fontFamily:F.main,letterSpacing:1 }}>{result?"✎ EDIT:":"SET:"}</span>
+          <input type="number" min={0} max={3} value={as1} onChange={e=>setAs1(e.target.value)} placeholder="T1"
+            style={{ ...inputStyle({ width:42, fontSize:13, padding:"4px 6px", border:`1px solid ${result?"rgba(232,0,29,0.4)":"rgba(255,255,255,0.1)"}` }) }} />
+          <span style={{ color:"rgba(255,255,255,0.1)" }}>–</span>
+          <input type="number" min={0} max={3} value={as2} onChange={e=>setAs2(e.target.value)} placeholder="T2"
+            style={{ ...inputStyle({ width:42, fontSize:13, padding:"4px 6px", border:`1px solid ${result?"rgba(232,0,29,0.4)":"rgba(255,255,255,0.1)"}` }) }} />
+          <button onClick={submitResult} style={{ padding:"5px 12px",borderRadius:5,border:"none",cursor:"pointer",background:C.red,color:C.white,fontFamily:F.main,fontWeight:700,fontSize:11,letterSpacing:1 }}>{result?"UPDATE ✓":"SET ✓"}</button>
+          {result&&<button onClick={()=>onSetResult(match.id,null)} style={{ padding:"5px 10px",borderRadius:5,border:`1px solid rgba(232,0,29,0.3)`,cursor:"pointer",background:"rgba(232,0,29,0.1)",color:C.red,fontFamily:F.main,fontWeight:700,fontSize:11 }}>CLEAR ✕</button>}
         </div>
       )}
     </div>
@@ -397,58 +462,58 @@ function BonusPointsPanel({ players, bonusPoints, onAdd, onDelete }) {
   };
   return (
     <div>
-      <div style={{ fontSize:13,fontWeight:800,fontFamily:F.main,color:"#f5c518",letterSpacing:1,marginBottom:6 }}>⭐ BONUS / PENALTY POINTS</div>
-      <div style={{ fontSize:11,color:"#555",fontFamily:F.main,marginBottom:16 }}>Use negative numbers to deduct points (e.g. -5).</div>
-      <div style={{ background:"#0d0d0d",border:"1px solid #1a1a1a",borderRadius:12,padding:"16px 18px",marginBottom:20 }}>
+      <div style={{ fontSize:14,fontWeight:700,fontFamily:F.main,color:C.red,letterSpacing:2,marginBottom:6,textTransform:"uppercase" }}>⭐ Bonus / Penalty Points</div>
+      <div style={{ fontSize:11,color:C.muted,fontFamily:F.body,marginBottom:16 }}>Use negative numbers to deduct points (e.g. -5).</div>
+      <div style={{ background:"rgba(8,8,28,0.9)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"16px 18px",marginBottom:20 }}>
         <div style={{ display:"flex",gap:8,flexWrap:"wrap",alignItems:"flex-end" }}>
           <div style={{ flex:1,minWidth:130 }}>
-            <div style={{ fontSize:10,color:"#444",fontFamily:F.main,marginBottom:4 }}>PLAYER</div>
-            <select value={sel} onChange={e=>setSel(e.target.value)} style={{ width:"100%",background:"#111",border:"1px solid #252525",borderRadius:7,color:"#ddd",padding:"9px 10px",fontSize:13,fontFamily:F.main,cursor:"pointer" }}>
+            <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,marginBottom:4,letterSpacing:1 }}>PLAYER</div>
+            <select value={sel} onChange={e=>setSel(e.target.value)}
+              style={{ ...inputStyle({ width:"100%", padding:"9px 10px", fontSize:13, cursor:"pointer", appearance:"none" }) }}>
               <option value="">— Select —</option>
               {players.map(p=><option key={p.id} value={p.id}>{p.nickname}</option>)}
             </select>
           </div>
           <div style={{ width:90 }}>
-            <div style={{ fontSize:10,color:"#444",fontFamily:F.main,marginBottom:4 }}>POINTS</div>
+            <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,marginBottom:4,letterSpacing:1 }}>POINTS</div>
             <input type="number" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="+5 or -3"
-              style={{ width:"100%",background:"#111",border:"1px solid #252525",borderRadius:7,color:parseInt(amount)<0?"#e74c3c":parseInt(amount)>0?"#00c77a":"#ddd",padding:"9px 10px",fontSize:14,fontFamily:F.main,fontWeight:800,boxSizing:"border-box" }} />
+              style={{ ...inputStyle({ width:"100%", padding:"9px 10px", fontSize:14, fontWeight:700, boxSizing:"border-box", color:parseInt(amount)<0?C.red:parseInt(amount)>0?C.green:C.white }) }} />
           </div>
           <div style={{ flex:2,minWidth:150 }}>
-            <div style={{ fontSize:10,color:"#444",fontFamily:F.main,marginBottom:4 }}>REASON (optional)</div>
+            <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,marginBottom:4,letterSpacing:1 }}>REASON (optional)</div>
             <input value={reason} onChange={e=>setReason(e.target.value)} placeholder="e.g. Tiebreaker bonus" onKeyDown={e=>e.key==="Enter"&&handleAdd()}
-              style={{ width:"100%",background:"#111",border:"1px solid #252525",borderRadius:7,color:"#ddd",padding:"9px 10px",fontSize:13,fontFamily:F.body,boxSizing:"border-box" }} />
+              style={{ ...inputStyle({ width:"100%", padding:"9px 10px", fontSize:13, boxSizing:"border-box" }) }} />
           </div>
-          <button onClick={handleAdd} style={{ padding:"9px 18px",background:"#f5c518",border:"none",borderRadius:7,cursor:"pointer",color:"#000",fontFamily:F.main,fontWeight:900,fontSize:13 }}>ADD ✓</button>
+          <button onClick={handleAdd} style={{ padding:"9px 18px",background:C.red,border:"none",borderRadius:7,cursor:"pointer",color:C.white,fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:1 }}>ADD ✓</button>
         </div>
-        {error&&<div style={{ color:"#e74c3c",fontSize:11,fontFamily:F.main,marginTop:8 }}>⚠ {error}</div>}
+        {error&&<div style={{ color:C.red,fontSize:11,fontFamily:F.main,marginTop:8,letterSpacing:1 }}>⚠ {error}</div>}
       </div>
       {players.map(p=>{
         const myBonus=bonusPoints.filter(b=>b.player_id===p.id); const total=getBonusTotal(p.id);
         if(myBonus.length===0)return null;
         return (
-          <div key={p.id} style={{ background:"#0d0d0d",border:"1px solid #1a1a1a",borderRadius:12,padding:"14px 16px",marginBottom:10 }}>
+          <div key={p.id} style={{ background:"rgba(8,8,28,0.9)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"14px 16px",marginBottom:10 }}>
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
-              <div style={{ fontSize:13,fontWeight:800,fontFamily:F.main }}>{p.nickname}</div>
-              <div style={{ fontSize:13,fontWeight:900,fontFamily:F.main,color:total>0?"#00c77a":total<0?"#e74c3c":"#555" }}>{total>0?"+":""}{total} bonus pts</div>
+              <div style={{ fontSize:13,fontWeight:700,fontFamily:F.main,color:C.white }}>{p.nickname}</div>
+              <div style={{ fontSize:13,fontWeight:700,fontFamily:F.main,color:total>0?C.green:total<0?C.red:C.muted }}>{total>0?"+":""}{total} bonus pts</div>
             </div>
             {myBonus.map(b=>(
-              <div key={b.id} style={{ display:"flex",alignItems:"center",gap:10,paddingTop:6,borderTop:"1px solid #141414" }}>
-                <div style={{ fontSize:14,fontWeight:900,fontFamily:F.main,width:42,textAlign:"center",color:b.amount>0?"#00c77a":"#e74c3c" }}>{b.amount>0?"+":""}{b.amount}</div>
-                <div style={{ flex:1,fontSize:12,color:"#555",fontFamily:F.body }}>{b.reason||<span style={{ color:"#333",fontStyle:"italic" }}>No reason</span>}</div>
-                <button onClick={()=>onDelete(b.id)} style={{ background:"#1a0000",border:"1px solid #e74c3c20",borderRadius:5,color:"#e74c3c",fontFamily:F.main,fontWeight:800,fontSize:10,padding:"3px 8px",cursor:"pointer" }}>✕</button>
+              <div key={b.id} style={{ display:"flex",alignItems:"center",gap:10,paddingTop:6,borderTop:"1px solid rgba(255,255,255,0.05)" }}>
+                <div style={{ fontSize:14,fontWeight:700,fontFamily:F.main,width:42,textAlign:"center",color:b.amount>0?C.green:C.red }}>{b.amount>0?"+":""}{b.amount}</div>
+                <div style={{ flex:1,fontSize:12,color:C.muted,fontFamily:F.body }}>{b.reason||<span style={{ color:C.dim,fontStyle:"italic" }}>No reason</span>}</div>
+                <button onClick={()=>onDelete(b.id)} style={{ background:"rgba(232,0,29,0.1)",border:"1px solid rgba(232,0,29,0.3)",borderRadius:5,color:C.red,fontFamily:F.main,fontWeight:700,fontSize:10,padding:"3px 8px",cursor:"pointer" }}>✕</button>
               </div>
             ))}
           </div>
         );
       })}
-      {bonusPoints.length===0&&<div style={{ textAlign:"center",color:"#2a2a2a",padding:30,fontFamily:F.main,fontSize:12 }}>No adjustments yet</div>}
+      {bonusPoints.length===0&&<div style={{ textAlign:"center",color:C.dim,padding:30,fontFamily:F.main,fontSize:12,letterSpacing:1 }}>No adjustments yet</div>}
     </div>
   );
 }
 
 // ─── BRACKET TEAM EDITOR (Admin) ──────────────────────────────────────────────
 function BracketEditor({ playoffMatches, onUpdateTeams }) {
-  // Local state mirrors playoff match team names
   const [teams, setTeams] = useState(() => {
     const map = {};
     playoffMatches.forEach(m => { map[m.id] = { team1: m.team1, team2: m.team2 }; });
@@ -472,28 +537,26 @@ function BracketEditor({ playoffMatches, onUpdateTeams }) {
 
   return (
     <div>
-      <div style={{ fontSize:13,fontWeight:800,fontFamily:F.main,color:"#f5c518",letterSpacing:1,marginBottom:6 }}>🏆 SET PLAYOFF TEAM NAMES</div>
-      <div style={{ fontSize:11,color:"#555",fontFamily:F.main,marginBottom:16 }}>
+      <div style={{ fontSize:14,fontWeight:700,fontFamily:F.main,color:C.red,letterSpacing:2,marginBottom:6,textTransform:"uppercase" }}>🏆 Set Playoff Team Names</div>
+      <div style={{ fontSize:11,color:C.muted,fontFamily:F.body,marginBottom:16 }}>
         Fill in team names as they qualify. Leave as TBD if not yet decided. Hit SAVE ALL when done.
       </div>
-
       {playoffMatches.map(m=>(
-        <div key={m.id} style={{ background:"#0d0d0d",border:"1px solid #1a1a1a",borderRadius:10,padding:"12px 16px",marginBottom:10 }}>
-          <div style={{ fontSize:10,color:"#555",fontFamily:F.main,letterSpacing:1,textTransform:"uppercase",marginBottom:8 }}>{m.label}</div>
+        <div key={m.id} style={{ background:"rgba(8,8,28,0.9)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,padding:"12px 16px",marginBottom:10 }}>
+          <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase",marginBottom:8 }}>{m.label}</div>
           <div style={{ display:"flex",gap:8,alignItems:"center",flexWrap:"wrap" }}>
             <input value={teams[m.id]?.team1||""} onChange={e=>setTeams(t=>({...t,[m.id]:{...t[m.id],team1:e.target.value}}))}
               placeholder="Team 1 (or TBD)"
-              style={{ flex:1,minWidth:140,background:"#111",border:"1px solid #252525",borderRadius:7,color:"#ddd",padding:"8px 12px",fontSize:13,fontFamily:F.body }} />
-            <span style={{ color:"#333",fontFamily:F.main,fontWeight:800 }}>vs</span>
+              style={{ ...inputStyle({ flex:1, minWidth:140, padding:"8px 12px", fontSize:13 }) }} />
+            <span style={{ color:C.dim,fontFamily:F.main,fontWeight:700 }}>vs</span>
             <input value={teams[m.id]?.team2||""} onChange={e=>setTeams(t=>({...t,[m.id]:{...t[m.id],team2:e.target.value}}))}
               placeholder="Team 2 (or TBD)"
-              style={{ flex:1,minWidth:140,background:"#111",border:"1px solid #252525",borderRadius:7,color:"#ddd",padding:"8px 12px",fontSize:13,fontFamily:F.body }} />
+              style={{ ...inputStyle({ flex:1, minWidth:140, padding:"8px 12px", fontSize:13 }) }} />
           </div>
         </div>
       ))}
-
-      <button onClick={save} style={{ width:"100%",padding:12,background:"#f5c518",border:"none",borderRadius:10,cursor:"pointer",color:"#000",fontFamily:F.main,fontWeight:900,fontSize:14,marginTop:8 }}>
-        SAVE ALL TEAM NAMES ✓
+      <button onClick={save} style={{ width:"100%",padding:12,background:C.red,border:"none",borderRadius:10,cursor:"pointer",color:C.white,fontFamily:F.main,fontWeight:700,fontSize:14,marginTop:8,letterSpacing:2,textTransform:"uppercase" }}>
+        Save All Team Names ✓
       </button>
     </div>
   );
@@ -505,33 +568,49 @@ function LoginScreen({ players, onLogin, onAdminLogin }) {
   const handlePlayerLogin=()=>{ const m=players.find(p=>p.nickname.toLowerCase()===name.trim().toLowerCase()); if(!m){setError("Name not found. Ask the admin to add you.");return;} onLogin(m.id); };
   const handleAdminLogin=()=>{ if(pass===ADMIN_PASSWORD)onAdminLogin(); else setError("Wrong password."); };
   return (
-    <div style={{ minHeight:"100vh",background:"#080808",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:20 }}>
-      <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700&family=Barlow+Condensed:wght@600;700;800;900&display=swap" rel="stylesheet" />
-      <div style={{ textAlign:"center",marginBottom:40 }}>
-        <div style={{ fontSize:32,fontWeight:900,fontFamily:F.main,background:"linear-gradient(90deg,#00d4ff,#f5c518)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent" }}>RLCS 2026</div>
-        <div style={{ fontSize:18,fontWeight:800,fontFamily:F.main,color:"#333",letterSpacing:3,marginTop:2 }}>PARIS MAJOR PREDICTOR</div>
-        <div style={{ fontSize:11,color:"#2a2a2a",fontFamily:F.main,letterSpacing:1,marginTop:6 }}>MAY 20–24 · PARIS LA DÉFENSE ARENA · $354,000</div>
+    <div style={{ minHeight:"100vh", background:`linear-gradient(135deg, rgba(232,0,29,0.06) 0%, transparent 40%), linear-gradient(225deg, rgba(0,102,255,0.08) 0%, transparent 40%), linear-gradient(180deg, ${C.navy} 0%, #0a0820 100%)`, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:20, position:"relative" }}>
+      <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+      <style>{`::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:${C.navy}}::-webkit-scrollbar-thumb{background:${C.red};border-radius:3px}`}</style>
+      {/* Streaks */}
+      <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"15%",left:"-10%",width:600,height:3,background:"linear-gradient(90deg,transparent,rgba(232,0,29,0.6),transparent)",transform:"rotate(-35deg)",filter:"blur(8px)" }} />
+      <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"10%",right:"-5%",width:500,height:2,background:"linear-gradient(90deg,transparent,rgba(0,102,255,0.8),transparent)",transform:"rotate(35deg)",filter:"blur(6px)" }} />
+      <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"55%",left:"5%",width:400,height:2,background:"linear-gradient(90deg,transparent,rgba(107,53,255,0.6),transparent)",transform:"rotate(-20deg)",filter:"blur(6px)" }} />
+
+      <div style={{ position:"relative",zIndex:1,textAlign:"center",marginBottom:40 }}>
+        <div style={{ fontSize:36,fontWeight:700,fontFamily:F.main,background:`linear-gradient(90deg, ${C.white}, ${C.red})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:4,textTransform:"uppercase" }}>RLCS 2026</div>
+        <div style={{ fontSize:16,fontWeight:700,fontFamily:F.main,color:"rgba(255,255,255,0.4)",letterSpacing:4,marginTop:4,textTransform:"uppercase" }}>Paris Major Predictor</div>
+        <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:3,marginTop:8,textTransform:"uppercase" }}>May 20–24 · Paris La Défense Arena · $354,000</div>
       </div>
-      <div style={{ background:"#0d0d0d",border:"1px solid #1a1a1a",borderRadius:16,padding:32,width:"100%",maxWidth:380 }}>
-        <div style={{ display:"flex",marginBottom:24,background:"#111",borderRadius:10,padding:4 }}>
+
+      <div style={{ position:"relative",zIndex:1,background:"rgba(8,8,28,0.95)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:16,padding:32,width:"100%",maxWidth:380,boxShadow:"0 0 60px rgba(0,0,0,0.5)" }}>
+        {/* Tabs */}
+        <div style={{ display:"flex",marginBottom:24,background:"rgba(255,255,255,0.04)",borderRadius:10,padding:4 }}>
           {[{id:"player",label:"🎮 Player"},{id:"admin",label:"⚙️ Admin"}].map(t=>(
-            <button key={t.id} onClick={()=>{setTab(t.id);setError("");}} style={{ flex:1,padding:"8px 0",borderRadius:7,border:"none",cursor:"pointer",background:tab===t.id?"#1e1e1e":"transparent",color:tab===t.id?"#ddd":"#444",fontFamily:F.main,fontWeight:800,fontSize:13 }}>{t.label}</button>
+            <button key={t.id} onClick={()=>{setTab(t.id);setError("");}} style={{ flex:1,padding:"8px 0",borderRadius:7,border:"none",cursor:"pointer",background:tab===t.id?"rgba(232,0,29,0.15)":"transparent",color:tab===t.id?C.red:C.muted,fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:1,transition:"all 0.15s" }}>{t.label}</button>
           ))}
         </div>
+
         {tab==="player"?(
           <>
-            <div style={{ fontSize:12,color:"#444",fontFamily:F.main,letterSpacing:0.5,marginBottom:10 }}>ENTER YOUR NAME</div>
-            <input value={name} onChange={e=>{setName(e.target.value);setError("");}} onKeyDown={e=>e.key==="Enter"&&handlePlayerLogin()} placeholder="Your nickname…" style={{ width:"100%",background:"#111",border:"1px solid #222",borderRadius:8,color:"#ddd",padding:"12px 14px",fontSize:15,fontFamily:F.body,marginBottom:12,boxSizing:"border-box" }} autoFocus />
-            {players.length>0&&<div style={{ marginBottom:12 }}><div style={{ fontSize:10,color:"#333",fontFamily:F.main,marginBottom:6 }}>REGISTERED:</div><div style={{ display:"flex",flexWrap:"wrap",gap:6 }}>{players.map(p=><button key={p.id} onClick={()=>{setName(p.nickname);setError("");}} style={{ padding:"4px 10px",borderRadius:6,border:"1px solid #222",background:"#111",color:"#666",fontFamily:F.main,fontWeight:700,fontSize:11,cursor:"pointer" }}>{p.nickname}</button>)}</div></div>}
-            {error&&<div style={{ color:"#e74c3c",fontSize:12,fontFamily:F.main,marginBottom:10 }}>⚠ {error}</div>}
-            <button onClick={handlePlayerLogin} style={{ width:"100%",padding:12,background:"linear-gradient(90deg,#00d4ff,#0099bb)",border:"none",borderRadius:8,color:"#000",fontWeight:900,fontFamily:F.main,fontSize:15,cursor:"pointer" }}>LET'S PREDICT →</button>
+            <div style={{ fontSize:11,color:C.muted,fontFamily:F.main,letterSpacing:2,marginBottom:10,textTransform:"uppercase" }}>Enter Your Name</div>
+            <input value={name} onChange={e=>{setName(e.target.value);setError("");}} onKeyDown={e=>e.key==="Enter"&&handlePlayerLogin()} placeholder="Your nickname…"
+              style={{ ...inputStyle({ width:"100%", padding:"12px 14px", fontSize:15, marginBottom:12, boxSizing:"border-box" }) }} autoFocus />
+            {players.length>0&&<div style={{ marginBottom:12 }}>
+              <div style={{ fontSize:10,color:C.dim,fontFamily:F.main,marginBottom:6,letterSpacing:1,textTransform:"uppercase" }}>Registered:</div>
+              <div style={{ display:"flex",flexWrap:"wrap",gap:6 }}>
+                {players.map(p=><button key={p.id} onClick={()=>{setName(p.nickname);setError("");}} style={{ padding:"4px 10px",borderRadius:6,border:"1px solid rgba(0,102,255,0.2)",background:"rgba(0,102,255,0.08)",color:"#6699FF",fontFamily:F.main,fontWeight:700,fontSize:11,cursor:"pointer" }}>{p.nickname}</button>)}
+              </div>
+            </div>}
+            {error&&<div style={{ color:C.red,fontSize:12,fontFamily:F.main,marginBottom:10,letterSpacing:0.5 }}>⚠ {error}</div>}
+            <button onClick={handlePlayerLogin} style={{ width:"100%",padding:12,background:`linear-gradient(90deg, ${C.blue}, #0044CC)`,border:"none",borderRadius:8,color:C.white,fontWeight:700,fontFamily:F.main,fontSize:15,cursor:"pointer",letterSpacing:2,textTransform:"uppercase" }}>Let's Predict →</button>
           </>
         ):(
           <>
-            <div style={{ fontSize:12,color:"#444",fontFamily:F.main,letterSpacing:0.5,marginBottom:10 }}>ADMIN PASSWORD</div>
-            <input type="password" value={pass} onChange={e=>{setPass(e.target.value);setError("");}} onKeyDown={e=>e.key==="Enter"&&handleAdminLogin()} placeholder="Password…" style={{ width:"100%",background:"#111",border:"1px solid #222",borderRadius:8,color:"#ddd",padding:"12px 14px",fontSize:15,fontFamily:F.body,marginBottom:12,boxSizing:"border-box" }} autoFocus />
-            {error&&<div style={{ color:"#e74c3c",fontSize:12,fontFamily:F.main,marginBottom:10 }}>⚠ {error}</div>}
-            <button onClick={handleAdminLogin} style={{ width:"100%",padding:12,background:"linear-gradient(90deg,#f5c518,#cc9900)",border:"none",borderRadius:8,color:"#000",fontWeight:900,fontFamily:F.main,fontSize:15,cursor:"pointer" }}>LOGIN AS ADMIN →</button>
+            <div style={{ fontSize:11,color:C.muted,fontFamily:F.main,letterSpacing:2,marginBottom:10,textTransform:"uppercase" }}>Admin Password</div>
+            <input type="password" value={pass} onChange={e=>{setPass(e.target.value);setError("");}} onKeyDown={e=>e.key==="Enter"&&handleAdminLogin()} placeholder="Password…"
+              style={{ ...inputStyle({ width:"100%", padding:"12px 14px", fontSize:15, marginBottom:12, boxSizing:"border-box" }) }} autoFocus />
+            {error&&<div style={{ color:C.red,fontSize:12,fontFamily:F.main,marginBottom:10,letterSpacing:0.5 }}>⚠ {error}</div>}
+            <button onClick={handleAdminLogin} style={{ width:"100%",padding:12,background:`linear-gradient(90deg, ${C.red}, #AA0015)`,border:"none",borderRadius:8,color:C.white,fontWeight:700,fontFamily:F.main,fontSize:15,cursor:"pointer",letterSpacing:2,textTransform:"uppercase" }}>Login as Admin →</button>
           </>
         )}
       </div>
@@ -541,12 +620,12 @@ function LoginScreen({ players, onLogin, onAdminLogin }) {
 
 function LoadingScreen() {
   return (
-    <div style={{ minHeight:"100vh",background:"#080808",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20 }}>
-      <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@800;900&display=swap" rel="stylesheet" />
-      <div style={{ fontSize:22,fontWeight:900,fontFamily:F.main,background:"linear-gradient(90deg,#00d4ff,#f5c518)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent" }}>RLCS 2026 · PARIS MAJOR</div>
-      <div style={{ width:36,height:36,border:"3px solid #1a1a1a",borderTop:"3px solid #f5c518",borderRadius:"50%",animation:"spin 0.8s linear infinite" }} />
+    <div style={{ minHeight:"100vh", background:`linear-gradient(180deg, ${C.navy} 0%, #0a0820 100%)`, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:20 }}>
+      <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap" rel="stylesheet" />
+      <div style={{ fontSize:22,fontWeight:700,fontFamily:F.main,background:`linear-gradient(90deg, ${C.white}, ${C.red})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:4,textTransform:"uppercase" }}>RLCS 2026 · Paris Major</div>
+      <div style={{ width:36,height:36,border:`3px solid rgba(255,255,255,0.08)`,borderTop:`3px solid ${C.red}`,borderRadius:"50%",animation:"spin 0.8s linear infinite" }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      <div style={{ color:"#333",fontSize:11,fontFamily:F.main,letterSpacing:2 }}>LOADING…</div>
+      <div style={{ color:C.muted,fontSize:11,fontFamily:F.main,letterSpacing:3,textTransform:"uppercase" }}>Loading…</div>
     </div>
   );
 }
@@ -689,39 +768,51 @@ export default function App() {
   ];
 
   return (
-    <div style={{ minHeight:"100vh",background:"#080808",color:"#e0e0e0",fontFamily:F.body }}>
-      <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700&family=Barlow+Condensed:wght@600;700;800;900&display=swap" rel="stylesheet" />
+    <div style={{ minHeight:"100vh", background:`linear-gradient(135deg, rgba(232,0,29,0.06) 0%, transparent 40%), linear-gradient(225deg, rgba(0,102,255,0.08) 0%, transparent 40%), linear-gradient(180deg, ${C.navy} 0%, #0a0820 100%)`, color:C.white, fontFamily:F.body, position:"relative" }}>
+      <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+      <style>{`::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:${C.navy}}::-webkit-scrollbar-thumb{background:${C.red};border-radius:3px}`}</style>
+
+      {/* Background streaks */}
+      <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"15%",left:"-10%",width:600,height:3,background:"linear-gradient(90deg,transparent,rgba(232,0,29,0.6),transparent)",transform:"rotate(-35deg)",filter:"blur(8px)" }} />
+      <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"10%",right:"-5%",width:500,height:2,background:"linear-gradient(90deg,transparent,rgba(0,102,255,0.8),transparent)",transform:"rotate(35deg)",filter:"blur(6px)" }} />
+      <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"55%",left:"5%",width:400,height:2,background:"linear-gradient(90deg,transparent,rgba(107,53,255,0.6),transparent)",transform:"rotate(-20deg)",filter:"blur(6px)" }} />
 
       {/* HEADER */}
-      <div style={{ background:"#0a0a0a",borderBottom:"1px solid #161616",padding:"14px 20px",position:"sticky",top:0,zIndex:100 }}>
+      <div style={{ position:"sticky",top:0,zIndex:100,background:"rgba(4,4,20,0.95)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",borderBottom:`1px solid rgba(232,0,29,0.3)`,padding:"14px 20px" }}>
         <div style={{ maxWidth:900,margin:"0 auto" }}>
           <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexWrap:"wrap",gap:10 }}>
             <div>
-              <div style={{ fontSize:20,fontWeight:900,fontFamily:F.main,background:"linear-gradient(90deg,#00d4ff,#f5c518)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent" }}>RLCS 2026 · PARIS MAJOR</div>
-              <div style={{ fontSize:10,color:"#333",fontFamily:F.main,letterSpacing:1 }}>MAY 20–24 · PARIS LA DÉFENSE ARENA · $354,000</div>
+              <div style={{ fontSize:20,fontWeight:700,fontFamily:F.main,background:`linear-gradient(90deg, ${C.white}, ${C.red})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:3,textTransform:"uppercase" }}>RLCS 2026 · Paris Major</div>
+              <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:3,textTransform:"uppercase",marginTop:2 }}>May 20–24 · Paris La Défense Arena · $354,000</div>
             </div>
-            <div style={{ display:"flex",alignItems:"center",gap:8,background:"#111",border:`1px solid ${isAdmin?"#f5c51830":"#1e1e1e"}`,borderRadius:8,padding:"6px 12px" }}>
-              <div style={{ width:24,height:24,borderRadius:6,background:isAdmin?"#f5c518":"#00d4ff20",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:12,color:isAdmin?"#000":"#00d4ff",fontFamily:F.main }}>{isAdmin?"A":myPlayer?.nickname[0].toUpperCase()}</div>
-              <span style={{ fontSize:12,fontFamily:F.main,fontWeight:800,color:isAdmin?"#f5c518":"#ddd" }}>{isAdmin?"ADMIN":myPlayer?.nickname}</span>
-              <button onClick={logout} style={{ background:"none",border:"none",color:"#444",cursor:"pointer",fontSize:14,padding:0,lineHeight:1 }}>✕</button>
+            <div style={{ display:"flex",alignItems:"center",gap:8,background:"rgba(255,255,255,0.04)",border:`1px solid ${isAdmin?"rgba(232,0,29,0.4)":"rgba(0,102,255,0.3)"}`,borderRadius:8,padding:"6px 12px" }}>
+              <div style={{ width:24,height:24,borderRadius:6,background:isAdmin?`rgba(232,0,29,0.2)`:`rgba(0,102,255,0.15)`,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:12,color:isAdmin?C.red:C.blue,fontFamily:F.main }}>{isAdmin?"A":myPlayer?.nickname[0].toUpperCase()}</div>
+              <span style={{ fontSize:12,fontFamily:F.main,fontWeight:700,color:isAdmin?C.red:C.white,letterSpacing:1 }}>{isAdmin?"ADMIN":myPlayer?.nickname}</span>
+              <button onClick={logout} style={{ background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:14,padding:0,lineHeight:1 }}>✕</button>
             </div>
           </div>
           <div style={{ display:"flex",gap:2,flexWrap:"wrap" }}>
             {NAV.map(n=>(
-              <button key={n.id} onClick={()=>setPage(n.id)} style={{ padding:"7px 14px",borderRadius:6,border:"none",cursor:"pointer",background:page===n.id?"#161616":"transparent",color:page===n.id?"#ddd":"#444",fontFamily:F.main,fontWeight:800,fontSize:12,letterSpacing:0.5,textTransform:"uppercase",borderBottom:page===n.id?"2px solid #f5c518":"2px solid transparent",transition:"color 0.15s" }}>{n.icon} {n.label}</button>
+              <button key={n.id} onClick={()=>setPage(n.id)} style={{ padding:"7px 14px",borderRadius:6,border:"none",cursor:"pointer",background:page===n.id?"rgba(232,0,29,0.1)":"transparent",color:page===n.id?C.white:C.muted,fontFamily:F.main,fontWeight:700,fontSize:12,letterSpacing:1,textTransform:"uppercase",borderBottom:page===n.id?`2px solid ${C.red}`:"2px solid transparent",transition:"all 0.15s" }}>{n.icon} {n.label}</button>
             ))}
           </div>
         </div>
       </div>
 
-      <div style={{ maxWidth:900,margin:"0 auto",padding:"20px 16px" }}>
+      {/* PAGE CONTENT */}
+      <div style={{ position:"relative",zIndex:1,maxWidth:900,margin:"0 auto",padding:"20px 16px" }}>
 
         {/* GROUP STAGE */}
         {page==="predict"&&(
           <div>
             <div style={{ display:"flex",gap:6,marginBottom:14,flexWrap:"wrap" }}>
               {["all","A","B","C","D"].map(g=>(
-                <button key={g} onClick={()=>setFilterGroup(g)} style={{ padding:"6px 14px",borderRadius:7,border:"none",cursor:"pointer",background:filterGroup===g?"#00d4ff":"#111",color:filterGroup===g?"#000":"#555",fontFamily:F.main,fontWeight:800,fontSize:12 }}>{g==="all"?"All Groups":`Group ${g}`}</button>
+                <button key={g} onClick={()=>setFilterGroup(g)} style={{
+                  padding:"6px 14px",borderRadius:6,border:`1px solid ${filterGroup===g?"transparent":"rgba(255,255,255,0.1)"}`,cursor:"pointer",fontFamily:F.main,fontWeight:700,fontSize:12,letterSpacing:1,textTransform:"uppercase",transition:"all 0.15s",
+                  background:filterGroup===g?(g==="all"?C.blue:C.red):"rgba(255,255,255,0.04)",
+                  color:filterGroup===g?C.white:"#667799",
+                  boxShadow:filterGroup===g?(g==="all"?"0 0 15px rgba(0,102,255,0.5)":"0 0 15px rgba(232,0,29,0.5)"):"none",
+                }}>{g==="all"?"All Groups":`Group ${g}`}</button>
               ))}
             </div>
             <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
@@ -742,54 +833,59 @@ export default function App() {
         {/* LEADERBOARD */}
         {page==="leaderboard"&&(
           <div>
-            <div style={{ fontSize:11,color:"#333",marginBottom:12,fontFamily:F.main,letterSpacing:1,textTransform:"uppercase" }}>🟢 3 pts = exact score · 🟡 1 pt = correct winner · ⭐ bonus points</div>
+            <div style={{ fontSize:10,color:C.muted,marginBottom:12,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase" }}>🟢 3 pts = exact score · 🔴 1 pt = correct winner · ⭐ bonus points</div>
             <input value={lbSearch} onChange={e=>setLbSearch(e.target.value)} placeholder="Search player…"
-              style={{ width:"100%",background:"#0d0d0d",border:"1px solid #1a1a1a",borderRadius:8,color:"#ddd",padding:"9px 14px",fontSize:13,fontFamily:F.body,marginBottom:12,boxSizing:"border-box" }} />
+              style={{ ...inputStyle({ width:"100%", padding:"9px 14px", fontSize:13, marginBottom:12, boxSizing:"border-box" }) }} />
             {leaderboard.map((p,i)=>{
               if(lbSearch&&!p.nickname.toLowerCase().includes(lbSearch.toLowerCase()))return null;
+              const bg = i===0 ? "linear-gradient(135deg, rgba(232,0,29,0.15), rgba(10,10,35,0.95))"
+                       : i===1 ? "linear-gradient(135deg, rgba(0,102,255,0.1), rgba(10,10,35,0.95))"
+                       : i===2 ? "linear-gradient(135deg, rgba(107,53,255,0.1), rgba(10,10,35,0.95))"
+                       : "rgba(8,8,28,0.9)";
+              const borderCol = p.id===authId ? "rgba(0,102,255,0.3)" : i===0 ? "rgba(232,0,29,0.3)" : i===1 ? "rgba(0,102,255,0.2)" : i===2 ? "rgba(107,53,255,0.2)" : "rgba(255,255,255,0.06)";
               return (
-              <div key={p.id} style={{ background:i===0?"linear-gradient(135deg,#1a1400,#0e0e0e)":"#0d0d0d",border:`1px solid ${p.id===authId?"#00d4ff25":i===0?"#f5c51820":"#181818"}`,borderRadius:12,padding:"14px 18px",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"space-between" }}>
+              <div key={p.id} style={{ background:bg, border:`1px solid ${borderCol}`, borderRadius:12, padding:"14px 18px", marginBottom:8, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                 <div style={{ display:"flex",alignItems:"center",gap:14 }}>
-                  <span style={{ fontSize:22,width:30,textAlign:"center" }}>{i===0?"🥇":i===1?"🥈":i===2?"🥉":<span style={{ fontSize:14,color:"#333",fontFamily:F.main }}>{`#${i+1}`}</span>}</span>
+                  <span style={{ fontSize:22,width:30,textAlign:"center" }}>{i===0?"🥇":i===1?"🥈":i===2?"🥉":<span style={{ fontSize:13,color:C.dim,fontFamily:F.main,fontWeight:700 }}>{`#${i+1}`}</span>}</span>
                   <div>
-                    <div style={{ fontSize:15,fontWeight:800,fontFamily:F.main,display:"flex",alignItems:"center",gap:6 }}>
-                      {p.nickname}{p.id===authId&&<span style={{ fontSize:9,color:"#00d4ff",background:"#00d4ff15",padding:"1px 7px",borderRadius:4 }}>YOU</span>}
+                    <div style={{ fontSize:15,fontWeight:700,fontFamily:F.main,display:"flex",alignItems:"center",gap:6,textTransform:"uppercase",letterSpacing:1 }}>
+                      {p.nickname}{p.id===authId&&<span style={{ fontSize:9,color:C.blue,background:"rgba(0,102,255,0.2)",padding:"1px 7px",borderRadius:4,border:"1px solid rgba(0,102,255,0.4)",letterSpacing:1 }}>YOU</span>}
                     </div>
-                    <div style={{ fontSize:10,color:"#333",fontFamily:F.main,marginTop:2,display:"flex",gap:8 }}>
+                    <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,marginTop:2,display:"flex",gap:8,letterSpacing:1 }}>
                       <span>{Object.keys(predictions[p.id]||{}).length}/{ALL_MATCHES.length} predicted</span>
-                      {p.bonus!==0&&<span style={{ color:p.bonus>0?"#00c77a":"#e74c3c" }}>{p.bonus>0?"+":""}{p.bonus} bonus</span>}
+                      {p.bonus!==0&&<span style={{ color:p.bonus>0?C.green:C.red }}>{p.bonus>0?"+":""}{p.bonus} bonus</span>}
                     </div>
                   </div>
                 </div>
                 <div style={{ textAlign:"right" }}>
-                  <div style={{ fontSize:30,fontWeight:900,fontFamily:F.main,color:i===0?"#f5c518":"#ddd" }}>{p.score}<span style={{ fontSize:12,color:"#444",marginLeft:4 }}>pts</span></div>
-                  {p.bonus!==0&&<div style={{ fontSize:10,color:"#444",fontFamily:F.main }}>{p.predScore} pred {p.bonus>0?"+":""}{p.bonus} bonus</div>}
+                  <div style={{ fontSize:30,fontWeight:700,fontFamily:F.main,color:i===0?C.red:C.white }}>{p.score}<span style={{ fontSize:12,color:C.muted,marginLeft:4,letterSpacing:1 }}>pts</span></div>
+                  {p.bonus!==0&&<div style={{ fontSize:10,color:C.dim,fontFamily:F.main,letterSpacing:0.5 }}>{p.predScore} pred {p.bonus>0?"+":""}{p.bonus} bonus</div>}
                 </div>
               </div>
               );
             })}
             {Object.keys(results).length>0&&(
               <div style={{ marginTop:28 }}>
-                <div style={{ fontSize:11,color:"#333",letterSpacing:1,marginBottom:10,fontFamily:F.main,textTransform:"uppercase" }}>Match Breakdown</div>
+                <div style={{ fontSize:10,color:C.muted,letterSpacing:2,marginBottom:10,fontFamily:F.main,textTransform:"uppercase" }}>Match Breakdown</div>
                 <div style={{ overflowX:"auto" }}>
                   <table style={{ width:"100%",borderCollapse:"collapse",fontSize:11,fontFamily:F.main }}>
-                    <thead><tr style={{ borderBottom:"1px solid #181818" }}>
-                      <th style={{ textAlign:"left",padding:"5px 8px",color:"#333" }}>Match</th>
-                      <th style={{ textAlign:"center",padding:"5px 8px",color:"#333" }}>Score</th>
-                      {players.map(p=><th key={p.id} style={{ textAlign:"center",padding:"5px 8px",color:p.id===authId?"#00d4ff":"#333" }}>{p.nickname}</th>)}
+                    <thead><tr style={{ borderBottom:"1px solid rgba(255,255,255,0.08)" }}>
+                      <th style={{ textAlign:"left",padding:"5px 8px",color:C.muted,letterSpacing:1 }}>Match</th>
+                      <th style={{ textAlign:"center",padding:"5px 8px",color:C.muted,letterSpacing:1 }}>Score</th>
+                      {players.map(p=><th key={p.id} style={{ textAlign:"center",padding:"5px 8px",color:p.id===authId?C.blue:C.muted,letterSpacing:0.5 }}>{p.nickname}</th>)}
                     </tr></thead>
                     <tbody>
                       {ALL_MATCHES.filter(m=>results[m.id]).map(m=>(
-                        <tr key={m.id} style={{ borderBottom:"1px solid #0f0f0f" }}>
-                          <td style={{ padding:"5px 8px",color:"#555",maxWidth:130,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{m.team1?.split(" ").pop()} vs {m.team2?.split(" ").pop()}</td>
-                          <td style={{ textAlign:"center",padding:"5px 8px",color:"#444" }}>{results[m.id].score1}–{results[m.id].score2}</td>
-                          {players.map(p=>{const s=calcScore(predictions[p.id]?.[m.id],results[m.id]);const has=!!predictions[p.id]?.[m.id];return<td key={p.id} style={{ textAlign:"center",padding:"5px 8px",fontWeight:900,color:!has?"#222":s===3?"#00c77a":s===1?"#f5c518":"#e74c3c" }}>{has?`+${s}`:"—"}</td>;})}
+                        <tr key={m.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                          <td style={{ padding:"5px 8px",color:C.dim,maxWidth:130,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{m.team1?.split(" ").pop()} vs {m.team2?.split(" ").pop()}</td>
+                          <td style={{ textAlign:"center",padding:"5px 8px",color:C.muted }}>{results[m.id].score1}–{results[m.id].score2}</td>
+                          {players.map(p=>{const s=calcScore(predictions[p.id]?.[m.id],results[m.id]);const has=!!predictions[p.id]?.[m.id];return<td key={p.id} style={{ textAlign:"center",padding:"5px 8px",fontWeight:700,color:!has?"rgba(255,255,255,0.1)":s===3?C.green:s===1?C.red:"rgba(255,255,255,0.25)" }}>{has?`+${s}`:"—"}</td>;})}
                         </tr>
                       ))}
                       {players.some(p=>getBonusTotal(p.id)!==0)&&(
-                        <tr style={{ borderTop:"2px solid #1a1a1a" }}>
-                          <td colSpan={2} style={{ padding:"5px 8px",color:"#f5c518",fontFamily:F.main,fontSize:11 }}>⭐ Bonus</td>
-                          {players.map(p=>{const b=getBonusTotal(p.id);return<td key={p.id} style={{ textAlign:"center",padding:"5px 8px",fontWeight:900,color:b>0?"#00c77a":b<0?"#e74c3c":"#333",fontFamily:F.main }}>{b!==0?(b>0?"+":"")+b:"—"}</td>;})}
+                        <tr style={{ borderTop:`2px solid rgba(255,255,255,0.08)` }}>
+                          <td colSpan={2} style={{ padding:"5px 8px",color:C.red,fontFamily:F.main,fontSize:11,letterSpacing:1 }}>⭐ Bonus</td>
+                          {players.map(p=>{const b=getBonusTotal(p.id);return<td key={p.id} style={{ textAlign:"center",padding:"5px 8px",fontWeight:700,color:b>0?C.green:b<0?C.red:C.dim,fontFamily:F.main }}>{b!==0?(b>0?"+":"")+b:"—"}</td>;})}
                         </tr>
                       )}
                     </tbody>
@@ -803,27 +899,32 @@ export default function App() {
         {/* OTHERS' PICKS */}
         {page==="others"&&(
           <div>
-            <div style={{ fontSize:11,color:"#333",marginBottom:12,fontFamily:F.main,letterSpacing:1,textTransform:"uppercase" }}>👁 Only visible for matches that have already started</div>
+            <div style={{ fontSize:10,color:C.muted,marginBottom:12,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase" }}>👁 Only visible for matches that have already started</div>
             <input value={othersSearch} onChange={e=>{ setOthersSearch(e.target.value); setViewingPlayer(null); }}
               placeholder="Search player name…"
-              style={{ width:"100%",background:"#0d0d0d",border:"1px solid #1a1a1a",borderRadius:8,color:"#ddd",padding:"9px 14px",fontSize:13,fontFamily:F.body,marginBottom:12,boxSizing:"border-box" }} />
+              style={{ ...inputStyle({ width:"100%", padding:"9px 14px", fontSize:13, marginBottom:12, boxSizing:"border-box" }) }} />
             <div style={{ display:"flex",gap:8,marginBottom:20,flexWrap:"wrap" }}>
               {players.filter(p=>p.id!==authId&&(!othersSearch||p.nickname.toLowerCase().includes(othersSearch.toLowerCase()))).map(p=>(
-                <button key={p.id} onClick={()=>setViewingPlayer(viewingPlayer===p.id?null:p.id)} style={{ padding:"8px 16px",borderRadius:8,border:`1px solid ${viewingPlayer===p.id?"#00d4ff40":"#1e1e1e"}`,background:viewingPlayer===p.id?"#00d4ff15":"#0d0d0d",color:viewingPlayer===p.id?"#00d4ff":"#555",fontFamily:F.main,fontWeight:800,fontSize:13,cursor:"pointer" }}>
-                  {p.nickname}<span style={{ fontSize:10,color:viewingPlayer===p.id?"#00d4ff":"#333",marginLeft:6 }}>{getTotalScore(p.id)} pts</span>
+                <button key={p.id} onClick={()=>setViewingPlayer(viewingPlayer===p.id?null:p.id)} style={{
+                  padding:"8px 16px",borderRadius:8,cursor:"pointer",fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:0.5,transition:"all 0.15s",
+                  border:`1px solid ${viewingPlayer===p.id?"rgba(0,102,255,0.5)":"rgba(255,255,255,0.1)"}`,
+                  background:viewingPlayer===p.id?"rgba(0,102,255,0.15)":"rgba(255,255,255,0.04)",
+                  color:viewingPlayer===p.id?"#4488FF":C.muted,
+                }}>
+                  {p.nickname}<span style={{ fontSize:10,color:viewingPlayer===p.id?C.blue:C.dim,marginLeft:6 }}>{getTotalScore(p.id)} pts</span>
                 </button>
               ))}
-              {players.filter(p=>p.id!==authId).length===0&&<div style={{ color:"#333",fontSize:13,fontFamily:F.main }}>No other players yet</div>}
+              {players.filter(p=>p.id!==authId).length===0&&<div style={{ color:C.dim,fontSize:13,fontFamily:F.main }}>No other players yet</div>}
             </div>
             {viewingPlayer&&(()=>{
               const vp=players.find(p=>p.id===viewingPlayer);
               const lockedMatches=[...GROUP_MATCHES,...playoffMatches].filter(m=>isLocked(m)&&!isTBDTeam(m.team1));
               return (
                 <div>
-                  <div style={{ fontSize:14,fontWeight:800,fontFamily:F.main,color:"#ddd",marginBottom:4 }}>{vp?.nickname}'s predictions</div>
-                  <div style={{ fontSize:11,color:"#333",fontFamily:F.main,marginBottom:14 }}>
+                  <div style={{ fontSize:14,fontWeight:700,fontFamily:F.main,color:C.white,marginBottom:4,letterSpacing:1,textTransform:"uppercase" }}>{vp?.nickname}'s predictions</div>
+                  <div style={{ fontSize:11,color:C.muted,fontFamily:F.body,marginBottom:14 }}>
                     {lockedMatches.filter(m=>predictions[viewingPlayer]?.[m.id]).length} predictions · {getTotalScore(viewingPlayer)} pts
-                    {getBonusTotal(viewingPlayer)!==0&&<span style={{ color:getBonusTotal(viewingPlayer)>0?"#00c77a":"#e74c3c" }}> (incl. {getBonusTotal(viewingPlayer)>0?"+":""}{getBonusTotal(viewingPlayer)} bonus)</span>}
+                    {getBonusTotal(viewingPlayer)!==0&&<span style={{ color:getBonusTotal(viewingPlayer)>0?C.green:C.red }}> (incl. {getBonusTotal(viewingPlayer)>0?"+":""}{getBonusTotal(viewingPlayer)} bonus)</span>}
                   </div>
                   <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
                     {lockedMatches.map(m=>(
@@ -834,16 +935,16 @@ export default function App() {
                 </div>
               );
             })()}
-            {!viewingPlayer&&<div style={{ textAlign:"center",color:"#2a2a2a",padding:40,fontFamily:F.main,fontSize:13 }}>↑ Select a player above</div>}
+            {!viewingPlayer&&<div style={{ textAlign:"center",color:"rgba(255,255,255,0.1)",padding:40,fontFamily:F.main,fontSize:13,letterSpacing:2,textTransform:"uppercase" }}>↑ Select a player above</div>}
           </div>
         )}
 
         {/* ADMIN */}
         {page==="admin"&&isAdmin&&(
           <div>
-            <div style={{ display:"flex",gap:4,marginBottom:24,background:"#0d0d0d",borderRadius:10,padding:4,flexWrap:"wrap" }}>
+            <div style={{ display:"flex",gap:4,marginBottom:24,background:"rgba(8,8,28,0.9)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:4,flexWrap:"wrap" }}>
               {[{id:"players",label:"👥 Players"},{id:"bracket",label:"🏆 Bracket Teams"},{id:"results",label:"🎯 Results"},{id:"bonus",label:"⭐ Bonus Points"}].map(t=>(
-                <button key={t.id} onClick={()=>setAdminTab(t.id)} style={{ flex:1,padding:"9px 0",borderRadius:7,border:"none",cursor:"pointer",background:adminTab===t.id?"#1a1a1a":"transparent",color:adminTab===t.id?"#f5c518":"#444",fontFamily:F.main,fontWeight:800,fontSize:12,transition:"all 0.15s",minWidth:100 }}>{t.label}</button>
+                <button key={t.id} onClick={()=>setAdminTab(t.id)} style={{ flex:1,padding:"9px 0",borderRadius:7,border:"none",cursor:"pointer",background:adminTab===t.id?"rgba(232,0,29,0.1)":"transparent",color:adminTab===t.id?C.red:C.muted,fontFamily:F.main,fontWeight:700,fontSize:12,transition:"all 0.15s",minWidth:100,letterSpacing:1,textTransform:"uppercase" }}>{t.label}</button>
               ))}
             </div>
 
@@ -851,30 +952,30 @@ export default function App() {
             {adminTab==="players"&&(
               <div>
                 <input value={adminSearch} onChange={e=>setAdminSearch(e.target.value)} placeholder="Search player…"
-                  style={{ width:"100%",background:"#0d0d0d",border:"1px solid #1a1a1a",borderRadius:8,color:"#ddd",padding:"9px 14px",fontSize:13,fontFamily:F.body,marginBottom:10,boxSizing:"border-box" }} />
+                  style={{ ...inputStyle({ width:"100%", padding:"9px 14px", fontSize:13, marginBottom:10, boxSizing:"border-box" }) }} />
                 {players.filter(p=>!adminSearch||p.nickname.toLowerCase().includes(adminSearch.toLowerCase())).map(p=>(
-                  <div key={p.id} style={{ background:"#0d0d0d",border:"1px solid #181818",borderRadius:10,padding:"10px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:10 }}>
-                    <div style={{ width:30,height:30,borderRadius:7,background:"#1a1a1a",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:13,color:"#f5c518",fontFamily:F.main,flexShrink:0 }}>{p.nickname[0].toUpperCase()}</div>
+                  <div key={p.id} style={{ background:"rgba(8,8,28,0.9)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,padding:"10px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:10 }}>
+                    <div style={{ width:30,height:30,borderRadius:7,background:"rgba(232,0,29,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:13,color:C.red,fontFamily:F.main,flexShrink:0 }}>{p.nickname[0].toUpperCase()}</div>
                     {editNick[p.id]!==undefined?(
                       <div style={{ flex:1,display:"flex",gap:6 }}>
                         <input value={editNick[p.id]} onChange={e=>setEditNick(n=>({...n,[p.id]:e.target.value}))} autoFocus onKeyDown={e=>{if(e.key==="Enter")handleRename(p.id,editNick[p.id]||p.nickname);}}
-                          style={{ flex:1,background:"#111",border:"1px solid #2a2a2a",borderRadius:6,color:"#ddd",padding:"5px 10px",fontSize:13,fontFamily:F.body }} />
-                        <button onClick={()=>handleRename(p.id,editNick[p.id]||p.nickname)} style={{ background:"#00c77a",border:"none",borderRadius:6,color:"#000",fontWeight:900,padding:"5px 12px",fontFamily:F.main,cursor:"pointer",fontSize:11 }}>SAVE</button>
-                        <button onClick={()=>setEditNick(n=>{const c={...n};delete c[p.id];return c;})} style={{ background:"#181818",border:"none",borderRadius:6,color:"#555",fontWeight:800,padding:"5px 10px",fontFamily:F.main,cursor:"pointer" }}>✕</button>
+                          style={{ ...inputStyle({ flex:1, padding:"5px 10px", fontSize:13 }) }} />
+                        <button onClick={()=>handleRename(p.id,editNick[p.id]||p.nickname)} style={{ background:C.green,border:"none",borderRadius:6,color:"#000",fontWeight:700,padding:"5px 12px",fontFamily:F.main,cursor:"pointer",fontSize:11,letterSpacing:1 }}>SAVE</button>
+                        <button onClick={()=>setEditNick(n=>{const c={...n};delete c[p.id];return c;})} style={{ background:"rgba(255,255,255,0.06)",border:"none",borderRadius:6,color:C.muted,fontWeight:700,padding:"5px 10px",fontFamily:F.main,cursor:"pointer" }}>✕</button>
                       </div>
                     ):(
                       <>
-                        <div style={{ flex:1,fontSize:13,fontWeight:800,fontFamily:F.main }}>{p.nickname}<span style={{ color:"#333",fontWeight:400,fontSize:11,marginLeft:8 }}>{getTotalScore(p.id)} pts</span></div>
-                        <button onClick={()=>setEditNick(n=>({...n,[p.id]:p.nickname}))} style={{ background:"#111",border:"1px solid #1e1e1e",borderRadius:6,color:"#555",fontFamily:F.main,fontWeight:800,fontSize:11,padding:"4px 10px",cursor:"pointer" }}>RENAME</button>
-                        <button onClick={()=>handleDeletePlayer(p.id)} style={{ background:"#1a0000",border:"1px solid #e74c3c20",borderRadius:6,color:"#e74c3c",fontFamily:F.main,fontWeight:800,fontSize:11,padding:"4px 10px",cursor:"pointer" }}>DELETE</button>
+                        <div style={{ flex:1,fontSize:13,fontWeight:700,fontFamily:F.main,color:C.white,letterSpacing:0.5 }}>{p.nickname}<span style={{ color:C.dim,fontWeight:400,fontSize:11,marginLeft:8 }}>{getTotalScore(p.id)} pts</span></div>
+                        <button onClick={()=>setEditNick(n=>({...n,[p.id]:p.nickname}))} style={{ background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:6,color:C.muted,fontFamily:F.main,fontWeight:700,fontSize:11,padding:"4px 10px",cursor:"pointer",letterSpacing:0.5 }}>RENAME</button>
+                        <button onClick={()=>handleDeletePlayer(p.id)} style={{ background:"rgba(232,0,29,0.1)",border:"1px solid rgba(232,0,29,0.3)",borderRadius:6,color:C.red,fontFamily:F.main,fontWeight:700,fontSize:11,padding:"4px 10px",cursor:"pointer" }}>DELETE</button>
                       </>
                     )}
                   </div>
                 ))}
                 <div style={{ display:"flex",gap:8,marginTop:10 }}>
                   <input value={newNick} onChange={e=>setNewNick(e.target.value)} placeholder="New player nickname…" onKeyDown={e=>{if(e.key==="Enter")handleAddPlayer();}}
-                    style={{ flex:1,background:"#0d0d0d",border:"1px dashed #222",borderRadius:10,color:"#ddd",padding:"10px 14px",fontSize:13,fontFamily:F.body }} />
-                  <button onClick={handleAddPlayer} style={{ padding:"10px 20px",background:"#f5c518",border:"none",borderRadius:10,cursor:"pointer",color:"#000",fontFamily:F.main,fontWeight:900,fontSize:13 }}>+ ADD</button>
+                    style={{ ...inputStyle({ flex:1, border:"1px dashed rgba(255,255,255,0.15)", padding:"10px 14px", fontSize:13 }) }} />
+                  <button onClick={handleAddPlayer} style={{ padding:"10px 20px",background:C.red,border:"none",borderRadius:10,cursor:"pointer",color:C.white,fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:1 }}>+ ADD</button>
                 </div>
               </div>
             )}
@@ -887,10 +988,15 @@ export default function App() {
             {/* Results */}
             {adminTab==="results"&&(
               <div>
-                <div style={{ fontSize:11,color:"#555",fontFamily:F.main,marginBottom:14 }}>Update any result even after it's set.</div>
+                <div style={{ fontSize:11,color:C.muted,fontFamily:F.body,marginBottom:14 }}>Update any result even after it's set.</div>
                 <div style={{ display:"flex",gap:6,marginBottom:14,flexWrap:"wrap" }}>
                   {["all","A","B","C","D","Playoffs"].map(g=>(
-                    <button key={g} onClick={()=>setFilterGroup(g)} style={{ padding:"6px 14px",borderRadius:7,border:"none",cursor:"pointer",background:filterGroup===g?"#f5c518":"#111",color:filterGroup===g?"#000":"#555",fontFamily:F.main,fontWeight:800,fontSize:12 }}>
+                    <button key={g} onClick={()=>setFilterGroup(g)} style={{
+                      padding:"6px 14px",borderRadius:6,border:`1px solid ${filterGroup===g?"transparent":"rgba(255,255,255,0.1)"}`,cursor:"pointer",fontFamily:F.main,fontWeight:700,fontSize:12,letterSpacing:1,textTransform:"uppercase",transition:"all 0.15s",
+                      background:filterGroup===g?C.red:"rgba(255,255,255,0.04)",
+                      color:filterGroup===g?C.white:"#667799",
+                      boxShadow:filterGroup===g?"0 0 12px rgba(232,0,29,0.4)":"none",
+                    }}>
                       {g==="all"?"All":g==="Playoffs"?"Playoffs":`Group ${g}`}
                     </button>
                   ))}
@@ -912,8 +1018,9 @@ export default function App() {
         )}
       </div>
 
-      <div style={{ borderTop:"1px solid #0f0f0f",padding:16,textAlign:"center",fontSize:10,color:"#1e1e1e",fontFamily:F.main,letterSpacing:1 }}>
-        RLCS 2026 PARIS MAJOR PREDICTOR · LIVE SYNC BY SUPABASE
+      {/* FOOTER */}
+      <div style={{ position:"relative",zIndex:1,borderTop:`1px solid rgba(232,0,29,0.15)`,padding:16,textAlign:"center",fontSize:10,color:"rgba(255,255,255,0.15)",fontFamily:F.main,letterSpacing:2,textTransform:"uppercase" }}>
+        RLCS 2026 Paris Major Predictor · Live Sync by Supabase
       </div>
     </div>
   );
