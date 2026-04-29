@@ -35,22 +35,22 @@ const C = {
 
 // ─── TEAMS ───────────────────────────────────────────────────────────────────
 const TEAMS = {
-  "Vitality":            { abbr:"VIT",  color:"#f5c518", bg:"#1a1500", logo:"https://liquipedia.net/commons/images/thumb/b/bc/Team_Vitality_lightmode.png/120px-Team_Vitality_lightmode.png" },
-  "Karmine Corp":        { abbr:"KC",   color:"#00d4ff", bg:"#001a2e", logo:"https://liquipedia.net/commons/images/thumb/e/e7/Karmine_Corp_allmode.png/120px-Karmine_Corp_allmode.png" },
-  "Wildcard":            { abbr:"WC",   color:"#ff4500", bg:"#1a0a00", logo:"https://liquipedia.net/commons/images/thumb/9/9f/Wildcard_allmode.png/120px-Wildcard_allmode.png" },
-  "FUT Esports":         { abbr:"FUT",  color:"#e74c3c", bg:"#1a0000", logo:"https://liquipedia.net/commons/images/thumb/4/43/FUT_Esports_allmode.png/120px-FUT_Esports_allmode.png" },
-  "NRG Esports":         { abbr:"NRG",  color:"#ff6900", bg:"#1a0a00", logo:"https://liquipedia.net/commons/images/thumb/2/21/NRG_Esports_allmode.png/120px-NRG_Esports_allmode.png" },
-  "Manchester City":     { abbr:"MCFC", color:"#6cabdd", bg:"#001a2e", logo:"https://liquipedia.net/commons/images/thumb/f/f4/Manchester_City_Esports_allmode.png/120px-Manchester_City_Esports_allmode.png" },
-  "MIBR":                { abbr:"MIBR", color:"#00a651", bg:"#001a0d", logo:"https://liquipedia.net/commons/images/thumb/5/5e/Made_in_Brazil.png/120px-Made_in_Brazil.png" },
-  "Five Fears":          { abbr:"5F",   color:"#e74c3c", bg:"#1a0000", logo:null },
+  "Vitality":            { abbr:"VIT",  color:"#f5c518", bg:"#1a1500", logo:"https://upload.wikimedia.org/wikipedia/en/thumb/9/9f/Team_Vitality_logo.svg/200px-Team_Vitality_logo.svg.png" },
+  "Karmine Corp":        { abbr:"KC",   color:"#00d4ff", bg:"#001a2e", logo:"https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Karmine_Corp_logo.png/200px-Karmine_Corp_logo.png" },
+  "Wildcard":            { abbr:"WC",   color:"#ff6600", bg:"#1a0a00", logo:"https://upload.wikimedia.org/wikipedia/en/thumb/e/e5/Wildcard_Gaming_logo.png/200px-Wildcard_Gaming_logo.png" },
+  "FUT Esports":         { abbr:"FUT",  color:"#e74c3c", bg:"#1a0000", logo:"https://upload.wikimedia.org/wikipedia/en/thumb/4/43/FUT_Esports_logo.png/200px-FUT_Esports_logo.png" },
+  "NRG Esports":         { abbr:"NRG",  color:"#ff6900", bg:"#1a0a00", logo:"https://upload.wikimedia.org/wikipedia/en/thumb/9/9e/NRG_Esports_logo.png/200px-NRG_Esports_logo.png" },
+  "Manchester City":     { abbr:"MCFC", color:"#6cabdd", bg:"#001a2e", logo:"https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Manchester_City_FC_badge.svg/200px-Manchester_City_FC_badge.svg.png" },
+  "MIBR":                { abbr:"MIBR", color:"#00a651", bg:"#001a0d", logo:"https://upload.wikimedia.org/wikipedia/en/thumb/5/5e/Made_in_Brazil.png/200px-Made_in_Brazil.png" },
+  "Five Fears":          { abbr:"5F",   color:"#e74c3c", bg:"#1a0000", logo:"https://liquipedia.net/commons/images/thumb/5/57/Five_Fears_allmode.png/120px-Five_Fears_allmode.png" },
   "Twisted Minds":       { abbr:"TM",   color:"#9b59b6", bg:"#0d0015", logo:"https://liquipedia.net/commons/images/thumb/0/04/Twisted_Minds_allmode.png/120px-Twisted_Minds_allmode.png" },
-  "Ninjas in Pyjamas":   { abbr:"NIP",  color:"#e0e0e0", bg:"#111",    logo:"https://liquipedia.net/commons/images/thumb/4/46/Ninjas_in_Pyjamas_2022_lightmode.png/120px-Ninjas_in_Pyjamas_2022_lightmode.png" },
+  "Ninjas in Pyjamas":   { abbr:"NIP",  color:"#e0e0e0", bg:"#111",    logo:"https://upload.wikimedia.org/wikipedia/en/thumb/9/9a/NIP_logo_2022.png/200px-NIP_logo_2022.png" },
   "Shopify Rebellion":   { abbr:"SR",   color:"#96bf48", bg:"#0d1a00", logo:"https://liquipedia.net/commons/images/thumb/1/1a/Shopify_Rebellion_lightmode.png/120px-Shopify_Rebellion_lightmode.png" },
-  "TSM":                 { abbr:"TSM",  color:"#3498db", bg:"#00091a", logo:"https://liquipedia.net/commons/images/thumb/d/df/TSM_allmode.png/120px-TSM_allmode.png" },
+  "TSM":                 { abbr:"TSM",  color:"#3498db", bg:"#00091a", logo:"https://upload.wikimedia.org/wikipedia/en/thumb/3/3e/TSM_Logo_2020.png/200px-TSM_Logo_2020.png" },
   "Gentle Mates":        { abbr:"GM",   color:"#ff6b35", bg:"#1a0a00", logo:"https://liquipedia.net/commons/images/thumb/7/72/Gentle_Mates_lightmode.png/120px-Gentle_Mates_lightmode.png" },
   "Spacestation Gaming": { abbr:"SSG",  color:"#ff4500", bg:"#1a0a00", logo:"https://liquipedia.net/commons/images/thumb/3/3f/Spacestation_Gaming_allmode.png/120px-Spacestation_Gaming_allmode.png" },
-  "R8 Esports":          { abbr:"R8",   color:"#c0392b", bg:"#1a0000", logo:null },
-  "FURIA Esports":       { abbr:"FUR",  color:"#ff0000", bg:"#1a0000", logo:"https://liquipedia.net/commons/images/thumb/f/f0/FURIA_Esports_lightmode.png/120px-FURIA_Esports_lightmode.png" },
+  "R8 Esports":          { abbr:"R8",   color:"#c0392b", bg:"#1a0000", logo:"https://liquipedia.net/commons/images/thumb/6/6e/R8_Esports_allmode.png/120px-R8_Esports_allmode.png" },
+  "FURIA Esports":       { abbr:"FUR",  color:"#ff0000", bg:"#1a0000", logo:"https://upload.wikimedia.org/wikipedia/en/thumb/f/f4/Furia_Esports_logo.png/200px-Furia_Esports_logo.png" },
 };
 
 // ─── GROUP MATCHES ───────────────────────────────────────────────────────────
@@ -134,7 +134,7 @@ const inputStyle = (extra={}) => ({
 function TeamBadge({ name, size="sm" }) {
   const t = teamStyle(name);
   const isTBD = isTBDTeam(name);
-  const sz = size === "lg" ? 44 : 28;
+  const sz = size === "lg" ? 52 : 36;
   const [err, setErr] = useState(false);
   return (
     <div style={{ display:"flex", alignItems:"center", gap:8 }}>
@@ -143,10 +143,10 @@ function TeamBadge({ name, size="sm" }) {
         background:isTBD?C.navyLight:t.bg,
         border:`2px solid ${isTBD?"rgba(255,255,255,0.1)":t.color+"60"}`,
         display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", flexShrink:0,
-        boxShadow: isTBD ? "none" : `0 0 8px ${t.color}30`,
+        boxShadow: isTBD ? "none" : `0 0 10px ${t.color}40`,
       }}>
         {t.logo && !isTBD && !err
-          ? <img src={t.logo} alt={name} style={{ width:"88%", height:"88%", objectFit:"contain" }} onError={()=>setErr(true)} />
+          ? <img src={t.logo} alt={name} style={{ width:"95%", height:"95%", objectFit:"contain" }} onError={()=>setErr(true)} />
           : <span style={{ fontSize:sz*0.3, fontWeight:700, color:isTBD?"rgba(255,255,255,0.2)":t.color, fontFamily:F.main }}>{isTBD?"?":t.abbr}</span>
         }
       </div>
@@ -1479,7 +1479,7 @@ export default function App() {
               </div>
               );
             })}
-            {Object.keys(results).length>0&&(
+            {isAdmin&&Object.keys(results).length>0&&(
               <div style={{ marginTop:28 }}>
                 <div style={{ fontSize:10,color:C.muted,letterSpacing:2,marginBottom:10,fontFamily:F.main,textTransform:"uppercase" }}>Match Breakdown</div>
                 <div style={{ overflowX:"auto" }}>
