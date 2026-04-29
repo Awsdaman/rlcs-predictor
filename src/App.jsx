@@ -140,13 +140,13 @@ function TeamBadge({ name, size="sm" }) {
     <div style={{ display:"flex", alignItems:"center", gap:8 }}>
       <div style={{
         width:sz, height:sz, borderRadius:6,
-        background:isTBD?C.navyLight:t.bg,
-        border:`2px solid ${isTBD?"rgba(255,255,255,0.1)":t.color+"60"}`,
+        background:isTBD?"#1a1a2e":t.bg,
+        border:`2px solid ${isTBD?"#2a2a2a":t.color+"90"}`,
         display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", flexShrink:0,
-        boxShadow: isTBD ? "none" : `0 0 10px ${t.color}40`,
+        boxShadow: isTBD ? "none" : `0 0 12px ${t.color}40`,
       }}>
         {t.logo && !isTBD && !err
-          ? <img src={t.logo} alt={name} style={{ width:"95%", height:"95%", objectFit:"contain" }} onError={()=>setErr(true)} />
+          ? <img src={t.logo} alt={name} style={{ width:"95%", height:"95%", objectFit:"contain" }} onError={(e)=>{ e.target.style.display="none"; setErr(true); }} />
           : <span style={{ fontSize:sz*0.3, fontWeight:700, color:isTBD?"rgba(255,255,255,0.2)":t.color, fontFamily:F.main }}>{isTBD?"?":t.abbr}</span>
         }
       </div>
