@@ -35,22 +35,22 @@ const C = {
 
 // ─── TEAMS ───────────────────────────────────────────────────────────────────
 const TEAMS = {
-  "Vitality":            { abbr:"VIT",  color:"#f5c518", bg:"#1a1500", logo:"/logos/vitality.png" },
-  "Karmine Corp":        { abbr:"KC",   color:"#00d4ff", bg:"#001a2e", logo:"/logos/karmine-corp.png" },
-  "Wildcard":            { abbr:"WC",   color:"#ff6600", bg:"#1a0a00", logo:"/logos/wildcard.png" },
-  "FUT Esports":         { abbr:"FUT",  color:"#e74c3c", bg:"#1a0000", logo:"/logos/fut.png" },
-  "NRG Esports":         { abbr:"NRG",  color:"#ff6900", bg:"#1a0a00", logo:"/logos/nrg.png" },
-  "Manchester City":     { abbr:"MCFC", color:"#6cabdd", bg:"#001a2e", logo:"/logos/manchester-city.png" },
-  "MIBR":                { abbr:"MIBR", color:"#00a651", bg:"#001a0d", logo:"/logos/mibr.png" },
-  "Five Fears":          { abbr:"5F",   color:"#e74c3c", bg:"#1a0000", logo:"/logos/five-fears.png" },
-  "Twisted Minds":       { abbr:"TM",   color:"#9b59b6", bg:"#0d0015", logo:"/logos/twisted-minds.png" },
-  "Ninjas in Pyjamas":   { abbr:"NIP",  color:"#e0e0e0", bg:"#111",    logo:"/logos/nip.png" },
-  "Shopify Rebellion":   { abbr:"SR",   color:"#96bf48", bg:"#0d1a00", logo:"/logos/shopify.png" },
-  "TSM":                 { abbr:"TSM",  color:"#3498db", bg:"#00091a", logo:"/logos/tsm.png" },
-  "Gentle Mates":        { abbr:"GM",   color:"#ff6b35", bg:"#1a0a00", logo:"/logos/gentle-mates.png" },
-  "Spacestation Gaming": { abbr:"SSG",  color:"#ff4500", bg:"#1a0a00", logo:"/logos/spacestation.png" },
-  "R8 Esports":          { abbr:"R8",   color:"#c0392b", bg:"#1a0000", logo:"/logos/r8.png" },
-  "FURIA Esports":       { abbr:"FUR",  color:"#ff0000", bg:"#1a0000", logo:"/logos/furia.png" },
+  "Vitality":            { abbr:"VIT",  color:"#FFD700", bg:"#1a1400", logo:"/logos/vitality.png" },
+  "Karmine Corp":        { abbr:"KC",   color:"#00CFFF", bg:"#001a2e", logo:"/logos/karmine-corp.png" },
+  "Wildcard":            { abbr:"WC",   color:"#FF4500", bg:"#1a0a00", logo:"/logos/wildcard.png" },
+  "FUT Esports":         { abbr:"FUT",  color:"#E74C3C", bg:"#1a0000", logo:"/logos/fut.png" },
+  "NRG Esports":         { abbr:"NRG",  color:"#FF6900", bg:"#1a0a00", logo:"/logos/nrg.png" },
+  "Manchester City":     { abbr:"MCFC", color:"#6CABDD", bg:"#001a2e", logo:"/logos/manchester-city.png" },
+  "MIBR":                { abbr:"MIBR", color:"#00A651", bg:"#001a0d", logo:"/logos/mibr.png" },
+  "Five Fears":          { abbr:"5F",   color:"#E74C3C", bg:"#1a0000", logo:"/logos/five-fears.png" },
+  "Twisted Minds":       { abbr:"TM",   color:"#FF3D6E", bg:"#1a0010", logo:"/logos/twisted-minds.png" },
+  "Ninjas in Pyjamas":   { abbr:"NIP",  color:"#F0F0F0", bg:"#0d0d0d", logo:"/logos/nip.png" },
+  "Shopify Rebellion":   { abbr:"SR",   color:"#96BF48", bg:"#0d1a00", logo:"/logos/shopify.png" },
+  "TSM":                 { abbr:"TSM",  color:"#3498DB", bg:"#00091a", logo:"/logos/tsm.png" },
+  "Gentle Mates":        { abbr:"GM",   color:"#FF6B35", bg:"#1a0a00", logo:"/logos/gentle-mates.png" },
+  "Spacestation Gaming": { abbr:"SSG",  color:"#00CFFF", bg:"#001a20", logo:"/logos/spacestation.png" },
+  "R8 Esports":          { abbr:"R8",   color:"#C0392B", bg:"#1a0000", logo:"/logos/r8.png" },
+  "FURIA Esports":       { abbr:"FUR",  color:"#FF0000", bg:"#1a0000", logo:"/logos/furia.png" },
 };
 
 // ─── GROUP MATCHES ───────────────────────────────────────────────────────────
@@ -135,18 +135,28 @@ function TeamBadge({ name, size="sm" }) {
   const t = teamStyle(name);
   const isTBD = isTBDTeam(name);
   const sz = size === "lg" ? 52 : 36;
-  const [err, setErr] = useState(false);
+  if (name === "Twisted Minds" || name === "Vitality") console.log(`[TeamBadge] ${name} logo path:`, t.logo);
   return (
     <div style={{ display:"flex", alignItems:"center", gap:8 }}>
       <div style={{
-        width:sz, height:sz, borderRadius:6,
-        background:isTBD?"#1a1a2e":t.bg,
-        border:`2px solid ${isTBD?"#2a2a2a":t.color+"90"}`,
-        display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", flexShrink:0,
-        boxShadow: isTBD ? "none" : `0 0 12px ${t.color}40`,
+        width: sz,
+        height: sz,
+        borderRadius: 7,
+        background: isTBD ? "#1a1a2e" : t.bg,
+        border: `2px solid ${isTBD ? "#333355" : t.color}`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "hidden",
+        flexShrink: 0,
+        boxShadow: isTBD ? "none" : `0 0 10px ${t.color}60, inset 0 0 6px ${t.color}20`,
       }}>
-        {t.logo && !isTBD && !err
-          ? <img src={t.logo} alt={name} style={{ width:"95%", height:"95%", objectFit:"contain" }} onError={(e)=>{ e.target.style.display="none"; setErr(true); }} />
+        {t.logo && !isTBD
+          ? <>
+              <img src={t.logo} alt={name} style={{ width:"95%", height:"95%", objectFit:"contain" }}
+                onError={(e)=>{ e.target.onerror=null; e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }} />
+              <span style={{ display:"none", fontSize:sz*0.3, fontWeight:700, color:t.color, fontFamily:F.main, alignItems:"center", justifyContent:"center" }}>{t.abbr}</span>
+            </>
           : <span style={{ fontSize:sz*0.3, fontWeight:700, color:isTBD?"rgba(255,255,255,0.2)":t.color, fontFamily:F.main }}>{isTBD?"?":t.abbr}</span>
         }
       </div>
