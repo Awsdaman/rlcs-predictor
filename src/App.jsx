@@ -17,6 +17,8 @@ async function hashPassword(password) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 // Current admin password: RL@Paris2026!#Admin (hash stored in app_settings table)
+// Fallback hash used only if app_settings fetch fails at load time:
+const ADMIN_PASSWORD_HASH = '8a0f9e483b972cabad08519542740c3bf80d754474abbd7eab16940a4d8e175e';
 
 // ─── BRAND COLORS ─────────────────────────────────────────────────────────────
 const C = {
@@ -900,20 +902,6 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
               </div>
             </div>
 
-            {players.length>0&&(
-              <div>
-                <div style={{ fontSize:10,color:C.dim,fontFamily:F.main,marginBottom:6,letterSpacing:1,textTransform:"uppercase" }}>Quick-fill name:</div>
-                <div style={{ display:"flex",flexWrap:"wrap",gap:6 }}>
-                  {players.map(p=>(
-                    <button key={p.id} onClick={()=>{ setLoginUser(p.nickname); setLoginErr(""); }}
-                      style={{ padding:"4px 10px",borderRadius:6,border:"1px solid rgba(0,102,255,0.2)",background:"rgba(0,102,255,0.08)",color:"#6699FF",fontFamily:F.main,fontWeight:700,fontSize:11,cursor:"pointer" }}>
-                      {p.nickname}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {loginErr&&<div style={{ color:C.red,fontSize:12,fontFamily:F.main,letterSpacing:0.5 }}>⚠ {loginErr}</div>}
 
             <button onClick={handleLogin} disabled={loginLoading}
@@ -967,7 +955,7 @@ export default function App() {
   const [results,        setResults]        = useState({});
   const [bonusPoints,    setBonusPoints]    = useState([]);
   const [playoffMatches, setPlayoffMatches] = useState(DEFAULT_PLAYOFF);
-  const [adminHash,      setAdminHash]      = useState('');
+  const [adminHash,      setAdminHash]      = useState(ADMIN_PASSWORD_HASH);
   const [authId,         setAuthId]         = useState(()=>localStorage.getItem("rlcs_auth")||null);
   const [isAdmin,        setIsAdmin]        = useState(()=>localStorage.getItem("rlcs_admin")==="1");
   const [page,           setPage]           = useState("predict");
