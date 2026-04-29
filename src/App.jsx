@@ -142,7 +142,7 @@ function TeamBadge({ name, size="sm" }) {
         width: sz,
         height: sz,
         borderRadius: 7,
-        background: isTBD ? "#1a1a2e" : (name === "TSM" ? "#FFFFFF" : t.bg),
+        background: isTBD ? "#1a1a2e" : (["TSM", "R8 Esports", "Shopify Rebellion", "Vitality"].includes(name) ? "#FFFFFF" : t.bg),
         border: `2px solid ${isTBD ? "#333355" : t.color}`,
         display: "flex",
         alignItems: "center",
@@ -153,7 +153,7 @@ function TeamBadge({ name, size="sm" }) {
       }}>
         {t.logo && !isTBD
           ? <>
-              <img src={t.logo} alt={name} style={{ width:name==="TSM"?"80%":"95%", height:name==="TSM"?"80%":"95%", objectFit:"contain" }}
+              <img src={t.logo} alt={name} style={{ width:["TSM","R8 Esports","Shopify Rebellion"].includes(name)?"80%":"95%", height:["TSM","R8 Esports","Shopify Rebellion"].includes(name)?"80%":"95%", objectFit:"contain" }}
                 onError={(e)=>{ e.target.onerror=null; e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }} />
               <span style={{ display:"none", fontSize:sz*0.3, fontWeight:700, color:t.color, fontFamily:F.main, alignItems:"center", justifyContent:"center" }}>{t.abbr}</span>
             </>
