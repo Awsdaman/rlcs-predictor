@@ -35,18 +35,18 @@ const C = {
 
 // ─── TEAMS ───────────────────────────────────────────────────────────────────
 const TEAMS = {
-  "Vitality":            { abbr:"VIT",  color:"#FFD700", bg:"#1a1400", logo:"https://upload.wikimedia.org/wikipedia/en/thumb/9/9f/Team_Vitality_logo.svg/200px-Team_Vitality_logo.svg.png" },
+  "Vitality":            { abbr:"VIT",  color:"#FFD700", bg:"#1a1400", logo:"/logos/vitality.png" },
   "Karmine Corp":        { abbr:"KC",   color:"#00CFFF", bg:"#001a2e", logo:"/logos/karmine-corp.png" },
-  "Wildcard":            { abbr:"WC",   color:"#FF4500", bg:"#1a0800", logo:"/logos/wildcard.png" },
+  "Wildcard":            { abbr:"WC",   color:"#1E90FF", bg:"#00091a", logo:"/logos/wildcard.png" },
   "FUT Esports":         { abbr:"FUT",  color:"#C8102E", bg:"#1a0000", logo:"/logos/fut.png" },
   "NRG Esports":         { abbr:"NRG",  color:"#FF6600", bg:"#1a0800", logo:"/logos/nrg.png" },
   "Manchester City":     { abbr:"MCFC", color:"#6CABDD", bg:"#001828", logo:"/logos/manchester-city.png" },
   "MIBR":                { abbr:"MIBR", color:"#00A651", bg:"#001a0d", logo:"/logos/mibr.png" },
-  "Five Fears":          { abbr:"5F",   color:"#FF3D3D", bg:"#1a0000", logo:"/logos/five-fears.png" },
-  "Twisted Minds":       { abbr:"TM",   color:"#FF3D6E", bg:"#1a0010", logo:"https://static.wikia.nocookie.net/lolesports_gamepedia_en/images/4/4e/Twisted_Mindslogo_square.png" },
-  "Ninjas in Pyjamas":   { abbr:"NIP",  color:"#F0F0F0", bg:"#111111", logo:"/logos/nip.png" },
+  "Five Fears":          { abbr:"5F",   color:"#00BFFF", bg:"#001520", logo:"/logos/five-fears.png" },
+  "Twisted Minds":       { abbr:"TM",   color:"#FF3D6E", bg:"#1a0010", logo:"/logos/twisted-minds.png" },
+  "Ninjas in Pyjamas":   { abbr:"NIP",  color:"#CCFF00", bg:"#0d1400", logo:"/logos/nip.png" },
   "Shopify Rebellion":   { abbr:"SR",   color:"#96BF48", bg:"#0d1a00", logo:"/logos/shopify.png" },
-  "TSM":                 { abbr:"TSM",  color:"#3498DB", bg:"#00091a", logo:"/logos/tsm.png" },
+  "TSM":                 { abbr:"TSM",  color:"#3498DB", bg:"#0a1628", logo:"/logos/tsm.png" },
   "Gentle Mates":        { abbr:"GM",   color:"#FF6B35", bg:"#1a0800", logo:"/logos/gentle-mates.png" },
   "Spacestation Gaming": { abbr:"SSG",  color:"#F5A623", bg:"#1a1000", logo:"/logos/spacestation.png" },
   "R8 Esports":          { abbr:"R8",   color:"#00BFFF", bg:"#001520", logo:"/logos/r8.png" },
@@ -142,7 +142,7 @@ function TeamBadge({ name, size="sm" }) {
         width: sz,
         height: sz,
         borderRadius: 7,
-        background: isTBD ? "#1a1a2e" : t.bg,
+        background: isTBD ? "#1a1a2e" : (name === "TSM" ? "#FFFFFF" : t.bg),
         border: `2px solid ${isTBD ? "#333355" : t.color}`,
         display: "flex",
         alignItems: "center",
@@ -153,7 +153,7 @@ function TeamBadge({ name, size="sm" }) {
       }}>
         {t.logo && !isTBD
           ? <>
-              <img src={t.logo} alt={name} style={{ width:"95%", height:"95%", objectFit:"contain" }}
+              <img src={t.logo} alt={name} style={{ width:name==="TSM"?"80%":"95%", height:name==="TSM"?"80%":"95%", objectFit:"contain" }}
                 onError={(e)=>{ e.target.onerror=null; e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }} />
               <span style={{ display:"none", fontSize:sz*0.3, fontWeight:700, color:t.color, fontFamily:F.main, alignItems:"center", justifyContent:"center" }}>{t.abbr}</span>
             </>
