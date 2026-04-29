@@ -35,22 +35,22 @@ const C = {
 
 // ─── TEAMS ───────────────────────────────────────────────────────────────────
 const TEAMS = {
-  "Vitality":            { abbr:"VIT",  color:"#FFD700", bg:"#1a1400", logo:"/logos/vitality.png" },
+  "Vitality":            { abbr:"VIT",  color:"#FFD700", bg:"#1a1400", logo:"https://upload.wikimedia.org/wikipedia/en/thumb/9/9f/Team_Vitality_logo.svg/200px-Team_Vitality_logo.svg.png" },
   "Karmine Corp":        { abbr:"KC",   color:"#00CFFF", bg:"#001a2e", logo:"/logos/karmine-corp.png" },
-  "Wildcard":            { abbr:"WC",   color:"#FF4500", bg:"#1a0a00", logo:"/logos/wildcard.png" },
-  "FUT Esports":         { abbr:"FUT",  color:"#E74C3C", bg:"#1a0000", logo:"/logos/fut.png" },
-  "NRG Esports":         { abbr:"NRG",  color:"#FF6900", bg:"#1a0a00", logo:"/logos/nrg.png" },
-  "Manchester City":     { abbr:"MCFC", color:"#6CABDD", bg:"#001a2e", logo:"/logos/manchester-city.png" },
+  "Wildcard":            { abbr:"WC",   color:"#FF4500", bg:"#1a0800", logo:"/logos/wildcard.png" },
+  "FUT Esports":         { abbr:"FUT",  color:"#C8102E", bg:"#1a0000", logo:"/logos/fut.png" },
+  "NRG Esports":         { abbr:"NRG",  color:"#FF6600", bg:"#1a0800", logo:"/logos/nrg.png" },
+  "Manchester City":     { abbr:"MCFC", color:"#6CABDD", bg:"#001828", logo:"/logos/manchester-city.png" },
   "MIBR":                { abbr:"MIBR", color:"#00A651", bg:"#001a0d", logo:"/logos/mibr.png" },
-  "Five Fears":          { abbr:"5F",   color:"#E74C3C", bg:"#1a0000", logo:"/logos/five-fears.png" },
-  "Twisted Minds":       { abbr:"TM",   color:"#FF3D6E", bg:"#1a0010", logo:"/logos/twisted-minds.png" },
-  "Ninjas in Pyjamas":   { abbr:"NIP",  color:"#F0F0F0", bg:"#0d0d0d", logo:"/logos/nip.png" },
+  "Five Fears":          { abbr:"5F",   color:"#FF3D3D", bg:"#1a0000", logo:"/logos/five-fears.png" },
+  "Twisted Minds":       { abbr:"TM",   color:"#FF3D6E", bg:"#1a0010", logo:"https://static.wikia.nocookie.net/lolesports_gamepedia_en/images/4/4e/Twisted_Mindslogo_square.png" },
+  "Ninjas in Pyjamas":   { abbr:"NIP",  color:"#F0F0F0", bg:"#111111", logo:"/logos/nip.png" },
   "Shopify Rebellion":   { abbr:"SR",   color:"#96BF48", bg:"#0d1a00", logo:"/logos/shopify.png" },
   "TSM":                 { abbr:"TSM",  color:"#3498DB", bg:"#00091a", logo:"/logos/tsm.png" },
-  "Gentle Mates":        { abbr:"GM",   color:"#FF6B35", bg:"#1a0a00", logo:"/logos/gentle-mates.png" },
-  "Spacestation Gaming": { abbr:"SSG",  color:"#00CFFF", bg:"#001a20", logo:"/logos/spacestation.png" },
-  "R8 Esports":          { abbr:"R8",   color:"#C0392B", bg:"#1a0000", logo:"/logos/r8.png" },
-  "FURIA Esports":       { abbr:"FUR",  color:"#FF0000", bg:"#1a0000", logo:"/logos/furia.png" },
+  "Gentle Mates":        { abbr:"GM",   color:"#FF6B35", bg:"#1a0800", logo:"/logos/gentle-mates.png" },
+  "Spacestation Gaming": { abbr:"SSG",  color:"#F5A623", bg:"#1a1000", logo:"/logos/spacestation.png" },
+  "R8 Esports":          { abbr:"R8",   color:"#00BFFF", bg:"#001520", logo:"/logos/r8.png" },
+  "FURIA Esports":       { abbr:"FUR",  color:"#FFFFFF", bg:"#0a0a0a", logo:"/logos/furia.png" },
 };
 
 // ─── GROUP MATCHES ───────────────────────────────────────────────────────────
@@ -149,7 +149,7 @@ function TeamBadge({ name, size="sm" }) {
         justifyContent: "center",
         overflow: "hidden",
         flexShrink: 0,
-        boxShadow: isTBD ? "none" : `0 0 10px ${t.color}60, inset 0 0 6px ${t.color}20`,
+        boxShadow: isTBD ? "none" : `0 0 8px ${t.color}80, 0 0 2px ${t.color}`,
       }}>
         {t.logo && !isTBD
           ? <>
