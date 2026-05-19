@@ -55,36 +55,42 @@ const TEAMS = {
 
 // ─── GROUP MATCHES ───────────────────────────────────────────────────────────
 const GROUP_MATCHES = [
-  // Wednesday May 20 — Slot 1 (09:00 UTC = 12:00 KSA)
-  { id:"ga1", group:"A", team1:"Vitality",            team2:"Karmine Corp",        startTime:"2026-05-20T09:00:00Z", phase:"Group Stage" },
-  { id:"gc1", group:"C", team1:"Twisted Minds",       team2:"Ninjas in Pyjamas",   startTime:"2026-05-20T09:00:00Z", phase:"Group Stage" },
-  { id:"gd1", group:"D", team1:"Gentle Mates",        team2:"Spacestation Gaming", startTime:"2026-05-20T09:00:00Z", phase:"Group Stage" },
-  { id:"gb1", group:"B", team1:"NRG Esports",         team2:"Manchester City",     startTime:"2026-05-20T09:00:00Z", phase:"Group Stage" },
-  // Wednesday May 20 — Slot 2 (12:00 UTC = 15:00 KSA)
-  { id:"ga2", group:"A", team1:"Vitality",            team2:"Wildcard",            startTime:"2026-05-20T12:00:00Z", phase:"Group Stage" },
-  { id:"gd2", group:"D", team1:"Gentle Mates",        team2:"R8 Esports",          startTime:"2026-05-20T12:00:00Z", phase:"Group Stage" },
-  { id:"gc2", group:"C", team1:"Twisted Minds",       team2:"Shopify Rebellion",   startTime:"2026-05-20T12:00:00Z", phase:"Group Stage" },
-  { id:"gb2", group:"B", team1:"NRG Esports",         team2:"MIBR",                startTime:"2026-05-20T12:00:00Z", phase:"Group Stage" },
-  // Wednesday May 20 — Slot 3 (15:00 UTC = 18:00 KSA)
-  { id:"gd3", group:"D", team1:"Gentle Mates",        team2:"FURIA Esports",       startTime:"2026-05-20T15:00:00Z", phase:"Group Stage" },
-  { id:"ga3", group:"A", team1:"Vitality",            team2:"FUT Esports",         startTime:"2026-05-20T15:00:00Z", phase:"Group Stage" },
-  { id:"gc3", group:"C", team1:"Twisted Minds",       team2:"TSM",                 startTime:"2026-05-20T15:00:00Z", phase:"Group Stage" },
-  { id:"gb3", group:"B", team1:"NRG Esports",         team2:"Five Fears",          startTime:"2026-05-20T15:00:00Z", phase:"Group Stage" },
-  // Thursday May 21 — Slot 1 (09:00 UTC = 12:00 KSA)
-  { id:"gd4", group:"D", team1:"Spacestation Gaming", team2:"R8 Esports",          startTime:"2026-05-21T09:00:00Z", phase:"Group Stage" },
-  { id:"ga4", group:"A", team1:"Karmine Corp",        team2:"Wildcard",            startTime:"2026-05-21T09:00:00Z", phase:"Group Stage" },
-  { id:"gb4", group:"B", team1:"Manchester City",     team2:"MIBR",                startTime:"2026-05-21T09:00:00Z", phase:"Group Stage" },
-  { id:"gc4", group:"C", team1:"Ninjas in Pyjamas",   team2:"Shopify Rebellion",   startTime:"2026-05-21T09:00:00Z", phase:"Group Stage" },
-  // Thursday May 21 — Slot 2 (12:00 UTC = 15:00 KSA)
-  { id:"gb5", group:"B", team1:"Manchester City",     team2:"Five Fears",          startTime:"2026-05-21T12:00:00Z", phase:"Group Stage" },
-  { id:"gc5", group:"C", team1:"Ninjas in Pyjamas",   team2:"TSM",                 startTime:"2026-05-21T12:00:00Z", phase:"Group Stage" },
-  { id:"ga5", group:"A", team1:"Karmine Corp",        team2:"FUT Esports",         startTime:"2026-05-21T12:00:00Z", phase:"Group Stage" },
+  // Wednesday May 20 — Slot 1 (10:00 UTC = 13:00 KSA) — 12:00 CEST
+  { id:"gb1", group:"B", team1:"NRG Esports",         team2:"Five Fears",          startTime:"2026-05-20T10:00:00Z", phase:"Group Stage" },
+  { id:"gb2", group:"B", team1:"Manchester City",     team2:"MIBR",                startTime:"2026-05-20T10:00:00Z", phase:"Group Stage" },
+  // Wednesday May 20 — Slot 2 (11:00 UTC = 14:00 KSA) — 13:00 CEST
+  { id:"ga1", group:"A", team1:"Vitality",            team2:"Wildcard",            startTime:"2026-05-20T11:00:00Z", phase:"Group Stage" },
+  { id:"ga2", group:"A", team1:"Karmine Corp",        team2:"FUT Esports",         startTime:"2026-05-20T11:00:00Z", phase:"Group Stage" },
+  // Wednesday May 20 — Slot 3 (12:00 UTC = 15:00 KSA) — 14:00 CEST
+  { id:"gd1", group:"D", team1:"Gentle Mates",        team2:"FURIA Esports",       startTime:"2026-05-20T12:00:00Z", phase:"Group Stage" },
+  { id:"gd2", group:"D", team1:"Spacestation Gaming", team2:"R8 Esports",          startTime:"2026-05-20T12:00:00Z", phase:"Group Stage" },
+  // Wednesday May 20 — Slot 4 (13:00 UTC = 16:00 KSA) — 15:00 CEST
+  { id:"gc1", group:"C", team1:"Twisted Minds",       team2:"Shopify Rebellion",   startTime:"2026-05-20T13:00:00Z", phase:"Group Stage" },
+  { id:"gc2", group:"C", team1:"Ninjas in Pyjamas",   team2:"TSM",                 startTime:"2026-05-20T13:00:00Z", phase:"Group Stage" },
+  // Wednesday May 20 — Slot 5 (14:00 UTC = 17:00 KSA) — 16:00 CEST
+  { id:"gb3", group:"B", team1:"NRG Esports",         team2:"MIBR",                startTime:"2026-05-20T14:00:00Z", phase:"Group Stage" },
+  { id:"gb4", group:"B", team1:"Manchester City",     team2:"Five Fears",          startTime:"2026-05-20T14:00:00Z", phase:"Group Stage" },
+  // Wednesday May 20 — Slot 6 (15:00 UTC = 18:00 KSA) — 17:00 CEST
+  { id:"ga3", group:"A", team1:"Vitality",            team2:"Karmine Corp",        startTime:"2026-05-20T15:00:00Z", phase:"Group Stage" },
+  { id:"ga4", group:"A", team1:"Wildcard",            team2:"FUT Esports",         startTime:"2026-05-20T15:00:00Z", phase:"Group Stage" },
+  // Thursday May 21 — Slot 1 (09:00 UTC = 12:00 KSA) — 11:00 CEST
+  { id:"gd3", group:"D", team1:"Gentle Mates",        team2:"Spacestation Gaming", startTime:"2026-05-21T09:00:00Z", phase:"Group Stage" },
+  { id:"gc3", group:"C", team1:"Twisted Minds",       team2:"Ninjas in Pyjamas",   startTime:"2026-05-21T09:00:00Z", phase:"Group Stage" },
+  // Thursday May 21 — Slot 2 (10:00 UTC = 13:00 KSA) — 12:00 CEST
+  { id:"gc4", group:"C", team1:"Twisted Minds",       team2:"TSM",                 startTime:"2026-05-21T10:00:00Z", phase:"Group Stage" },
+  { id:"gd4", group:"D", team1:"Gentle Mates",        team2:"R8 Esports",          startTime:"2026-05-21T10:00:00Z", phase:"Group Stage" },
+  // Thursday May 21 — Slot 3 (11:00 UTC = 14:00 KSA) — 13:00 CEST
+  { id:"gc5", group:"C", team1:"Ninjas in Pyjamas",   team2:"Shopify Rebellion",   startTime:"2026-05-21T11:00:00Z", phase:"Group Stage" },
+  { id:"gb5", group:"B", team1:"NRG Esports",         team2:"Manchester City",     startTime:"2026-05-21T11:00:00Z", phase:"Group Stage" },
+  // Thursday May 21 — Slot 4 (12:00 UTC = 15:00 KSA) — 14:00 CEST
   { id:"gd5", group:"D", team1:"Spacestation Gaming", team2:"FURIA Esports",       startTime:"2026-05-21T12:00:00Z", phase:"Group Stage" },
-  // Thursday May 21 — Slot 3 (15:00 UTC = 18:00 KSA)
-  { id:"gc6", group:"C", team1:"Shopify Rebellion",   team2:"TSM",                 startTime:"2026-05-21T15:00:00Z", phase:"Group Stage" },
-  { id:"ga6", group:"A", team1:"Wildcard",            team2:"FUT Esports",         startTime:"2026-05-21T15:00:00Z", phase:"Group Stage" },
-  { id:"gd6", group:"D", team1:"R8 Esports",          team2:"FURIA Esports",       startTime:"2026-05-21T15:00:00Z", phase:"Group Stage" },
-  { id:"gb6", group:"B", team1:"MIBR",                team2:"Five Fears",          startTime:"2026-05-21T15:00:00Z", phase:"Group Stage" },
+  { id:"ga5", group:"A", team1:"Vitality",            team2:"FUT Esports",         startTime:"2026-05-21T12:00:00Z", phase:"Group Stage" },
+  // Thursday May 21 — Slot 5 (13:00 UTC = 16:00 KSA) — 15:00 CEST
+  { id:"ga6", group:"A", team1:"Karmine Corp",        team2:"Wildcard",            startTime:"2026-05-21T13:00:00Z", phase:"Group Stage" },
+  { id:"gb6", group:"B", team1:"MIBR",                team2:"Five Fears",          startTime:"2026-05-21T13:00:00Z", phase:"Group Stage" },
+  // Thursday May 21 — Slot 6 (14:00 UTC = 17:00 KSA) — 16:00 CEST
+  { id:"gc6", group:"C", team1:"Shopify Rebellion",   team2:"TSM",                 startTime:"2026-05-21T14:00:00Z", phase:"Group Stage" },
+  { id:"gd6", group:"D", team1:"R8 Esports",          team2:"FURIA Esports",       startTime:"2026-05-21T14:00:00Z", phase:"Group Stage" },
 ];
 
 // ─── PLAYOFF MATCHES — teams set from bracket state in Supabase ──────────────
