@@ -20,6 +20,12 @@ async function hashPassword(password) {
 // Fallback hash used only if app_settings fetch fails at load time:
 const ADMIN_PASSWORD_HASH = '8a0f9e483b972cabad08519542740c3bf80d754474abbd7eab16940a4d8e175e';
 
+// ─── INVITE LINK BASE ────────────────────────────────────────────────────────
+// Supabase: ALTER TABLE groups ADD COLUMN IF NOT EXISTS invite_token uuid UNIQUE DEFAULT gen_random_uuid();
+//           UPDATE groups SET invite_token = gen_random_uuid() WHERE invite_token IS NULL;
+const INVITE_BASE = "https://rlcs-predictor.vercel.app/join";
+const INVITE_TOKEN_RE = /^\/join\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
+
 // ─── BRAND COLORS ─────────────────────────────────────────────────────────────
 const C = {
   red:       '#E8001D',
@@ -1036,6 +1042,15 @@ export default function App() {
   // Admin activity sub-tab
   const [activityFeed,     setActivityFeed]     = useState([]);
   const [recentRegs,       setRecentRegs]       = useState([]);
+  // Invite-link join flow — token parsed from URL synchronously so it survives login
+  const [pendingJoinToken, setPendingJoinToken] = useState(()=>{
+    const m = window.location.pathname.match(INVITE_TOKEN_RE);
+    if (m) { sessionStorage.setItem("rlcs_pending_join", m[1]); window.history.replaceState({}, "", "/"); return m[1]; }
+    return sessionStorage.getItem("rlcs_pending_join") || null;
+  });
+  const [joinGroup,        setJoinGroup]        = useState(null); // group row from Supabase
+  const [joinLoading,      setJoinLoading]      = useState(false);
+  const [inviteCopied,     setInviteCopied]     = useState(false);
 
   const myIdRef = useRef(authId);
   useEffect(()=>{ myIdRef.current=authId; },[authId]);
@@ -1076,6 +1091,17 @@ export default function App() {
     const iv=setInterval(fetch,30000);
     return()=>clearInterval(iv);
   },[adminTab,isAdmin]);
+
+  // ── Resolve pending invite token once auth + data are ready ──
+  useEffect(()=>{
+    if(!pendingJoinToken||loading||!authId)return;
+    (async()=>{
+      const{data:grp}=await supabase.from("groups").select("*").eq("invite_token",pendingJoinToken).single();
+      if(grp){ setJoinGroup(grp); }
+      else{ toast("Invite link is invalid or has been regenerated","error"); sessionStorage.removeItem("rlcs_pending_join"); setPendingJoinToken(null); }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[pendingJoinToken,loading,authId]);
 
   // ── Load all data ──
   useEffect(()=>{
@@ -1249,6 +1275,24 @@ export default function App() {
     toast(`Group "${grpName}" deleted`,"info");
   };
 
+  const handleJoinByToken = async () => {
+    if(!joinGroup||!authId)return;
+    setJoinLoading(true);
+    await supabase.from("players").update({group_id:joinGroup.id}).eq("id",authId);
+    setPlayers(prev=>prev.map(p=>p.id===authId?{...p,group_id:joinGroup.id}:p));
+    const name=joinGroup.name;
+    setJoinGroup(null); setPendingJoinToken(null); sessionStorage.removeItem("rlcs_pending_join");
+    setJoinLoading(false);
+    toast(`Joined "${name}"!`,"success");
+    setPage("mygroup");
+  };
+
+  const handleRegenerateInviteToken = async (groupId) => {
+    const newToken = crypto.randomUUID();
+    const{error}=await supabase.from("groups").update({invite_token:newToken}).eq("id",groupId);
+    if(!error){ setGroups(prev=>prev.map(g=>g.id===groupId?{...g,invite_token:newToken}:g)); toast("Invite link regenerated","success"); }
+  };
+
   const getPredScore =(pid)=>ALL_MATCHES.reduce((t,m)=>t+calcScore(predictions[pid]?.[m.id],results[m.id]),0);
   const getBonusTotal=(pid)=>bonusPoints.filter(b=>b.player_id===pid).reduce((t,b)=>t+b.amount,0);
   const getTotalScore=(pid)=>getPredScore(pid)+getBonusTotal(pid);
@@ -1378,19 +1422,26 @@ export default function App() {
                 <div style={{ fontSize:12,color:C.muted,fontFamily:F.main,marginTop:4,letterSpacing:1 }}>Members: {grpMembers.length}</div>
               </div>
 
-              {/* Share box */}
-              <div style={{ background:"rgba(8,8,28,0.9)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"14px 18px",marginBottom:20,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap" }}>
-                <div>
-                  <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:1,textTransform:"uppercase",marginBottom:4 }}>Share this group</div>
-                  <div style={{ display:"flex",alignItems:"center",gap:10 }}>
-                    <div style={{ background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:20,padding:"4px 14px",fontSize:13,fontWeight:700,fontFamily:F.main,color:C.white,letterSpacing:1 }}>{myGroup.id}</div>
-                    <button onClick={()=>{ navigator.clipboard.writeText(`Join my RLCS 2026 Paris Major prediction group! Code: ${myGroup.id}`); setGrpCopied(true); setTimeout(()=>setGrpCopied(false),2000); }}
-                      style={{ padding:"5px 14px",borderRadius:6,border:`1px solid ${grpCopied?"rgba(0,255,136,0.4)":"rgba(255,255,255,0.1)"}`,background:grpCopied?"rgba(0,255,136,0.1)":"rgba(255,255,255,0.04)",color:grpCopied?C.green:C.muted,fontFamily:F.main,fontWeight:700,fontSize:11,cursor:"pointer",letterSpacing:1,transition:"all 0.2s" }}>
-                      {grpCopied?"✓ Copied!":"Copy Invite"}
-                    </button>
+              {/* Invite link share box */}
+              <div style={{ background:"rgba(8,8,28,0.9)",border:"1px solid rgba(107,53,255,0.25)",borderRadius:12,padding:"14px 18px",marginBottom:20 }}>
+                <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:1,textTransform:"uppercase",marginBottom:10 }}>🔗 Invite Link</div>
+                <div style={{ display:"flex",alignItems:"center",gap:8,flexWrap:"wrap" }}>
+                  <div style={{ flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:7,padding:"7px 12px",fontSize:11,color:C.dim,fontFamily:"monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",minWidth:0 }}>
+                    {myGroup.invite_token ? `${INVITE_BASE}/${myGroup.invite_token}` : "Token not yet generated — run DB migration"}
                   </div>
+                  <button onClick={()=>{ if(!myGroup.invite_token)return; navigator.clipboard.writeText(`${INVITE_BASE}/${myGroup.invite_token}`); setInviteCopied(true); setTimeout(()=>setInviteCopied(false),2000); }}
+                    disabled={!myGroup.invite_token}
+                    style={{ padding:"7px 16px",borderRadius:7,border:`1px solid ${inviteCopied?"rgba(0,255,136,0.4)":"rgba(107,53,255,0.4)"}`,background:inviteCopied?"rgba(0,255,136,0.1)":"rgba(107,53,255,0.1)",color:inviteCopied?C.green:C.purple,fontFamily:F.main,fontWeight:700,fontSize:11,cursor:myGroup.invite_token?"pointer":"default",letterSpacing:1,transition:"all 0.2s",flexShrink:0,opacity:myGroup.invite_token?1:0.4 }}>
+                    {inviteCopied?"✓ Copied!":"📋 Copy Link"}
+                  </button>
+                  {isAdmin&&myGroup.invite_token&&(
+                    <button onClick={()=>{ if(window.confirm("Regenerate the invite link? The old link will stop working immediately."))handleRegenerateInviteToken(myGroup.id); }}
+                      style={{ padding:"7px 12px",borderRadius:7,border:"1px solid rgba(232,0,29,0.3)",background:"rgba(232,0,29,0.08)",color:C.red,fontFamily:F.main,fontWeight:700,fontSize:11,cursor:"pointer",letterSpacing:0.5,flexShrink:0 }}>
+                      ↻ Regenerate
+                    </button>
+                  )}
                 </div>
-                <div style={{ fontSize:10,color:C.dim,fontFamily:F.main,letterSpacing:1 }}>Share the code + your group password with friends</div>
+                <div style={{ fontSize:10,color:C.dim,fontFamily:F.main,letterSpacing:0.5,marginTop:8 }}>Anyone with this link joins with one click — no password needed</div>
               </div>
 
               {/* Group leaderboard */}
@@ -1734,9 +1785,19 @@ export default function App() {
                             Code: <span style={{ color:C.white }}>{g.id}</span> · {members.length} member{members.length!==1?"s":""} · {new Date(g.created_at).toLocaleDateString()}
                           </div>
                         </div>
-                        <button onClick={()=>{ navigator.clipboard.writeText(g.id); }}
+                        <button onClick={()=>{ navigator.clipboard.writeText(g.id); toast("Code copied","info"); }}
                           style={{ padding:"4px 10px",borderRadius:6,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.04)",color:C.muted,fontFamily:F.main,fontWeight:700,fontSize:11,cursor:"pointer",letterSpacing:0.5 }}>
-                          Copy Code
+                          Code
+                        </button>
+                        {g.invite_token&&(
+                          <button onClick={()=>{ navigator.clipboard.writeText(`${INVITE_BASE}/${g.invite_token}`); toast("Invite link copied","success"); }}
+                            style={{ padding:"4px 10px",borderRadius:6,border:"1px solid rgba(107,53,255,0.3)",background:"rgba(107,53,255,0.08)",color:C.purple,fontFamily:F.main,fontWeight:700,fontSize:11,cursor:"pointer",letterSpacing:0.5 }}>
+                            🔗 Link
+                          </button>
+                        )}
+                        <button onClick={()=>{ if(window.confirm(`Regenerate invite link for "${g.name}"?`))handleRegenerateInviteToken(g.id); }}
+                          style={{ padding:"4px 10px",borderRadius:6,border:"1px solid rgba(232,0,29,0.2)",background:"rgba(232,0,29,0.06)",color:C.red,fontFamily:F.main,fontWeight:700,fontSize:11,cursor:"pointer",letterSpacing:0.5 }}>
+                          ↻
                         </button>
                         <button onClick={()=>handleDeleteGroup(g.id)}
                           style={{ padding:"4px 10px",borderRadius:6,border:"1px solid rgba(232,0,29,0.3)",background:"rgba(232,0,29,0.1)",color:C.red,fontFamily:F.main,fontWeight:700,fontSize:11,cursor:"pointer" }}>
@@ -1909,6 +1970,40 @@ export default function App() {
         )}
       </div>
 
+      {/* JOIN GROUP MODAL — triggered by invite link */}
+      {joinGroup&&authId&&(
+        <div onClick={()=>{ if(!joinLoading){ setJoinGroup(null); setPendingJoinToken(null); sessionStorage.removeItem("rlcs_pending_join"); }}} style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:210,display:"flex",alignItems:"center",justifyContent:"center",padding:20 }}>
+          <div onClick={e=>e.stopPropagation()} style={{ background:"rgba(8,8,28,0.98)",border:"1px solid rgba(107,53,255,0.35)",borderRadius:16,padding:32,width:"100%",maxWidth:360,boxShadow:"0 0 60px rgba(107,53,255,0.15)",textAlign:"center" }}>
+            <div style={{ fontSize:36,marginBottom:12 }}>🏠</div>
+            <div style={{ fontSize:18,fontWeight:700,fontFamily:F.main,color:C.white,letterSpacing:2,textTransform:"uppercase",marginBottom:8 }}>Join Group?</div>
+            <div style={{ fontSize:15,color:C.muted,fontFamily:F.body,marginBottom:6 }}>
+              You've been invited to join
+            </div>
+            <div style={{ fontSize:20,fontWeight:700,fontFamily:F.main,color:C.white,letterSpacing:1,marginBottom:16 }}>{joinGroup.name}</div>
+            {myGroup&&myGroup.id!==joinGroup.id&&(
+              <div style={{ fontSize:11,color:"rgba(255,193,7,0.8)",fontFamily:F.main,letterSpacing:0.5,marginBottom:16,background:"rgba(255,193,7,0.06)",border:"1px solid rgba(255,193,7,0.15)",borderRadius:6,padding:"6px 10px" }}>
+                ⚠ You'll leave "{myGroup.name}"
+              </div>
+            )}
+            {myGroup&&myGroup.id===joinGroup.id&&(
+              <div style={{ fontSize:11,color:C.green,fontFamily:F.main,letterSpacing:0.5,marginBottom:16 }}>✓ You're already in this group</div>
+            )}
+            <div style={{ display:"flex",gap:8 }}>
+              <button onClick={()=>{ setJoinGroup(null); setPendingJoinToken(null); sessionStorage.removeItem("rlcs_pending_join"); }} disabled={joinLoading}
+                style={{ flex:1,padding:"11px 0",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,color:C.muted,fontFamily:F.main,fontWeight:700,fontSize:13,cursor:"pointer",letterSpacing:1 }}>
+                Cancel
+              </button>
+              {(!myGroup||myGroup.id!==joinGroup.id)&&(
+                <button onClick={handleJoinByToken} disabled={joinLoading}
+                  style={{ flex:2,padding:"11px 0",background:joinLoading?"rgba(107,53,255,0.4)":`linear-gradient(90deg, ${C.purple}, #5025CC)`,border:"none",borderRadius:8,color:C.white,fontFamily:F.main,fontWeight:700,fontSize:13,cursor:joinLoading?"default":"pointer",letterSpacing:1,textTransform:"uppercase" }}>
+                  {joinLoading?"Joining…":"Join Group →"}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* CHANGE GROUP MODAL */}
       {changeGroupModal&&(
         <div onClick={()=>setChangeGroupModal(false)} style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20 }}>
@@ -1918,6 +2013,9 @@ export default function App() {
               {myGroup ? `Currently in: ${myGroup.name}` : "Currently in: Public"}<br/>Enter the code and password for your new group.
             </div>
             <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
+              <div style={{ background:"rgba(255,193,7,0.06)",border:"1px solid rgba(255,193,7,0.2)",borderRadius:8,padding:"8px 12px",fontSize:11,color:"rgba(255,193,7,0.85)",fontFamily:F.main,letterSpacing:0.5 }}>
+                ⚠ Legacy method — ask for an invite link for one-click joining
+              </div>
               <div>
                 <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:1,marginBottom:4,textTransform:"uppercase" }}>Group Code</div>
                 <input value={cgCode} onChange={e=>{ setCgCode(e.target.value); setCgMsg(null); }} placeholder="e.g. the-squad"
