@@ -119,7 +119,7 @@ const calcScore = (pred, result) => {
   if (pred.winner === result.winner) return 1;
   return 0;
 };
-const isLocked  = (m)   => new Date() >= new Date(m.startTime);
+const isLocked  = (m, now) => (now !== undefined ? now : Date.now()) >= new Date(m.lock_time ?? m.startTime);
 const fmtTime   = (iso) => new Date(iso).toLocaleString("en-US", { timeZone:"Asia/Riyadh", month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" });
 const timeAgo   = (iso) => { if(!iso)return"–"; const s=Math.floor((Date.now()-new Date(iso))/1000); if(s<60)return`${s}s ago`; const m=Math.floor(s/60); if(m<60)return`${m} min ago`; const h=Math.floor(m/60); if(h<24)return`${h} hr ago`; return`${Math.floor(h/24)}d ago`; };
 const teamStyle = (n)   => TEAMS[n] || { abbr:(n||"?").slice(0,3).toUpperCase(), color:"#888", bg:"#111", logo:null };
@@ -135,6 +135,31 @@ const inputStyle = (extra={}) => ({
   fontFamily:F.body,
   ...extra,
 });
+
+// ─── COUNTDOWN PILL ──────────────────────────────────────────────────────────
+function CountdownPill({ lockTime, now }) {
+  const ms = new Date(lockTime) - now;
+  if (ms <= 0) {
+    return (
+      <div style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.12)", borderRadius:20, padding:"2px 8px", fontSize:9, fontWeight:700, fontFamily:F.main, letterSpacing:0.5, color:"rgba(255,255,255,0.3)", whiteSpace:"nowrap" }}>
+        🔒 LOCKED
+      </div>
+    );
+  }
+  const totalSecs = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSecs / 3600);
+  const mins  = Math.floor((totalSecs % 3600) / 60);
+  const secs  = totalSecs % 60;
+  const urgent = ms < 3_600_000; // < 1 hour → red
+  const text = hours > 0
+    ? `Locks in ${hours}h ${String(mins).padStart(2,"0")}m`
+    : `${mins}m ${String(secs).padStart(2,"0")}s`;
+  return (
+    <div style={{ background: urgent ? "rgba(232,0,29,0.12)" : "rgba(255,255,255,0.05)", border: `1px solid ${urgent ? "rgba(232,0,29,0.4)" : "rgba(255,255,255,0.1)"}`, borderRadius:20, padding:"2px 8px", fontSize:9, fontWeight:700, fontFamily:F.main, letterSpacing:0.5, color: urgent ? C.red : C.muted, whiteSpace:"nowrap", transition:"color 0.3s, border-color 0.3s" }}>
+      {text}
+    </div>
+  );
+}
 
 // ─── TEAM BADGE ──────────────────────────────────────────────────────────────
 function TeamBadge({ name, size="sm" }) {
@@ -172,11 +197,11 @@ function TeamBadge({ name, size="sm" }) {
 }
 
 // ─── BRACKET MATCH CARD ───────────────────────────────────────────────────────
-function BracketCard({ match, result, pred, onClick, isSelected }) {
+function BracketCard({ match, result, pred, onClick, isSelected, now }) {
   const t1 = match.team1, t2 = match.team2;
   const res = result;
   const score = pred && res ? calcScore(pred, res) : null;
-  const locked = isLocked(match);
+  const locked = isLocked(match, now);
   const t1TBD = isTBDTeam(t1), t2TBD = isTBDTeam(t2);
 
   const borderColor = score===3 ? "rgba(0,255,136,0.4)" : score===1 ? "rgba(232,0,29,0.4)" : isSelected ? "rgba(0,102,255,0.6)" : "rgba(255,255,255,0.08)";
@@ -193,7 +218,7 @@ function BracketCard({ match, result, pred, onClick, isSelected }) {
       <div style={{ padding:"3px 10px", background:"rgba(4,4,20,0.9)", borderBottom:"1px solid rgba(255,255,255,0.06)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
         <span style={{ fontSize:9, color:C.muted, fontFamily:F.main, letterSpacing:2, textTransform:"uppercase" }}>{match.label}</span>
         {score !== null && <span style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:score===3?C.green:score===1?C.red:"rgba(255,255,255,0.3)" }}>+{score}pts</span>}
-        {locked && !res && score===null && <span style={{ fontSize:9, color:"rgba(255,255,255,0.2)", fontFamily:F.main }}>🔒</span>}
+        {score === null && !res && <CountdownPill lockTime={match.lock_time ?? match.startTime} now={now} />}
       </div>
       {/* Team 1 */}
       <div style={{ padding:"6px 10px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid rgba(255,255,255,0.04)", background:res?.winner===t1?"rgba(0,255,136,0.06)":"transparent", borderLeft:res?.winner===t1?`2px solid ${C.green}`:"2px solid transparent" }}>
@@ -294,7 +319,7 @@ function PredictPanel({ match, result, pred, onPredict, onClose }) {
 }
 
 // ─── PLAYOFFS BRACKET PAGE ────────────────────────────────────────────────────
-function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredict }) {
+function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredict, now }) {
   const [selected, setSelected] = useState(null);
 
   const byRound = (r) => playoffMatches.filter(m => m.round === r);
@@ -306,7 +331,7 @@ function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredic
       <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
         {matches.map(m => (
           <BracketCard key={m.id} match={m} result={results[m.id]} pred={predictions[playerId]?.[m.id]}
-            onClick={() => setSelected(selected === m.id ? null : m.id)} isSelected={selected === m.id} />
+            onClick={() => setSelected(selected === m.id ? null : m.id)} isSelected={selected === m.id} now={now} />
         ))}
       </div>
     </div>
@@ -366,10 +391,10 @@ function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredic
 }
 
 // ─── MATCH CARD (Group Stage) ─────────────────────────────────────────────────
-function MatchCard({ match, playerId, predictions, results, onPredict, onSetResult, isAdmin, readOnly }) {
+function MatchCard({ match, playerId, predictions, results, onPredict, onSetResult, isAdmin, readOnly, now }) {
   const pred   = predictions[playerId]?.[match.id];
   const result = results[match.id];
-  const locked = isLocked(match);
+  const locked = isLocked(match, now);
   const score  = (pred && result) ? calcScore(pred, result) : null;
   const t1 = teamStyle(match.team1), t2 = teamStyle(match.team2);
   const [s1,  setS1]  = useState(pred?.score1??"");
@@ -393,9 +418,9 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
       onMouseLeave={()=>setHovered(false)}
       style={{ background:"linear-gradient(135deg, rgba(10,10,35,0.9), rgba(15,15,45,0.9))", border:`1px solid ${borderColor}`, borderRadius:8, padding:"14px 16px", position:"relative", transition:"all 0.2s", boxShadow:glowShadow }}
     >
-      {/* Score badge */}
+      {/* Score badge / countdown pill */}
       {score!==null&&<div style={{ position:"absolute",top:10,right:10,borderRadius:5,padding:"2px 9px",background:score===3?C.green:score===1?C.red:"rgba(100,100,150,0.4)",color:score===1?C.white:"#000",fontWeight:700,fontSize:11,fontFamily:F.main,letterSpacing:1 }}>+{score} PTS</div>}
-      {locked&&!result&&score===null&&!isAdmin&&<div style={{ position:"absolute",top:10,right:10,background:"rgba(255,255,255,0.06)",color:"rgba(255,255,255,0.25)",fontSize:10,borderRadius:5,padding:"2px 9px",fontFamily:F.main,letterSpacing:1 }}>🔒 LOCKED</div>}
+      {score===null&&!result&&!isAdmin&&!readOnly&&<div style={{ position:"absolute",top:10,right:10 }}><CountdownPill lockTime={match.lock_time??match.startTime} now={now} /></div>}
 
       {/* Match info */}
       <div style={{ fontSize:10,color:C.muted,marginBottom:10,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase" }}>
@@ -1015,6 +1040,10 @@ export default function App() {
   const myIdRef = useRef(authId);
   useEffect(()=>{ myIdRef.current=authId; },[authId]);
 
+  // ── Shared countdown clock — ONE interval for all match cards ──
+  const [now, setNow] = useState(()=>Date.now());
+  useEffect(()=>{ const iv=setInterval(()=>setNow(Date.now()),1000); return()=>clearInterval(iv); },[]);
+
   const pillRef = useRef(null);
   const [pillOpen,      setPillOpen]      = useState(false);
   const [cgShowPass,    setCgShowPass]    = useState(false);
@@ -1325,7 +1354,7 @@ export default function App() {
             <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
               {filteredGroupMatches.map(m=>(
                 <MatchCard key={m.id} match={m} playerId={isAdmin?null:authId} predictions={predictions}
-                  results={results} onPredict={handlePredict} onSetResult={handleSetResult} isAdmin={false} readOnly={isAdmin} />
+                  results={results} onPredict={handlePredict} onSetResult={handleSetResult} isAdmin={false} readOnly={isAdmin} now={now} />
               ))}
             </div>
           </div>
@@ -1334,7 +1363,7 @@ export default function App() {
         {/* PLAYOFFS */}
         {page==="playoffs"&&(
           <PlayoffsPage playoffMatches={playoffMatches} predictions={predictions} results={results}
-            playerId={isAdmin?null:authId} onPredict={handlePredict} />
+            playerId={isAdmin?null:authId} onPredict={handlePredict} now={now} />
         )}
 
         {/* MY GROUP */}
