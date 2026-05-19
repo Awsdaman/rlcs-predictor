@@ -327,59 +327,160 @@ function PredictPanel({ match, result, pred, onPredict, onClose }) {
 // ─── PLAYOFFS BRACKET PAGE ────────────────────────────────────────────────────
 function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredict, now }) {
   const [selected, setSelected] = useState(null);
-
   const byRound = (r) => playoffMatches.filter(m => m.round === r);
   const selectedMatch = playoffMatches.find(m => m.id === selected);
 
-  const renderSection = (label, matches) => (
-    <div style={{ marginBottom:16 }}>
-      <div style={{ fontSize:9, color:C.muted, fontFamily:F.main, letterSpacing:2, textTransform:"uppercase", marginBottom:6, paddingLeft:2 }}>{label}</div>
-      <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-        {matches.map(m => (
-          <BracketCard key={m.id} match={m} result={results[m.id]} pred={predictions[playerId]?.[m.id]}
-            onClick={() => setSelected(selected === m.id ? null : m.id)} isSelected={selected === m.id} now={now} />
-        ))}
-      </div>
+  const cp = (m) => ({
+    match: m, result: results[m.id], pred: predictions[playerId]?.[m.id],
+    onClick: () => setSelected(selected === m.id ? null : m.id),
+    isSelected: selected === m.id, now,
+  });
+
+  const ubqf = byRound("UBQF"); // 2 matches
+  const sf   = byRound("SF");   // 2 matches
+  const gf   = byRound("GF");   // 1 match
+  const lb1  = byRound("LBR1"); // 4 matches
+  const lb2  = byRound("LBR2"); // 2 matches
+  const lbqf = byRound("LBQF"); // 2 matches
+
+  // Layout constants
+  const COL = 192;        // card column width
+  const GAP = 28;         // connector gap between columns
+  const CARD_H = 78;      // approximate BracketCard height in px
+  const CARD_GAP = 10;    // gap between stacked cards
+  const LABEL_H = 24;     // round label height
+
+  // LBR2 vertical alignment: each card centers between a pair in LBR1
+  // LBR2[0] top = (CARD_H + CARD_GAP) / 2 from column top (after label)
+  const lb2_mt0 = (CARD_H + CARD_GAP) / 2;  // = 44
+  // Gap between LBR2[0] bottom and LBR2[1] top = 2*(CARD_H+CARD_GAP) - CARD_H
+  const lb2_gap = 2 * (CARD_H + CARD_GAP) - CARD_H; // = 98
+
+  // Pixel positions of LBR2 card centers (from top of that column, after label)
+  const lb2_c0 = LABEL_H + lb2_mt0 + CARD_H / 2;                       // ≈ 107
+  const lb2_c1 = LABEL_H + lb2_mt0 + CARD_H + lb2_gap + CARD_H / 2;   // ≈ 283
+
+  // UB SF cards should align visually with LB LBQF cards —
+  // both are in col 2, so UB SF starts at same y offset as LBQF.
+  // UBQF (col 1 of UB) uses same spacing as lb2 logic:
+  const ubqf_mt0 = lb2_mt0;
+  const ubqf_gap = lb2_gap;
+  const ubqf_c0 = lb2_c0;
+  const ubqf_c1 = lb2_c1;
+
+  const roundLbl = (text, color) => (
+    <div style={{ height: LABEL_H, display:"flex", alignItems:"center", fontSize:9, fontWeight:700, color: color||C.muted, fontFamily:F.main, letterSpacing:2, textTransform:"uppercase" }}>
+      {text}
+    </div>
+  );
+
+  // Vertical connector lines between two columns (absolute-positioned lines at given y-positions)
+  const vConn = (y0, y1) => (
+    <div style={{ width:GAP, flexShrink:0, position:"relative", alignSelf:"stretch" }}>
+      <div style={{ position:"absolute", left:0, right:0, top: y0, height:1, background:"rgba(255,255,255,0.15)" }} />
+      {y1 !== undefined && <div style={{ position:"absolute", left:0, right:0, top: y1, height:1, background:"rgba(255,255,255,0.15)" }} />}
+    </div>
+  );
+
+  // Single horizontal connector
+  const hConn = () => (
+    <div style={{ width:GAP, flexShrink:0, position:"relative", alignSelf:"stretch" }}>
+      <div style={{ position:"absolute", left:0, right:0, top:"50%", height:1, background:"rgba(255,255,255,0.18)" }} />
     </div>
   );
 
   return (
     <div>
-      <div style={{ fontSize:10, color:C.muted, marginBottom:16, fontFamily:F.main, letterSpacing:2, textTransform:"uppercase" }}>
+      <div style={{ fontSize:10, color:C.muted, marginBottom:20, fontFamily:F.main, letterSpacing:2, textTransform:"uppercase" }}>
         Playoffs · May 22–24 · All Bo7 · Click any match to predict
       </div>
 
       <div style={{ overflowX:"auto", paddingBottom:8 }}>
-        <div style={{ display:"flex", gap:0, minWidth:900, alignItems:"flex-start" }}>
+        <div style={{ minWidth: 960 }}>
 
-          <div style={{ flex:1 }}>
-            {renderSection("LB Round 1", byRound("LBR1"))}
-            {renderSection("UB Quarter Finals", byRound("UBQF"))}
+          {/* ── UPPER BRACKET ─────────────────────────────────── */}
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+            <div style={{ width: COL + GAP, flexShrink:0 }} />{/* align with LBR2 col */}
+            <div style={{ height:1, flex:1, background:"rgba(0,102,255,0.25)" }} />
+            <span style={{ fontSize:9, fontWeight:700, color:C.blue, fontFamily:F.main, letterSpacing:3, textTransform:"uppercase", flexShrink:0 }}>UPPER BRACKET</span>
+            <div style={{ height:1, flex:1, background:"rgba(0,102,255,0.25)" }} />
           </div>
 
-          <div style={{ width:24, display:"flex", alignItems:"center", justifyContent:"center", paddingTop:80 }}>
-            <div style={{ width:24, height:1, background:"rgba(255,255,255,0.1)" }} />
+          <div style={{ display:"flex", alignItems:"flex-start", marginBottom:28 }}>
+            {/* Spacer — UB starts at col 1, LBR1 is col 0 */}
+            <div style={{ width: COL + GAP, flexShrink:0 }} />
+
+            {/* UBQF */}
+            <div style={{ width:COL, flexShrink:0 }}>
+              {roundLbl("UB Quarter Finals", C.blue)}
+              <div style={{ marginTop: ubqf_mt0 }}><BracketCard {...cp(ubqf[0])} /></div>
+              <div style={{ marginTop: ubqf_gap }}><BracketCard {...cp(ubqf[1])} /></div>
+            </div>
+
+            {vConn(ubqf_c0, ubqf_c1)}
+
+            {/* SF */}
+            <div style={{ width:COL, flexShrink:0 }}>
+              {roundLbl("Semi Finals", C.blue)}
+              <div style={{ marginTop: ubqf_mt0 }}><BracketCard {...cp(sf[0])} /></div>
+              <div style={{ marginTop: ubqf_gap }}><BracketCard {...cp(sf[1])} /></div>
+            </div>
+
+            {hConn()}
+
+            {/* GF */}
+            <div style={{ width:COL, flexShrink:0, display:"flex", flexDirection:"column", justifyContent:"center", alignSelf:"stretch" }}>
+              {roundLbl("Grand Final 🏆", C.green)}
+              {gf.map(m => <BracketCard key={m.id} {...cp(m)} />)}
+            </div>
           </div>
 
-          <div style={{ flex:1 }}>
-            {renderSection("LB Round 2", byRound("LBR2"))}
-            {renderSection("LB Quarter Finals", byRound("LBQF"))}
+          {/* ── LOWER BRACKET ─────────────────────────────────── */}
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+            <div style={{ height:1, flex:1, background:"rgba(232,0,29,0.25)" }} />
+            <span style={{ fontSize:9, fontWeight:700, color:C.red, fontFamily:F.main, letterSpacing:3, textTransform:"uppercase", flexShrink:0 }}>LOWER BRACKET</span>
+            <div style={{ height:1, flex:1, background:"rgba(232,0,29,0.25)" }} />
           </div>
 
-          <div style={{ width:24, display:"flex", alignItems:"center", justifyContent:"center", paddingTop:60 }}>
-            <div style={{ width:24, height:1, background:"rgba(255,255,255,0.1)" }} />
-          </div>
+          <div style={{ display:"flex", alignItems:"flex-start" }}>
 
-          <div style={{ flex:1 }}>
-            {renderSection("Semi Finals", byRound("SF"))}
-          </div>
+            {/* LBR1 */}
+            <div style={{ width:COL, flexShrink:0 }}>
+              {roundLbl("LB Round 1", C.red)}
+              <div style={{ display:"flex", flexDirection:"column", gap:CARD_GAP }}>
+                {lb1.map(m => <BracketCard key={m.id} {...cp(m)} />)}
+              </div>
+            </div>
 
-          <div style={{ width:24, display:"flex", alignItems:"center", justifyContent:"center", paddingTop:40 }}>
-            <div style={{ width:24, height:1, background:"rgba(255,255,255,0.1)" }} />
-          </div>
+            {vConn(lb2_c0, lb2_c1)}
 
-          <div style={{ flex:1 }}>
-            {renderSection("Grand Final 🏆", byRound("GF"))}
+            {/* LBR2 */}
+            <div style={{ width:COL, flexShrink:0 }}>
+              {roundLbl("LB Round 2", C.red)}
+              <div style={{ marginTop: lb2_mt0 }}><BracketCard {...cp(lb2[0])} /></div>
+              <div style={{ marginTop: lb2_gap }}><BracketCard {...cp(lb2[1])} /></div>
+            </div>
+
+            {vConn(lb2_c0, lb2_c1)}
+
+            {/* LBQF */}
+            <div style={{ width:COL, flexShrink:0 }}>
+              {roundLbl("LB Quarter Finals", C.red)}
+              <div style={{ marginTop: lb2_mt0 }}><BracketCard {...cp(lbqf[0])} /></div>
+              <div style={{ marginTop: lb2_gap }}><BracketCard {...cp(lbqf[1])} /></div>
+            </div>
+
+            {/* Arrow to GF */}
+            <div style={{ width:GAP, flexShrink:0, position:"relative", alignSelf:"stretch" }}>
+              <div style={{ position:"absolute", left:0, right:0, top: lb2_c0, height:1, background:"rgba(255,255,255,0.1)", borderTop:"1px dashed rgba(255,255,255,0.12)" }} />
+              <div style={{ position:"absolute", left:0, right:0, top: lb2_c1, height:1, background:"rgba(255,255,255,0.1)", borderTop:"1px dashed rgba(255,255,255,0.12)" }} />
+            </div>
+
+            <div style={{ width:COL, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", alignSelf:"stretch" }}>
+              <div style={{ textAlign:"center", fontSize:9, color:C.dim, fontFamily:F.main, letterSpacing:1, textTransform:"uppercase", lineHeight:1.8 }}>
+                ↑ Winners advance<br/>to Grand Final
+              </div>
+            </div>
           </div>
 
         </div>
