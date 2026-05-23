@@ -105,11 +105,11 @@ const DEFAULT_PLAYOFF = [
   { id:"p_lb2",   label:"LB ROUND 1 M2",      round:"LBR1", startTime:"2026-05-22T09:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
   { id:"p_lb3",   label:"LB ROUND 1 M3",      round:"LBR1", startTime:"2026-05-22T09:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
   { id:"p_lb4",   label:"LB ROUND 1 M4",      round:"LBR1", startTime:"2026-05-22T09:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_lb5",   label:"LB ROUND 2 M1",      round:"LBR2", startTime:"2026-05-22T13:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_lb6",   label:"LB ROUND 2 M2",      round:"LBR2", startTime:"2026-05-22T13:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_ubqf1", label:"UB QUARTER FINAL 1",  round:"UBQF", startTime:"2026-05-22T13:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_ubqf2", label:"UB QUARTER FINAL 2",  round:"UBQF", startTime:"2026-05-22T13:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_lbqf1", label:"LB QUARTER FINAL 1",  round:"LBQF", startTime:"2026-05-23T09:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
+  { id:"p_lb5",   label:"LB ROUND 2 M1",      round:"LBR2", startTime:"2026-05-23T15:30:00Z", team1:"TBD", team2:"TBD", bo:7 },
+  { id:"p_lb6",   label:"LB ROUND 2 M2",      round:"LBR2", startTime:"2026-05-23T16:45:00Z", team1:"TBD", team2:"TBD", bo:7 },
+  { id:"p_ubqf1", label:"UB QUARTER FINAL 1",  round:"UBQF", startTime:"2026-05-23T12:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
+  { id:"p_ubqf2", label:"UB QUARTER FINAL 2",  round:"UBQF", startTime:"2026-05-23T13:15:00Z", team1:"TBD", team2:"TBD", bo:7 },
+  { id:"p_lbqf1", label:"LB QUARTER FINAL 1",  round:"LBQF", startTime:"2026-05-24T12:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
   { id:"p_lbqf2", label:"LB QUARTER FINAL 2",  round:"LBQF", startTime:"2026-05-23T09:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
   { id:"p_sf1",   label:"SEMI FINAL 1",         round:"SF",   startTime:"2026-05-24T09:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
   { id:"p_sf2",   label:"SEMI FINAL 2",         round:"SF",   startTime:"2026-05-24T11:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
@@ -125,8 +125,10 @@ const calcScore = (pred, result) => {
   if (pred.winner === result.winner) return 1;
   return 0;
 };
-const isLocked  = (m, now) => (now !== undefined ? now : Date.now()) >= new Date(m.lock_time ?? m.startTime);
-const fmtTime   = (iso) => new Date(iso).toLocaleString("en-US", { timeZone:"Asia/Riyadh", month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" });
+// Lock time is always derived: startTime - 30 minutes. Never stored separately.
+const getLockTime = (m) => new Date(new Date(m.startTime).getTime() - 30 * 60 * 1000);
+const isLocked    = (m, now) => (now !== undefined ? now : Date.now()) >= getLockTime(m).getTime();
+const fmtTime     = (iso) => new Date(iso).toLocaleString("en-US", { timeZone:"Asia/Riyadh", month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" });
 const timeAgo   = (iso) => { if(!iso)return"–"; const s=Math.floor((Date.now()-new Date(iso))/1000); if(s<60)return`${s}s ago`; const m=Math.floor(s/60); if(m<60)return`${m} min ago`; const h=Math.floor(m/60); if(h<24)return`${h} hr ago`; return`${Math.floor(h/24)}d ago`; };
 const teamStyle = (n)   => TEAMS[n] || { abbr:(n||"?").slice(0,3).toUpperCase(), color:"#888", bg:"#111", logo:null };
 const isTBDTeam = (n)   => !n || n === "TBD";
@@ -203,7 +205,7 @@ function TeamBadge({ name, size="sm" }) {
 }
 
 // ─── BRACKET MATCH CARD ───────────────────────────────────────────────────────
-function BracketCard({ match, result, pred, onClick, isSelected, now }) {
+function BracketCard({ match, result, pred, onClick, isSelected, now, isAdmin }) {
   const t1 = match.team1, t2 = match.team2;
   const res = result;
   const score = pred && res ? calcScore(pred, res) : null;
@@ -221,10 +223,13 @@ function BracketCard({ match, result, pred, onClick, isSelected, now }) {
       boxShadow: glowShadow,
     }}>
       {/* Label bar */}
-      <div style={{ padding:"3px 10px", background:"rgba(4,4,20,0.9)", borderBottom:"1px solid rgba(255,255,255,0.06)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-        <span style={{ fontSize:9, color:C.muted, fontFamily:F.main, letterSpacing:2, textTransform:"uppercase" }}>{match.label}</span>
-        {score !== null && <span style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:score===3?C.green:score===1?C.red:"rgba(255,255,255,0.3)" }}>+{score}pts</span>}
-        {score === null && !res && <CountdownPill lockTime={match.lock_time ?? match.startTime} now={now} />}
+      <div style={{ padding:"3px 10px", background:"rgba(4,4,20,0.9)", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+          <span style={{ fontSize:9, color:C.muted, fontFamily:F.main, letterSpacing:2, textTransform:"uppercase" }}>{match.label}</span>
+          {score !== null && <span style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:score===3?C.green:score===1?C.red:"rgba(255,255,255,0.3)" }}>+{score}pts</span>}
+          {score === null && !res && <CountdownPill lockTime={getLockTime(match).toISOString()} now={now} />}
+        </div>
+        {isAdmin && <div style={{ fontSize:8, color:"rgba(255,100,0,0.6)", fontFamily:"monospace", marginTop:1 }}>⚙ UTC: {match.startTime} · Locks {fmtTime(getLockTime(match).toISOString())} KSA</div>}
       </div>
       {/* Team 1 */}
       <div style={{ padding:"6px 10px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid rgba(255,255,255,0.04)", background:res?.winner===t1?"rgba(0,255,136,0.06)":"transparent", borderLeft:res?.winner===t1?`2px solid ${C.green}`:"2px solid transparent" }}>
@@ -278,7 +283,9 @@ function PredictPanel({ match, result, pred, onPredict, onClose }) {
         <div style={{ fontSize:13, fontWeight:700, fontFamily:F.main, color:C.red, letterSpacing:2, textTransform:"uppercase" }}>{match.label} — Bo{match.bo}</div>
         <button onClick={onClose} style={{ background:"none", border:"none", color:C.muted, cursor:"pointer", fontSize:16 }}>✕</button>
       </div>
-      <div style={{ fontSize:10, color:C.dim, fontFamily:F.main, letterSpacing:1, marginBottom:12 }}>{fmtTime(match.startTime)} · KSA</div>
+      <div style={{ fontSize:10, color:C.dim, fontFamily:F.main, letterSpacing:1, marginBottom:12 }}>
+        Starts {fmtTime(match.startTime)} KSA · Locks {fmtTime(getLockTime(match).toISOString())} KSA
+      </div>
 
       {result ? (
         <div style={{ textAlign:"center", padding:"10px 0" }}>
@@ -325,7 +332,7 @@ function PredictPanel({ match, result, pred, onPredict, onClose }) {
 }
 
 // ─── PLAYOFFS BRACKET PAGE ────────────────────────────────────────────────────
-function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredict, now }) {
+function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredict, now, isAdmin }) {
   const [selected, setSelected] = useState(null);
   const byRound = (r) => playoffMatches.filter(m => m.round === r);
   const selectedMatch = playoffMatches.find(m => m.id === selected);
@@ -333,7 +340,7 @@ function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredic
   const cp = (m) => ({
     match: m, result: results[m.id], pred: predictions[playerId]?.[m.id],
     onClick: () => setSelected(selected === m.id ? null : m.id),
-    isSelected: selected === m.id, now,
+    isSelected: selected === m.id, now, isAdmin,
   });
 
   const ubqf = byRound("UBQF"); // 2 matches
@@ -527,12 +534,13 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
     >
       {/* Score badge / countdown pill */}
       {score!==null&&<div style={{ position:"absolute",top:10,right:10,borderRadius:5,padding:"2px 9px",background:score===3?C.green:score===1?C.red:"rgba(100,100,150,0.4)",color:score===1?C.white:"#000",fontWeight:700,fontSize:11,fontFamily:F.main,letterSpacing:1 }}>+{score} PTS</div>}
-      {score===null&&!result&&!isAdmin&&!readOnly&&<div style={{ position:"absolute",top:10,right:10 }}><CountdownPill lockTime={match.lock_time??match.startTime} now={now} /></div>}
+      {score===null&&!result&&!isAdmin&&!readOnly&&<div style={{ position:"absolute",top:10,right:10 }}><CountdownPill lockTime={getLockTime(match).toISOString()} now={now} /></div>}
 
       {/* Match info */}
-      <div style={{ fontSize:10,color:C.muted,marginBottom:10,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase" }}>
-        Group {match.group} · Bo5 · {fmtTime(match.startTime)} KSA
+      <div style={{ fontSize:10,color:C.muted,marginBottom:2,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase" }}>
+        Group {match.group} · Bo5 · Starts {fmtTime(match.startTime)} KSA · Locks {fmtTime(getLockTime(match).toISOString())} KSA
       </div>
+      {isAdmin&&<div style={{ fontSize:9,color:"rgba(255,100,0,0.6)",fontFamily:"monospace",letterSpacing:0,marginBottom:8 }}>⚙ UTC: {match.startTime}</div>}
 
       {/* Teams row */}
       <div style={{ display:"flex",alignItems:"center",gap:8 }}>
@@ -1508,7 +1516,7 @@ export default function App() {
         {/* PLAYOFFS */}
         {page==="playoffs"&&(
           <PlayoffsPage playoffMatches={playoffMatches} predictions={predictions} results={results}
-            playerId={isAdmin?null:authId} onPredict={handlePredict} now={now} />
+            playerId={isAdmin?null:authId} onPredict={handlePredict} now={now} isAdmin={isAdmin} />
         )}
 
         {/* MY GROUP */}
