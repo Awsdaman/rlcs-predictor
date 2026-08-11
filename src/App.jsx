@@ -148,6 +148,41 @@ const maxWins   = (m)   => ((m.bo || 5) === 7 ? 4 : 3);   // Bo5 → first to 3,
 const hasTBD    = (m)   => isTBDTeam(m.team1) || isTBDTeam(m.team2);
 const F = { main:"'Rajdhani', sans-serif", body:"'Inter', sans-serif" };
 
+// ─── SCORELINE RULES ─────────────────────────────────────────────────────────
+// A series ends the moment a team reaches maxWins, so exactly one side can hold
+// that number and the loser is strictly below it. 4–3 is a real Bo7; 3–3 is not
+// a scoreline that can exist.
+// The `max` attribute on a number input only gates the spinner — it does not
+// stop typing — so every entry point clamps through here instead.
+const clampScore = (raw, cap) => {
+  if (raw === "" || raw == null) return "";
+  const n = parseInt(raw, 10);
+  if (isNaN(n)) return "";
+  return String(Math.min(cap, Math.max(0, n)));
+};
+// Who the scoreline says won, or null while it is still undecided.
+const impliedWinner = (m, a, b) => {
+  const cap = maxWins(m);
+  const n1 = parseInt(a, 10), n2 = parseInt(b, 10);
+  if (n1 === cap && n2 !== cap) return m.team1;
+  if (n2 === cap && n1 !== cap) return m.team2;
+  return null;
+};
+// Applies a new score to one side and returns a legal pair: the edited side is
+// clamped, and if it just hit the cap the other side is pulled below it.
+const applyScore = (m, side, raw, s1, s2) => {
+  const cap = maxWins(m);
+  const v = clampScore(raw, cap);
+  let a = side === 1 ? v : s1;
+  let b = side === 2 ? v : s2;
+  if (parseInt(v, 10) === cap) {
+    if (side === 1 && parseInt(b, 10) === cap) b = String(cap - 1);
+    if (side === 2 && parseInt(a, 10) === cap) a = String(cap - 1);
+  }
+  return [a, b];
+};
+const numOrNull = (v) => { const n = parseInt(v, 10); return isNaN(n) ? null : n; };
+
 // ─── SHARED INPUT STYLE ───────────────────────────────────────────────────────
 const inputStyle = (extra={}) => ({
   background:"rgba(255,255,255,0.05)",
@@ -322,15 +357,33 @@ function PredictPanel({ match, result, pred, onPredict, onClose }) {
   const t1TBD = isTBDTeam(match.team1), t2TBD = isTBDTeam(match.team2);
   const [s1, setS1] = useState(pred?.score1 ?? "");
   const [s2, setS2] = useState(pred?.score2 ?? "");
-  const t1 = teamStyle(match.team1), t2 = teamStyle(match.team2);
 
   useEffect(() => { setS1(pred?.score1??""); setS2(pred?.score2??""); }, [pred?.score1, pred?.score2]);
 
-  const submit = (winner) => {
-    const n1=parseInt(s1), n2=parseInt(s2);
-    onPredict(match.id, { winner, score1:isNaN(n1)?null:n1, score2:isNaN(n2)?null:n2 });
+  const save = (winner, a, b) => onPredict(match.id, { winner, score1:numOrNull(a), score2:numOrNull(b) });
+
+  // Typing the winning score is the pick — no second step. Saves without closing
+  // so the loser's score can still be filled in.
+  const onScore = (side, raw) => {
+    const [a, b] = applyScore(match, side, raw, s1, s2);
+    setS1(a); setS2(b);
+    const w = impliedWinner(match, a, b);
+    if (w) save(w, a, b);
+  };
+
+  // Explicit pick still works (winner-only predictions are worth a point). If it
+  // contradicts a decided scoreline, flip the scores rather than storing a
+  // prediction whose winner and score disagree.
+  const pickWinner = (team) => {
+    let a = s1, b = s2;
+    const w = impliedWinner(match, a, b);
+    if (w && w !== team) { [a, b] = [b, a]; setS1(a); setS2(b); }
+    save(team, a, b);
     onClose();
   };
+
+  const cap = maxWins(match);
+  const liveWinner = impliedWinner(match, s1, s2) || pred?.winner || null;
 
   return (
     <div style={{ background:C.surface, border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"16px 18px", marginTop:12, boxShadow:"0 0 30px rgba(0,0,0,0.25)" }}>
@@ -358,28 +411,37 @@ function PredictPanel({ match, result, pred, onPredict, onClose }) {
         <div style={{ textAlign:"center", color:C.muted, fontFamily:F.main, fontSize:12, padding:"10px 0" }}>Teams TBD — predictions open once teams are set</div>
       ) : (
         <div>
-          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12, justifyContent:"center" }}>
-            <input type="number" min={0} max={maxWins(match)} value={s1} onChange={e=>setS1(e.target.value)} placeholder="–"
-              style={{ ...inputStyle({ width:48, textAlign:"center", fontSize:20, fontWeight:700, padding:"6px 0" }) }} />
+          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:6, justifyContent:"center" }}>
+            <span style={{ flex:1, textAlign:"right", fontSize:12, fontWeight:700, fontFamily:F.main, letterSpacing:0.5, color:liveWinner===match.team1?C.goldLight:C.muted }}>{match.team1}</span>
+            <input type="number" min={0} max={cap} value={s1} onChange={e=>onScore(1, e.target.value)} placeholder="–"
+              style={{ ...inputStyle({ ...NUM, width:52, textAlign:"center", fontSize:22, fontWeight:700, padding:"6px 0",
+                border:`1px solid ${liveWinner===match.team1?C.gold:"rgba(255,255,255,0.1)"}` }) }} />
             <span style={{ color:"rgba(255,255,255,0.15)", fontSize:18 }}>:</span>
-            <input type="number" min={0} max={maxWins(match)} value={s2} onChange={e=>setS2(e.target.value)} placeholder="–"
-              style={{ ...inputStyle({ width:48, textAlign:"center", fontSize:20, fontWeight:700, padding:"6px 0" }) }} />
+            <input type="number" min={0} max={cap} value={s2} onChange={e=>onScore(2, e.target.value)} placeholder="–"
+              style={{ ...inputStyle({ ...NUM, width:52, textAlign:"center", fontSize:22, fontWeight:700, padding:"6px 0",
+                border:`1px solid ${liveWinner===match.team2?C.gold:"rgba(255,255,255,0.1)"}` }) }} />
+            <span style={{ flex:1, textAlign:"left", fontSize:12, fontWeight:700, fontFamily:F.main, letterSpacing:0.5, color:liveWinner===match.team2?C.goldLight:C.muted }}>{match.team2}</span>
+          </div>
+          <div style={{ textAlign:"center", fontSize:10, fontFamily:F.main, letterSpacing:1, marginBottom:12,
+                        color: impliedWinner(match, s1, s2) ? C.gold : C.dim }}>
+            {impliedWinner(match, s1, s2)
+              ? `${impliedWinner(match, s1, s2)} wins — saved`
+              : `First to ${cap} wins the series`}
           </div>
           <div style={{ display:"flex", gap:8 }}>
-            {[{team:match.team1,t:t1},{team:match.team2,t:t2}].map(({team,t})=>(
-              <button key={team} onClick={()=>submit(team)} style={{
-                flex:1, padding:"9px 0", borderRadius:7, border:`1px solid ${pred?.winner===team?t.color:"rgba(255,255,255,0.1)"}`,
-                cursor:"pointer", fontFamily:F.main, fontWeight:700, fontSize:12, textTransform:"uppercase", letterSpacing:1,
-                background:pred?.winner===team?t.color:"rgba(255,255,255,0.04)",
-                color:pred?.winner===team?"#000":C.muted,
-                boxShadow:pred?.winner===team?`0 0 12px ${t.color}60`:"none",
-                transition:"all 0.15s",
+            {[match.team1, match.team2].map((team)=>(
+              <button key={team} onClick={()=>pickWinner(team)} style={{
+                flex:1, padding:"9px 0", borderRadius:7, border:`1px solid ${liveWinner===team?C.gold:"rgba(255,255,255,0.1)"}`,
+                cursor:"pointer", fontFamily:F.main, fontWeight:700, fontSize:12, letterSpacing:0.5,
+                background:liveWinner===team?C.gold:"rgba(255,255,255,0.04)",
+                color:liveWinner===team?"#151515":C.muted,
+                transition:"background 0.12s, border-color 0.12s",
               }}>
                 {team} wins
               </button>
             ))}
           </div>
-          {pred && <div style={{ marginTop:8, fontSize:10, color:C.dim, fontFamily:F.main, textAlign:"center", letterSpacing:1 }}>CURRENT: {pred.winner} {pred.score1!=null?`(${pred.score1}–${pred.score2})`:""}</div>}
+          {pred && <div style={{ marginTop:8, fontSize:10, color:C.dim, fontFamily:F.main, textAlign:"center", letterSpacing:1 }}>SAVED: {pred.winner} {pred.score1!=null?`(${pred.score1}–${pred.score2})`:""}</div>}
         </div>
       )}
     </div>
@@ -679,7 +741,6 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
   const locked = isLocked(match, now);
   const tbd    = hasTBD(match);
   const score  = (pred && result) ? calcScore(pred, result) : null;
-  const t1 = teamStyle(match.team1), t2 = teamStyle(match.team2);
   const [s1,  setS1]  = useState(pred?.score1??"");
   const [s2,  setS2]  = useState(pred?.score2??"");
   const [as1, setAs1] = useState(result?.score1??"");
@@ -689,8 +750,31 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
   useEffect(()=>{ setS1(pred?.score1??""); setS2(pred?.score2??""); },[pred?.score1,pred?.score2]);
   useEffect(()=>{ setAs1(result?.score1??""); setAs2(result?.score2??""); },[result?.score1,result?.score2]);
 
-  const submitPred=(winner)=>{ const n1=parseInt(s1),n2=parseInt(s2); onPredict(match.id,{winner,score1:isNaN(n1)?null:n1,score2:isNaN(n2)?null:n2}); };
-  const submitResult=()=>{ const n1=parseInt(as1),n2=parseInt(as2); if(isNaN(n1)||isNaN(n2))return; onSetResult(match.id,{winner:n1>n2?match.team1:match.team2,score1:n1,score2:n2}); };
+  const cap = maxWins(match);
+
+  // Reaching the winning score is the pick — same rule as the bracket panel.
+  const onScore = (side, raw) => {
+    const [a, b] = applyScore(match, side, raw, s1, s2);
+    setS1(a); setS2(b);
+    const w = impliedWinner(match, a, b);
+    if (w) onPredict(match.id, { winner:w, score1:numOrNull(a), score2:numOrNull(b) });
+  };
+  const submitPred = (winner) => {
+    let a = s1, b = s2;
+    const w = impliedWinner(match, a, b);
+    if (w && w !== winner) { [a, b] = [b, a]; setS1(a); setS2(b); }
+    onPredict(match.id, { winner, score1:numOrNull(a), score2:numOrNull(b) });
+  };
+
+  // Admin result entry obeys the same series length, so an impossible scoreline
+  // like a 5–2 Bo5 can't be recorded.
+  const onAdminScore = (side, raw) => {
+    const [a, b] = applyScore(match, side, raw, as1, as2);
+    setAs1(a); setAs2(b);
+  };
+  const submitResult=()=>{ const n1=parseInt(as1),n2=parseInt(as2); if(isNaN(n1)||isNaN(n2)||n1===n2)return; onSetResult(match.id,{winner:n1>n2?match.team1:match.team2,score1:n1,score2:n2}); };
+
+  const liveWinner = impliedWinner(match, s1, s2) || pred?.winner || null;
 
   const borderColor = score===3 ? "rgba(19,196,111,0.4)" : score===1 ? "rgba(190,158,89,0.4)" : score===0&&result ? "rgba(140,140,140,0.3)" : hovered ? "rgba(15,88,244,0.4)" : "rgba(255,255,255,0.08)";
   const glowShadow  = score===3 ? "0 0 15px rgba(19,196,111,0.2)" : score===1 ? "0 0 15px rgba(190,158,89,0.15)" : hovered && !result ? "0 0 20px rgba(15,88,244,0.15)" : "none";
@@ -724,11 +808,13 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
           <div style={{ display:"flex",alignItems:"center",gap:4,flexShrink:0 }}>
             {!locked&&playerId&&!readOnly&&!tbd?(
               <>
-                <input type="number" min={0} max={maxWins(match)} value={s1} onChange={e=>setS1(e.target.value)} placeholder="–"
-                  style={{ ...inputStyle({ width:36, textAlign:"center", fontSize:16, fontWeight:700, padding:"4px 0" }) }} />
+                <input type="number" min={0} max={cap} value={s1} onChange={e=>onScore(1, e.target.value)} placeholder="–"
+                  style={{ ...inputStyle({ ...NUM, width:38, textAlign:"center", fontSize:16, fontWeight:700, padding:"4px 0",
+                    border:`1px solid ${liveWinner===match.team1?C.gold:"rgba(255,255,255,0.1)"}` }) }} />
                 <span style={{ color:"rgba(255,255,255,0.08)" }}>:</span>
-                <input type="number" min={0} max={maxWins(match)} value={s2} onChange={e=>setS2(e.target.value)} placeholder="–"
-                  style={{ ...inputStyle({ width:36, textAlign:"center", fontSize:16, fontWeight:700, padding:"4px 0" }) }} />
+                <input type="number" min={0} max={cap} value={s2} onChange={e=>onScore(2, e.target.value)} placeholder="–"
+                  style={{ ...inputStyle({ ...NUM, width:38, textAlign:"center", fontSize:16, fontWeight:700, padding:"4px 0",
+                    border:`1px solid ${liveWinner===match.team2?C.gold:"rgba(255,255,255,0.1)"}` }) }} />
               </>
             ):(
               <span style={{ color:"rgba(255,255,255,0.08)",fontFamily:F.main,fontSize:14,padding:"0 8px" }}>vs</span>
@@ -748,13 +834,12 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
       {/* Win buttons */}
       {!locked&&!result&&playerId&&!readOnly&&!tbd&&(
         <div style={{ display:"flex",gap:6,marginTop:10 }}>
-          {[{team:match.team1,t:t1},{team:match.team2,t:t2}].map(({team,t})=>(
+          {[match.team1, match.team2].map((team)=>(
             <button key={team} onClick={()=>submitPred(team)} style={{
               flex:1, padding:"7px 0", borderRadius:7, cursor:"pointer", fontFamily:F.main, fontWeight:700, fontSize:11, letterSpacing:1, textTransform:"uppercase", transition:"all 0.15s",
-              background:pred?.winner===team?t.color:"rgba(255,255,255,0.04)",
-              border:`1px solid ${pred?.winner===team?t.color:"rgba(255,255,255,0.1)"}`,
-              color:pred?.winner===team?"#000":C.muted,
-              boxShadow:pred?.winner===team?`0 0 12px ${t.color}60`:"none",
+              background:liveWinner===team?C.gold:"rgba(255,255,255,0.04)",
+              border:`1px solid ${liveWinner===team?C.gold:"rgba(255,255,255,0.1)"}`,
+              color:liveWinner===team?"#151515":C.muted,
             }}>{team} wins</button>
           ))}
         </div>
@@ -781,10 +866,10 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
       {isAdmin&&!tbd&&(
         <div style={{ marginTop:10,paddingTop:10,borderTop:"1px solid rgba(255,255,255,0.06)",display:"flex",alignItems:"center",gap:6,flexWrap:"wrap" }}>
           <span style={{ fontSize:10,color:result?C.red:C.muted,fontFamily:F.main,letterSpacing:1 }}>{result?"✎ EDIT:":"SET:"}</span>
-          <input type="number" min={0} max={maxWins(match)} value={as1} onChange={e=>setAs1(e.target.value)} placeholder="T1"
+          <input type="number" min={0} max={cap} value={as1} onChange={e=>onAdminScore(1, e.target.value)} placeholder="T1"
             style={{ ...inputStyle({ width:42, fontSize:13, padding:"4px 6px", border:`1px solid ${result?"rgba(190,158,89,0.4)":"rgba(255,255,255,0.1)"}` }) }} />
           <span style={{ color:"rgba(255,255,255,0.1)" }}>–</span>
-          <input type="number" min={0} max={maxWins(match)} value={as2} onChange={e=>setAs2(e.target.value)} placeholder="T2"
+          <input type="number" min={0} max={cap} value={as2} onChange={e=>onAdminScore(2, e.target.value)} placeholder="T2"
             style={{ ...inputStyle({ width:42, fontSize:13, padding:"4px 6px", border:`1px solid ${result?"rgba(190,158,89,0.4)":"rgba(255,255,255,0.1)"}` }) }} />
           <button onClick={submitResult} style={{ padding:"5px 12px",borderRadius:5,border:"none",cursor:"pointer",background:GOLD_GRAD,color:"#232327",fontFamily:F.main,fontWeight:700,fontSize:11,letterSpacing:1 }}>{result?"UPDATE ✓":"SET ✓"}</button>
           {result&&<button onClick={()=>onSetResult(match.id,null)} style={{ padding:"5px 10px",borderRadius:5,border:`1px solid rgba(244,15,48,0.35)`,cursor:"pointer",background:"rgba(244,15,48,0.1)",color:C.red,fontFamily:F.main,fontWeight:700,fontSize:11 }}>CLEAR ✕</button>}

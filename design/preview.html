@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EWC 2026 Predictor — current design</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin:0; }
+
+  :root{
+    --gold:#C8A86A; --gold-light:#F2C575; --gold-dark:#987C4B;
+    --orange:#FF5A1F; --red:#F4425C; --blue:#5B8CFF; --green:#3ECF8E;
+    --bg:#1A1A1D; --bg-deep:#141417; --surface:#232327; --surface-hi:#2C2C31;
+    --line:rgba(255,255,255,0.10); --line-soft:rgba(255,255,255,0.06);
+    --white:#F7F7F8; --muted:#A0A0A6; --dim:#6E6E76;
+    --conn:rgba(200,168,106,0.34);
+    --f-main:'Rajdhani',sans-serif; --f-body:'Inter',sans-serif;
+    --card-w:320px;
+  }
+
+  body{
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(200,168,106,0.10) 0%, transparent 60%),
+      linear-gradient(180deg,#1A1A1D 0%,#141417 100%);
+    background-attachment: fixed;
+    color:var(--white); font-family:var(--f-body); min-height:100vh;
+  }
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-track{background:var(--bg-deep)}
+  ::-webkit-scrollbar-thumb{background:var(--gold-dark);border-radius:4px}
+
+  /* ── chrome ─────────────────────────────────────────────── */
+  .hdr{position:sticky;top:0;z-index:50;background:rgba(20,20,23,0.94);
+       backdrop-filter:blur(20px);border-bottom:1px solid rgba(200,168,106,0.35);padding:16px 20px}
+  .hdr-in{max-width:1440px;margin:0 auto}
+  .wordmark{font-family:var(--f-main);font-size:20px;font-weight:700;letter-spacing:3px;
+            text-transform:uppercase;
+            background:linear-gradient(90deg,var(--white) 0%,var(--gold-light) 55%,var(--gold) 100%);
+            -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .subline{font-family:var(--f-main);font-size:10px;color:var(--muted);letter-spacing:3px;
+           text-transform:uppercase;margin-top:2px}
+  .nav{display:flex;gap:2px;flex-wrap:wrap;margin-top:12px}
+  .nav button{padding:7px 14px;border:none;border-bottom:2px solid transparent;background:none;
+              color:var(--muted);font-family:var(--f-main);font-weight:700;font-size:12px;
+              letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border-radius:6px 6px 0 0}
+  .nav button.on{background:rgba(200,168,106,0.12);color:var(--gold-light);border-bottom-color:var(--gold)}
+
+  .wrap{max-width:1440px;margin:0 auto;padding:24px 20px 60px}
+
+  .section-note{font-family:var(--f-main);font-size:10px;color:var(--muted);letter-spacing:2px;
+                text-transform:uppercase;margin:0 0 20px}
+  .section-note em{color:var(--gold);font-style:normal}
+
+  .toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;
+           flex-wrap:wrap;margin-bottom:16px}
+  .pill{padding:8px 22px;border-radius:7px;border:1px solid var(--line);background:rgba(255,255,255,0.04);
+        color:var(--muted);font-family:var(--f-main);font-weight:700;font-size:12px;
+        letter-spacing:1.5px;text-transform:uppercase;cursor:pointer}
+  .pill.on{border-color:transparent;color:#151515;
+           background:linear-gradient(135deg,var(--gold-light) 0%,var(--gold) 45%,var(--gold-dark) 100%)}
+  .seg{display:flex;gap:3px;background:var(--surface);border:1px solid var(--line);
+       border-radius:9px;padding:3px}
+  .seg button{padding:6px 16px;border:none;border-radius:6px;background:none;color:var(--muted);
+              font-family:var(--f-main);font-weight:700;font-size:11px;letter-spacing:1.5px;
+              text-transform:uppercase;cursor:pointer}
+  .seg button.on{background:rgba(200,168,106,0.16);color:var(--gold)}
+
+  .banner{display:flex;align-items:center;gap:14px;margin:0 0 6px}
+  .banner span{font-family:var(--f-main);font-size:10px;font-weight:700;letter-spacing:2.4px;
+               text-transform:uppercase;flex-shrink:0}
+  .banner .rule{height:1px;flex:1;background:var(--line-soft)}
+
+  /* ── bracket geometry ───────────────────────────────────── */
+  .scroller{overflow-x:auto;padding-bottom:8px}
+  .bracket{display:flex;align-items:stretch;min-width:900px}
+  .round{display:flex;flex-direction:column;flex:0 0 var(--card-w);width:var(--card-w)}
+  .round.narrow{flex-basis:104px;width:104px}
+  .round-hd{height:38px;display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:8px}
+  .round-hd b{font-family:var(--f-main);font-size:10px;font-weight:700;letter-spacing:1.6px;
+              text-transform:uppercase;color:var(--gold)}
+  .round-hd i{font-family:var(--f-main);font-size:9px;font-style:normal;color:var(--dim);
+              letter-spacing:1.2px;text-transform:uppercase;margin-top:3px}
+  .round-body{flex:1;display:flex;flex-direction:column}
+  /* NOTE: no gap — see tokens.md. Slots space with symmetric padding so centres stay exact. */
+  .slot{flex:1;display:flex;align-items:center;min-height:0;padding:7px 0}
+
+  .conn{flex:1;min-width:44px;display:flex;flex-direction:column}
+  .conn .round-hd{height:38px}
+  .elbow{flex:1;position:relative;min-height:0}
+  .elbow i{position:absolute;background:var(--conn);font-style:normal}
+  .elbow .in-a {left:0;width:50%;top:25%;height:1px}
+  .elbow .in-b {left:0;width:50%;top:75%;height:1px}
+  .elbow .vert {left:50%;width:1px;top:25%;height:50%}
+  .elbow .out  {left:50%;width:50%;top:50%;height:1px}
+  .straight{flex:1;position:relative;min-height:0}
+  .straight i{position:absolute;left:0;right:0;top:50%;height:1px;background:var(--conn)}
+
+  /* ── match card ─────────────────────────────────────────── */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:6px;overflow:hidden;
+        cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.25);width:100%}
+  .card:hover{background:var(--surface-hi);border-color:rgba(200,168,106,0.45)}
+  .card.sel{border-color:var(--gold);box-shadow:0 6px 18px rgba(0,0,0,0.35)}
+  .card.win3{border-color:var(--green)}
+  .card.win1{border-color:var(--red)}
+  .card-hd{padding:7px 14px;background:rgba(0,0,0,0.18);border-bottom:1px solid var(--line-soft);
+           display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .card-hd .lbl{font-family:var(--f-main);font-size:9.5px;font-weight:700;letter-spacing:1.4px;
+                text-transform:uppercase;color:var(--dim);white-space:nowrap;overflow:hidden;
+                text-overflow:ellipsis}
+  .card.sel .card-hd .lbl{color:var(--gold)}
+  .pts{font-family:var(--f-main);font-size:9.5px;font-weight:700;letter-spacing:1px;flex-shrink:0}
+  .pts.p3{color:var(--green)} .pts.p1{color:var(--gold)} .pts.p0{color:var(--dim)}
+
+  .chip{border-radius:20px;padding:2px 8px;font-family:var(--f-main);font-size:9px;font-weight:700;
+        letter-spacing:0.5px;white-space:nowrap;border:1px solid var(--line);
+        background:rgba(255,255,255,0.05);color:var(--muted)}
+  .chip.urgent{color:var(--red);border-color:rgba(244,66,92,0.4);background:rgba(244,66,92,0.12)}
+  .chip.live{color:var(--orange);border-color:rgba(255,90,31,0.5);background:rgba(255,90,31,0.15);
+             animation:pulse 1.4s ease-in-out infinite}
+  .chip.locked{color:rgba(255,255,255,0.3)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+
+  .trow{padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .trow + .trow{border-top:1px solid var(--line-soft)}
+  .trow.won{background:rgba(200,168,106,0.07)}
+  .trow-l{display:flex;align-items:center;gap:11px;min-width:0}
+  .gutter{width:3px;height:22px;border-radius:2px;background:transparent;flex-shrink:0}
+  .trow.won .gutter{background:var(--gold)}
+  .logo{width:26px;height:26px;border-radius:4px;display:flex;align-items:center;justify-content:center;
+        font-family:var(--f-main);font-size:9px;font-weight:700;flex-shrink:0}
+  .logo.tbd{border:1px dashed var(--line-soft);background:none}
+  .tname{font-family:var(--f-main);font-size:13.5px;font-weight:700;letter-spacing:0.3px;
+         white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--white)}
+  .trow.won .tname{color:var(--gold-light)}
+  .trow.lost .tname{color:var(--muted)} .trow.lost .logo{opacity:.5}
+  .tname.tbd{color:var(--dim)}
+  .trow-r{display:flex;align-items:center;gap:9px;flex-shrink:0}
+  .score{font-family:var(--f-main);font-size:20px;font-weight:700;line-height:1;
+         font-variant-numeric:tabular-nums;color:var(--dim)}
+  .trow.won .score{color:var(--gold-light)}
+  .pick{font-family:var(--f-main);font-size:9px;font-weight:700;letter-spacing:1px;color:var(--gold);
+        border:1px solid rgba(200,168,106,0.45);border-radius:3px;padding:2px 6px}
+
+  .qualify{border:1px solid rgba(200,168,106,0.38);border-radius:4px;padding:8px 10px;text-align:center;
+           background:rgba(200,168,106,0.06);width:100%}
+  .qualify div{font-family:var(--f-main);font-size:9px;font-weight:700;color:var(--gold);
+               letter-spacing:1.2px;text-transform:uppercase}
+
+  /* ── predict panel ──────────────────────────────────────── */
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;
+         margin-top:12px;max-width:520px}
+  .panel-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .panel-hd b{font-family:var(--f-main);font-size:13px;font-weight:700;color:var(--gold);
+              letter-spacing:2px;text-transform:uppercase}
+  .panel-meta{font-family:var(--f-main);font-size:10px;color:var(--dim);letter-spacing:1px;margin-bottom:12px}
+  .scores{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:12px}
+  .scores input{width:48px;text-align:center;font-size:20px;font-weight:700;padding:6px 0;
+                background:rgba(255,255,255,0.05);border:1px solid var(--line);border-radius:7px;
+                color:var(--white);font-family:var(--f-body)}
+  .winbtns{display:flex;gap:8px}
+  .winbtns button{flex:1;padding:9px 0;border-radius:7px;border:1px solid var(--line);
+                  background:rgba(255,255,255,0.04);color:var(--muted);font-family:var(--f-main);
+                  font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:1px;cursor:pointer}
+  .winbtns button.on{background:var(--gold);border-color:var(--gold);color:#151515}
+
+  /* ── schedule list card ─────────────────────────────────── */
+  .day-hd{display:flex;align-items:center;gap:12px;margin:0 0 12px}
+  .day-hd b{font-family:var(--f-main);font-size:12px;font-weight:700;color:var(--gold);
+            letter-spacing:2.5px;text-transform:uppercase}
+  .day-hd .rule{height:1px;flex:1;background:var(--line-soft)}
+  .day-hd i{font-family:var(--f-main);font-size:9px;font-style:normal;color:var(--dim);letter-spacing:1.5px}
+  .mcard{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;
+         position:relative;margin-bottom:8px}
+  .mcard .meta{font-family:var(--f-main);font-size:10px;color:var(--muted);letter-spacing:2px;
+               text-transform:uppercase;margin-bottom:8px}
+  .mcard .teams{display:flex;align-items:center;gap:8px}
+  .mcard .side{flex:1;display:flex;align-items:center;gap:8px}
+  .mcard .side.r{justify-content:flex-end}
+  .mcard .biglogo{width:36px;height:36px;border-radius:7px;display:flex;align-items:center;
+                  justify-content:center;font-family:var(--f-main);font-weight:700;font-size:11px;flex-shrink:0}
+  .mcard .bigname{font-family:var(--f-main);font-size:11px;font-weight:700;letter-spacing:1px;
+                  text-transform:uppercase}
+  .vs{font-family:var(--f-main);color:rgba(255,255,255,0.15);font-size:14px;padding:0 8px}
+
+  /* ── standings ──────────────────────────────────────────── */
+  .lb{background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:14px 18px;
+      margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+  .lb.first{background:linear-gradient(135deg,rgba(200,168,106,0.15),var(--surface));
+            border-color:rgba(200,168,106,0.3)}
+  .lb.me{border-color:rgba(91,140,255,0.3)}
+  .lb-l{display:flex;align-items:center;gap:14px}
+  .rank{font-size:22px;width:30px;text-align:center;font-family:var(--f-main);font-weight:700;color:var(--dim)}
+  .lb-name{font-family:var(--f-main);font-size:15px;font-weight:700;text-transform:uppercase;
+           letter-spacing:1px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .tag{font-size:9px;padding:1px 7px;border-radius:4px;letter-spacing:1px;font-weight:600}
+  .tag.you{color:var(--blue);background:rgba(91,140,255,0.2);border:1px solid rgba(91,140,255,0.4)}
+  .tag.grp{color:var(--gold);background:rgba(200,168,106,0.15);border:1px solid rgba(200,168,106,0.3)}
+  .lb-sub{font-family:var(--f-main);font-size:10px;color:var(--muted);margin-top:2px;letter-spacing:1px}
+  .lb-pts{font-family:var(--f-main);font-size:30px;font-weight:700;font-variant-numeric:tabular-nums}
+  .lb-pts span{font-size:12px;color:var(--muted);margin-left:4px;letter-spacing:1px}
+
+  h2.demo{font-family:var(--f-main);font-size:11px;letter-spacing:3px;text-transform:uppercase;
+          color:var(--dim);margin:44px 0 14px;padding-top:24px;border-top:1px solid var(--line-soft)}
+  .states{display:flex;flex-wrap:wrap;gap:14px}
+  .states .card{width:var(--card-w)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-in">
+    <div class="wordmark">EWC 2026 · Rocket League</div>
+    <div class="subline">Aug 12–16 · Riyadh · $1,000,000 · 16 Teams</div>
+    <div class="nav">
+      <button class="on">Group Stage</button>
+      <button>Playoffs</button>
+      <button>My Group</button>
+      <button>Standings</button>
+      <button>Others' Picks</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="toolbar">
+    <div style="display:flex;gap:8px">
+      <button class="pill on">Group A</button>
+      <button class="pill">Group B</button>
+    </div>
+    <div class="seg"><button class="on">Bracket</button><button>Schedule</button></div>
+  </div>
+
+  <p class="section-note">Group A · Aug 12–14 · All Bo5 · Top 4 advance · <em>Click any match to predict</em></p>
+
+  <!-- ══ UPPER BRACKET ══ -->
+  <div class="banner"><span style="color:var(--gold)">Upper Bracket</span><div class="rule"></div></div>
+  <div class="scroller">
+    <div class="bracket" style="margin-bottom:38px">
+
+      <div class="round">
+        <div class="round-hd"><b>Quarter Finals</b><i>Aug 12</i></div>
+        <div class="round-body">
+          <!-- finished + exact score -->
+          <div class="slot">
+            <div class="card win3">
+              <div class="card-hd"><span class="lbl">UB Quarter Final 1</span><span class="pts p3">+3</span></div>
+              <div class="trow won"><div class="trow-l"><div class="gutter"></div>
+                <div class="logo" style="background:#1a0010;border:1px solid #FF3D6E44;color:#FF3D6E">TM</div>
+                <div class="tname">Twisted Minds</div></div>
+                <div class="trow-r"><div class="score">3</div></div></div>
+              <div class="trow lost"><div class="trow-l"><div class="gutter"></div>
+                <div class="logo" style="background:#1a0000;border:1px solid #C8102E44;color:#C8102E">FUT</div>
+                <div class="tname">FUT Esports</div></div>
+                <div class="trow-r"><div class="score">1</div></div></div>
+            </div>
+          </div>
+          <!-- finished + winner only -->
+          <div class="slot">
+            <div class="card win1">
+              <div class="card-hd"><span class="lbl">UB Quarter Final 2</span><span class="pts p1">+1</span></div>
+              <div class="trow lost"><div class="trow-l"><div class="gutter"></div>
+                <div class="logo" style="background:#0d1a00;border:1px solid #96BF4844;color:#96BF48">SR</div>
+                <div class="tname">Shopify Rebellion</div></div>
+                <div class="trow-r"><div class="score">2</div></div></div>
+              <div class="trow won"><div class="trow-l"><div class="gutter"></div>
+                <div class="logo" style="background:#0d1400;border:1px solid #CCFF0044;color:#CCFF00">NIP</div>
+                <div class="tname">Ninjas in Pyjamas</div></div>
+                <div class="trow-r"><div class="score">3</div></div></div>
+            </div>
+          </div>
+          <!-- live -->
+          <div class="slot">
+            <div class="card">
+              <div class="card-hd"><span class="lbl">UB Quarter Final 3</span><span class="chip live">● Live</span></div>
+              <div class="trow"><div class="trow-l"><div class="gutter"></div>
+                <div class="logo" style="background:#1a1400;border:1px solid #FFD70044;color:#FFD700">VIT</div>
+                <div class="tname">Vitality</div></div>
+                <div class="trow-r"><span class="pick">Pick</span></div></div>
+              <div class="trow"><div class="trow-l"><div class="gutter"></div>
+                <div class="logo" style="background:#0a0a0a;border:1px solid #ffffff44;color:#fff">FUR</div>
+                <div class="tname">FURIA Esports</div></div>
+                <div class="trow-r"></div></div>
+            </div>
+          </div>
+          <!-- selected + counting down -->
+          <div class="slot">
+            <div class="card sel">
+              <div class="card-hd"><span class="lbl">UB Quarter Final 4</span><span class="chip urgent">42m 10s</span></div>
+              <div class="trow"><div class="trow-l"><div class="gutter"></div>
+                <div class="logo" style="background:#1a0800;border:1px solid #FF660044;color:#FF6600">NRG</div>
+                <div class="tname">NRG Esports</div></div>
+                <div class="trow-r"></div></div>
+              <div class="trow"><div class="trow-l"><div class="gutter"></div>
+                <div class="logo" style="background:#0a1628;border:1px solid #3498DB44;color:#3498DB">TSM</div>
+                <div class="tname">TSM</div></div>
+                <div class="trow-r"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 → 2 elbows -->
+      <div class="conn">
+        <div class="round-hd"></div>
+        <div class="round-body">
+          <div class="elbow"><i class="in-a"></i><i class="in-b"></i><i class="vert"></i><i class="out"></i></div>
+          <div class="elbow"><i class="in-a"></i><i class="in-b"></i><i class="vert"></i><i class="out"></i></div>
+        </div>
+      </div>
+
+      <div class="round">
+        <div class="round-hd"><b>Semi Finals</b><i>Aug 13</i></div>
+        <div class="round-body">
+          <div class="slot">
+            <div class="card">
+              <div class="card-hd"><span class="lbl">UB Semi Final 1</span><span class="chip">Locks in 21h 40m</span></div>
+              <div class="trow"><div class="trow-l"><div class="gutter"></div>
+                <div class="logo" style="background:#1a0010;border:1px solid #FF3D6E44;color:#FF3D6E">TM</div>
+                <div class="tname">Twisted Minds</div></div><div class="trow-r"></div></div>
+              <div class="trow"><div class="trow-l"><div class="gutter"></div>
+                <div class="logo" style="background:#0d1400;border:1px solid #CCFF0044;color:#CCFF00">NIP</div>
+                <div class="tname">Ninjas in Pyjamas</div></div><div class="trow-r"></div></div>
+            </div>
+          </div>
+          <div class="slot">
+            <div class="card">
+              <div class="card-hd"><span class="lbl">UB Semi Final 2</span></div>
+              <div class="trow"><div class="trow-l"><div class="gutter"></div>
+                <div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div>
+              <div class="trow"><div class="trow-l"><div class="gutter"></div>
+                <div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1:1 straight to the qualified marker -->
+      <div class="conn">
+        <div class="round-hd"></div>
+        <div class="round-body"><div class="straight"><i></i></div><div class="straight"><i></i></div></div>
+      </div>
+
+      <div class="round narrow">
+        <div class="round-hd"><b style="color:var(--gold-light)">Advance</b></div>
+        <div class="round-body">
+          <div class="slot"><div class="qualify"><div>Qualified</div></div></div>
+          <div class="slot"><div class="qualify"><div>Qualified</div></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ LOWER BRACKET ══ -->
+  <div class="banner"><span style="color:var(--orange)">Lower Bracket — Elimination</span><div class="rule"></div></div>
+  <div class="scroller">
+    <div class="bracket">
+      <div class="round">
+        <div class="round-hd"><b style="color:var(--orange)">Round 1</b><i>Aug 13</i></div>
+        <div class="round-body">
+          <div class="slot">
+            <div class="card">
+              <div class="card-hd"><span class="lbl">LB Round 1 M1</span><span class="chip locked">🔒 Locked</span></div>
+              <div class="trow"><div class="trow-l"><div class="gutter"></div>
+                <div class="logo" style="background:#1a0000;border:1px solid #C8102E44;color:#C8102E">FUT</div>
+                <div class="tname">FUT Esports</div></div><div class="trow-r"></div></div>
+              <div class="trow"><div class="trow-l"><div class="gutter"></div>
+                <div class="logo" style="background:#0d1a00;border:1px solid #96BF4844;color:#96BF48">SR</div>
+                <div class="tname">Shopify Rebellion</div></div><div class="trow-r"></div></div>
+            </div>
+          </div>
+          <div class="slot">
+            <div class="card">
+              <div class="card-hd"><span class="lbl">LB Round 1 M2</span></div>
+              <div class="trow"><div class="trow-l"><div class="gutter"></div>
+                <div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div>
+              <div class="trow"><div class="trow-l"><div class="gutter"></div>
+                <div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="conn"><div class="round-hd"></div>
+        <div class="round-body"><div class="straight"><i></i></div><div class="straight"><i></i></div></div></div>
+      <div class="round">
+        <div class="round-hd"><b style="color:var(--orange)">Round 2</b><i>Aug 14</i></div>
+        <div class="round-body">
+          <div class="slot">
+            <div class="card">
+              <div class="card-hd"><span class="lbl">LB Round 2 M1</span></div>
+              <div class="trow"><div class="trow-l"><div class="gutter"></div>
+                <div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div>
+              <div class="trow"><div class="trow-l"><div class="gutter"></div>
+                <div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div>
+            </div>
+          </div>
+          <div class="slot">
+            <div class="card">
+              <div class="card-hd"><span class="lbl">LB Round 2 M2</span></div>
+              <div class="trow"><div class="trow-l"><div class="gutter"></div>
+                <div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div>
+              <div class="trow"><div class="trow-l"><div class="gutter"></div>
+                <div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="conn"><div class="round-hd"></div>
+        <div class="round-body"><div class="straight"><i></i></div><div class="straight"><i></i></div></div></div>
+      <div class="round narrow">
+        <div class="round-hd"><b style="color:var(--gold-light)">Advance</b></div>
+        <div class="round-body">
+          <div class="slot"><div class="qualify"><div>Qualified</div></div></div>
+          <div class="slot"><div class="qualify"><div>Qualified</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PREDICT PANEL ══ -->
+  <h2 class="demo">Predict panel — opens under the selected card</h2>
+  <div class="panel">
+    <div class="panel-hd">
+      <b>Group A · UB Quarter Final 4 — Bo5</b>
+      <span style="color:var(--muted);cursor:pointer">✕</span>
+    </div>
+    <div class="panel-meta">Starts Aug 12, 05:20 PM KSA · Locks Aug 12, 04:50 PM KSA</div>
+    <div class="scores"><input value="3"><span style="color:rgba(255,255,255,0.15)">:</span><input value="2"></div>
+    <div class="winbtns">
+      <button class="on">NRG Esports wins</button>
+      <button>TSM wins</button>
+    </div>
+  </div>
+
+  <!-- ══ PLAYOFFS ══ -->
+  <h2 class="demo">Playoffs — single elimination, Bo7</h2>
+  <div class="scroller">
+    <div class="bracket">
+      <div class="round">
+        <div class="round-hd"><b>Quarter Finals</b><i>Aug 15</i></div>
+        <div class="round-body">
+          <div class="slot"><div class="card"><div class="card-hd"><span class="lbl">Quarter Final 1</span></div>
+            <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div>
+            <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div></div></div>
+          <div class="slot"><div class="card"><div class="card-hd"><span class="lbl">Quarter Final 2</span></div>
+            <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div>
+            <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div></div></div>
+          <div class="slot"><div class="card"><div class="card-hd"><span class="lbl">Quarter Final 3</span></div>
+            <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div>
+            <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div></div></div>
+          <div class="slot"><div class="card"><div class="card-hd"><span class="lbl">Quarter Final 4</span></div>
+            <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div>
+            <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div></div></div>
+        </div>
+      </div>
+      <div class="conn"><div class="round-hd"></div><div class="round-body">
+        <div class="elbow"><i class="in-a"></i><i class="in-b"></i><i class="vert"></i><i class="out"></i></div>
+        <div class="elbow"><i class="in-a"></i><i class="in-b"></i><i class="vert"></i><i class="out"></i></div></div></div>
+      <div class="round">
+        <div class="round-hd"><b>Semi Finals</b><i>Aug 16</i></div>
+        <div class="round-body">
+          <div class="slot"><div class="card"><div class="card-hd"><span class="lbl">Semi Final 1</span></div>
+            <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div>
+            <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div></div></div>
+          <div class="slot"><div class="card"><div class="card-hd"><span class="lbl">Semi Final 2</span></div>
+            <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div>
+            <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div></div></div>
+        </div>
+      </div>
+      <div class="conn"><div class="round-hd"></div><div class="round-body">
+        <div class="elbow"><i class="in-a"></i><i class="in-b"></i><i class="vert"></i><i class="out"></i></div></div></div>
+      <div class="round">
+        <div class="round-hd"><b style="color:var(--gold-light)">Grand Final</b><i>Aug 16</i></div>
+        <div class="round-body">
+          <div class="slot"><div class="card"><div class="card-hd"><span class="lbl">Grand Final</span></div>
+            <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div>
+            <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCHEDULE LIST ══ -->
+  <h2 class="demo">Schedule view — the same matches as a by-day list</h2>
+  <div class="day-hd"><b>Wednesday, Aug 12</b><div class="rule"></div><i>8 matches · KSA</i></div>
+  <div class="mcard">
+    <div class="meta">Group B · UB Quarter Final 1 · Bo5 · Starts Aug 12, 02:00 PM KSA · Locks 01:30 PM</div>
+    <div class="teams">
+      <div class="side">
+        <div class="biglogo" style="background:#001a2e;border:2px solid #00CFFF;color:#00CFFF">KC</div>
+        <div class="bigname">Karmine Corp</div>
+      </div>
+      <span class="vs">vs</span>
+      <div class="side r">
+        <div class="bigname">Wildcard</div>
+        <div class="biglogo" style="background:#00091a;border:2px solid #1E90FF;color:#1E90FF">WC</div>
+      </div>
+    </div>
+  </div>
+  <div class="mcard">
+    <div class="meta">Group B · UB Quarter Final 3 · Bo5 · Starts Aug 12, 02:50 PM KSA · Locks 02:20 PM</div>
+    <div class="teams">
+      <div class="side">
+        <div class="biglogo" style="background:#001520;border:2px solid #00BFFF;color:#00BFFF">R8</div>
+        <div class="bigname">R8 Esports</div>
+      </div>
+      <span class="vs">vs</span>
+      <div class="side r">
+        <div class="bigname">Team Falcons</div>
+        <div class="biglogo" style="background:#00170d;border:2px solid #00E693;color:#00E693">FLCN</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STANDINGS ══ -->
+  <h2 class="demo">Standings</h2>
+  <div class="lb first">
+    <div class="lb-l"><div class="rank">🥇</div>
+      <div><div class="lb-name">Aboda7m <span class="tag grp">alzaidy</span></div>
+        <div class="lb-sub">18/28 predicted · +2 bonus</div></div></div>
+    <div class="lb-pts" style="color:var(--gold)">34<span>pts</span></div>
+  </div>
+  <div class="lb me">
+    <div class="lb-l"><div class="rank">🥈</div>
+      <div><div class="lb-name">awsdaman <span class="tag you">You</span> <span class="tag grp">alzaidy</span></div>
+        <div class="lb-sub">21/28 predicted</div></div></div>
+    <div class="lb-pts">31<span>pts</span></div>
+  </div>
+  <div class="lb">
+    <div class="lb-l"><div class="rank">🥉</div>
+      <div><div class="lb-name">SuhaibDaman <span class="tag grp">alzaidy</span></div>
+        <div class="lb-sub">17/28 predicted</div></div></div>
+    <div class="lb-pts">27<span>pts</span></div>
+  </div>
+  <div class="lb">
+    <div class="lb-l"><div class="rank">#4</div>
+      <div><div class="lb-name">Kuma <span class="tag grp">alzaidy</span></div>
+        <div class="lb-sub">12/28 predicted · −3 bonus</div></div></div>
+    <div class="lb-pts">15<span>pts</span></div>
+  </div>
+
+  <!-- ══ STATE GALLERY ══ -->
+  <h2 class="demo">Every card state, side by side</h2>
+  <div class="states">
+    <div class="card"><div class="card-hd"><span class="lbl">Counting down</span><span class="chip">Locks in 35h 17m</span></div>
+      <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo" style="background:#1a1400;border:1px solid #FFD70044;color:#FFD700">VIT</div><div class="tname">Vitality</div></div><div class="trow-r"></div></div>
+      <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo" style="background:#0a0a0a;border:1px solid #ffffff44;color:#fff">FUR</div><div class="tname">FURIA Esports</div></div><div class="trow-r"></div></div></div>
+
+    <div class="card"><div class="card-hd"><span class="lbl">Urgent (&lt; 1h)</span><span class="chip urgent">42m 10s</span></div>
+      <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo" style="background:#1a0800;border:1px solid #FF660044;color:#FF6600">NRG</div><div class="tname">NRG Esports</div></div><div class="trow-r"><span class="pick">Pick</span></div></div>
+      <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo" style="background:#0a1628;border:1px solid #3498DB44;color:#3498DB">TSM</div><div class="tname">TSM</div></div><div class="trow-r"></div></div></div>
+
+    <div class="card"><div class="card-hd"><span class="lbl">Live now</span><span class="chip live">● Live</span></div>
+      <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo" style="background:#001a0d;border:1px solid #00A65144;color:#00A651">MIBR</div><div class="tname">MIBR</div></div><div class="trow-r"></div></div>
+      <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo" style="background:#1a1000;border:1px solid #F5A62344;color:#F5A623">SSG</div><div class="tname">Spacestation Gaming</div></div><div class="trow-r"></div></div></div>
+
+    <div class="card win3"><div class="card-hd"><span class="lbl">Exact score</span><span class="pts p3">+3</span></div>
+      <div class="trow won"><div class="trow-l"><div class="gutter"></div><div class="logo" style="background:#1a0010;border:1px solid #FF3D6E44;color:#FF3D6E">TM</div><div class="tname">Twisted Minds</div></div><div class="trow-r"><div class="score">3</div></div></div>
+      <div class="trow lost"><div class="trow-l"><div class="gutter"></div><div class="logo" style="background:#1a0000;border:1px solid #C8102E44;color:#C8102E">FUT</div><div class="tname">FUT Esports</div></div><div class="trow-r"><div class="score">1</div></div></div></div>
+
+    <div class="card win1"><div class="card-hd"><span class="lbl">Winner only</span><span class="pts p1">+1</span></div>
+      <div class="trow lost"><div class="trow-l"><div class="gutter"></div><div class="logo" style="background:#0d1a00;border:1px solid #96BF4844;color:#96BF48">SR</div><div class="tname">Shopify Rebellion</div></div><div class="trow-r"><div class="score">2</div></div></div>
+      <div class="trow won"><div class="trow-l"><div class="gutter"></div><div class="logo" style="background:#0d1400;border:1px solid #CCFF0044;color:#CCFF00">NIP</div><div class="tname">Ninjas in Pyjamas</div></div><div class="trow-r"><div class="score">3</div></div></div></div>
+
+    <div class="card"><div class="card-hd"><span class="lbl">Wrong pick</span><span class="pts p0">+0</span></div>
+      <div class="trow lost"><div class="trow-l"><div class="gutter"></div><div class="logo" style="background:#001520;border:1px solid #00BFFF44;color:#00BFFF">5F</div><div class="tname">Five Fears</div></div><div class="trow-r"><div class="score">0</div></div></div>
+      <div class="trow won"><div class="trow-l"><div class="gutter"></div><div class="logo" style="background:#1a0800;border:1px solid #FF6B3544;color:#FF6B35">GM</div><div class="tname">Gentle Mates</div></div><div class="trow-r"><div class="score">3</div></div></div></div>
+
+    <div class="card"><div class="card-hd"><span class="lbl">Locked, no result</span><span class="chip locked">🔒 Locked</span></div>
+      <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo" style="background:#001a2e;border:1px solid #00CFFF44;color:#00CFFF">KC</div><div class="tname">Karmine Corp</div></div><div class="trow-r"></div></div>
+      <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo" style="background:#00091a;border:1px solid #1E90FF44;color:#1E90FF">WC</div><div class="tname">Wildcard</div></div><div class="trow-r"></div></div></div>
+
+    <div class="card"><div class="card-hd"><span class="lbl">Not yet seeded</span></div>
+      <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div>
+      <div class="trow"><div class="trow-l"><div class="gutter"></div><div class="logo tbd"></div><div class="tname tbd">TBD</div></div><div class="trow-r"></div></div></div>
+  </div>
+
+</div>
+</body>
+</html>
