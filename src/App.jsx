@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, Fragment } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, Fragment } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL      || "YOUR_SUPABASE_URL";
@@ -137,6 +137,94 @@ const DEFAULT_PLAYOFF = [
 ];
 
 const ALL_MATCHES = [...DEFAULT_GROUP_MATCHES, ...DEFAULT_PLAYOFF];
+
+// ─── BRACKET ADVANCEMENT ─────────────────────────────────────────────────────
+// Where a finished match sends its winner and loser. Both groups share a shape,
+// so the group half is generated rather than written twice.
+//
+// Playoff quarter-finals are deliberately absent: the official format draws
+// upper-bracket teams randomly against lower-bracket teams (with a same-group
+// restriction), so those four slots cannot be derived and stay manual.
+const groupAdvancement = (g) => ({
+  [`${g}_ubqf1`]:  { win:[`${g}_ubsf1`,1], lose:[`${g}_lbr1m1`,1] },
+  [`${g}_ubqf2`]:  { win:[`${g}_ubsf1`,2], lose:[`${g}_lbr1m1`,2] },
+  [`${g}_ubqf3`]:  { win:[`${g}_ubsf2`,1], lose:[`${g}_lbr1m2`,1] },
+  [`${g}_ubqf4`]:  { win:[`${g}_ubsf2`,2], lose:[`${g}_lbr1m2`,2] },
+  [`${g}_lbr1m1`]: { win:[`${g}_lbr2m1`,1] },
+  [`${g}_lbr1m2`]: { win:[`${g}_lbr2m2`,1] },
+  // Cross-placed: a semi-final loser drops to the far side so it doesn't
+  // immediately replay the team that just eliminated its own half.
+  [`${g}_ubsf1`]:  { lose:[`${g}_lbr2m2`,2] },
+  [`${g}_ubsf2`]:  { lose:[`${g}_lbr2m1`,2] },
+});
+
+const ADVANCEMENT = {
+  ...groupAdvancement("a"),
+  ...groupAdvancement("b"),
+  p_qf1: { win:["p_sf1",1] },
+  p_qf2: { win:["p_sf1",2] },
+  p_qf3: { win:["p_sf2",1] },
+  p_qf4: { win:["p_sf2",2] },
+  p_sf1: { win:["p_gf",1], lose:["p_3rd",1] },
+  p_sf2: { win:["p_gf",2], lose:["p_3rd",2] },
+};
+
+// Reverse index: which match feeds a given slot. Used to mark auto-filled slots
+// in the admin editor.
+const FEEDS = {};
+Object.entries(ADVANCEMENT).forEach(([src, r]) => {
+  if (r.win)  FEEDS[`${r.win[0]}:${r.win[1]}`]   = { src, side:"winner" };
+  if (r.lose) FEEDS[`${r.lose[0]}:${r.lose[1]}`] = { src, side:"loser"  };
+});
+
+// Advancement is derived, never stored. Correcting a result therefore re-derives
+// everything downstream of it, and clearing one reverts those slots to TBD —
+// which a write-through approach could not do without cascading rewrites.
+//
+// Manual overrides seed the slots no result can reach; a derived value wins
+// wherever the feeding match has a result, so the bracket always agrees with
+// the scores that produced it.
+function resolveBracket(baseMatches, results, overrides) {
+  const slots = {};
+  baseMatches.forEach(m => { slots[m.id] = { team1:m.team1, team2:m.team2 }; });
+  Object.entries(overrides || {}).forEach(([id, o]) => {
+    if (slots[id]) slots[id] = { team1:o.team1 || "TBD", team2:o.team2 || "TBD" };
+  });
+
+  // The graph is only three deep, but iterate to a fixed point so a run of
+  // results entered at once settles in one go regardless of order.
+  for (let pass = 0; pass < 6; pass++) {
+    let changed = false;
+    for (const [srcId, routes] of Object.entries(ADVANCEMENT)) {
+      const src = slots[srcId], res = results[srcId];
+      if (!src || !res?.winner) continue;
+      if (isTBDTeam(src.team1) || isTBDTeam(src.team2)) continue;
+      // A result naming a team that isn't in this match (stale after an edit)
+      // shouldn't propagate a guess downstream.
+      const loser = res.winner === src.team1 ? src.team2
+                  : res.winner === src.team2 ? src.team1
+                  : null;
+      if (!loser) continue;
+      const put = ([destId, n], team) => {
+        const dest = slots[destId];
+        if (!dest) return;                     // route points into the other array
+        const key = n === 1 ? "team1" : "team2";
+        if (dest[key] !== team) { dest[key] = team; changed = true; }
+      };
+      if (routes.win)  put(routes.win,  res.winner);
+      if (routes.lose) put(routes.lose, loser);
+    }
+    if (!changed) break;
+  }
+  return baseMatches.map(m => ({ ...m, ...slots[m.id] }));
+}
+
+// Is this slot filled automatically right now? (i.e. its feeding match is done)
+function autoFilledBy(matchId, slotNo, results) {
+  const feed = FEEDS[`${matchId}:${slotNo}`];
+  if (!feed) return null;
+  return results[feed.src]?.winner ? feed : null;
+}
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 const calcScore = (pred, result) => {
@@ -1190,7 +1278,7 @@ function BonusPointsPanel({ players, bonusPoints, onAdd, onDelete }) {
 }
 
 // ─── BRACKET TEAM EDITOR (Admin) — group-stage progression + playoffs ────────
-function BracketEditor({ matches, onUpdateTeams, onSaved }) {
+function BracketEditor({ matches, results, onUpdateTeams, onSaved }) {
   const [teams, setTeams] = useState(() => {
     const map = {};
     matches.forEach(m => { map[m.id] = { team1: m.team1, team2: m.team2 }; });
@@ -1205,6 +1293,9 @@ function BracketEditor({ matches, onUpdateTeams, onSaved }) {
   const save = async () => {
     for (const m of matches) {
       const t = teams[m.id];
+      // Fully auto-filled slots are re-derived from results on every render, so
+      // storing an override for them would only add a row that never applies.
+      if (autoFilledBy(m.id, 1, results||{}) && autoFilledBy(m.id, 2, results||{})) continue;
       if (t.team1 !== m.team1 || t.team2 !== m.team2) {
         await onUpdateTeams(m.id, t.team1||"TBD", t.team2||"TBD");
       }
@@ -1234,18 +1325,48 @@ function BracketEditor({ matches, onUpdateTeams, onSaved }) {
               <div style={{ height:1,flex:1,background:"rgba(15,88,244,0.2)" }} />
             </div>
           )}
-          <div style={{ background:C.surface,border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,padding:"12px 16px",marginBottom:10 }}>
-            <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase",marginBottom:8 }}>{m.label} · {fmtTime(m.startTime)} KSA</div>
-            <div style={{ display:"flex",gap:8,alignItems:"center",flexWrap:"wrap" }}>
-              <input value={teams[m.id]?.team1||""} onChange={e=>setTeams(t=>({...t,[m.id]:{...t[m.id],team1:e.target.value}}))}
-                placeholder="Team 1 (or TBD)" list="ewc-teams"
-                style={{ ...inputStyle({ flex:1, minWidth:140, padding:"8px 12px", fontSize:13 }) }} />
-              <span style={{ color:C.dim,fontFamily:F.main,fontWeight:700 }}>vs</span>
-              <input value={teams[m.id]?.team2||""} onChange={e=>setTeams(t=>({...t,[m.id]:{...t[m.id],team2:e.target.value}}))}
-                placeholder="Team 2 (or TBD)" list="ewc-teams"
-                style={{ ...inputStyle({ flex:1, minWidth:140, padding:"8px 12px", fontSize:13 }) }} />
-            </div>
-          </div>
+          {(() => {
+            const auto1 = autoFilledBy(m.id, 1, results||{});
+            const auto2 = autoFilledBy(m.id, 2, results||{});
+            const srcLabel = (a) => {
+              const src = matches.find(x => x.id === a.src);
+              return `${a.side} of ${src ? src.label : a.src}`;
+            };
+            const field = (n, auto) => (
+              <input value={teams[m.id]?.[`team${n}`]||""} readOnly={!!auto}
+                title={auto ? `Set automatically — ${srcLabel(auto)}` : undefined}
+                onChange={e=>{ if(auto) return; setTeams(t=>({...t,[m.id]:{...t[m.id],[`team${n}`]:e.target.value}})); }}
+                placeholder={`Team ${n} (or TBD)`} list={auto?undefined:"ewc-teams"}
+                style={{ ...inputStyle({ flex:1, minWidth:140, padding:"8px 12px", fontSize:13,
+                  background: auto ? "rgba(200,168,106,0.07)" : "rgba(255,255,255,0.05)",
+                  border: `1px solid ${auto ? "rgba(200,168,106,0.3)" : "rgba(255,255,255,0.1)"}`,
+                  color: auto ? C.goldLight : C.white,
+                  cursor: auto ? "not-allowed" : "text" }) }} />
+            );
+            return (
+              <div style={{ background:C.surface,border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,padding:"12px 16px",marginBottom:10 }}>
+                <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:8,flexWrap:"wrap" }}>
+                  <span style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase" }}>{m.label} · {fmtTime(m.startTime)} KSA</span>
+                  {(auto1||auto2) && (
+                    <span style={{ fontSize:9,fontWeight:700,fontFamily:F.main,color:C.gold,letterSpacing:1,
+                                   border:"1px solid rgba(200,168,106,0.35)",borderRadius:3,padding:"2px 6px",textTransform:"uppercase" }}>
+                      {auto1&&auto2 ? "Auto" : "Part auto"}
+                    </span>
+                  )}
+                </div>
+                <div style={{ display:"flex",gap:8,alignItems:"center",flexWrap:"wrap" }}>
+                  {field(1, auto1)}
+                  <span style={{ color:C.dim,fontFamily:F.main,fontWeight:700 }}>vs</span>
+                  {field(2, auto2)}
+                </div>
+                {(auto1||auto2) && (
+                  <div style={{ fontSize:10,color:C.dim,fontFamily:F.body,marginTop:8 }}>
+                    Filled from results — change the feeding match's score to change this.
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
         );
       })}
@@ -2032,8 +2153,11 @@ export default function App() {
   const [predictions,    setPredictions]    = useState({});
   const [results,        setResults]        = useState({});
   const [bonusPoints,    setBonusPoints]    = useState([]);
-  const [groupMatches,   setGroupMatches]   = useState(DEFAULT_GROUP_MATCHES);
-  const [playoffMatches, setPlayoffMatches] = useState(DEFAULT_PLAYOFF);
+  // Only the manually-seeded slots live in state; the rest of the bracket is
+  // derived from results, so a corrected score fixes everything after it.
+  const [bracketOverrides, setBracketOverrides] = useState({});
+  const groupMatches   = useMemo(() => resolveBracket(DEFAULT_GROUP_MATCHES, results, bracketOverrides), [results, bracketOverrides]);
+  const playoffMatches = useMemo(() => resolveBracket(DEFAULT_PLAYOFF,       results, bracketOverrides), [results, bracketOverrides]);
   const [adminHash,      setAdminHash]      = useState(ADMIN_PASSWORD_HASH);
   const [authId,         setAuthId]         = useState(()=>localStorage.getItem("rlcs_auth")||null);
   const [isAdmin,        setIsAdmin]        = useState(()=>localStorage.getItem("rlcs_admin")==="1");
@@ -2174,8 +2298,7 @@ export default function App() {
     if (data && data.length > 0) {
       const overrides = {};
       data.forEach(row => { overrides[row.match_id] = { team1: row.team1, team2: row.team2 }; });
-      setPlayoffMatches(prev => prev.map(m => overrides[m.id] ? { ...m, ...overrides[m.id] } : m));
-      setGroupMatches(prev => prev.map(m => overrides[m.id] ? { ...m, ...overrides[m.id] } : m));
+      setBracketOverrides(overrides);
     }
   };
 
@@ -2200,8 +2323,7 @@ export default function App() {
       })
       .on("postgres_changes",{event:"*",schema:"public",table:"bracket_teams"},({eventType:et,new:r})=>{
         if(et==="INSERT"||et==="UPDATE"){
-          setPlayoffMatches(prev=>prev.map(m=>m.id===r.match_id?{...m,team1:r.team1,team2:r.team2}:m));
-          setGroupMatches(prev=>prev.map(m=>m.id===r.match_id?{...m,team1:r.team1,team2:r.team2}:m));
+          setBracketOverrides(prev=>({...prev,[r.match_id]:{team1:r.team1,team2:r.team2}}));
         }
       })
       .on("postgres_changes",{event:"*",schema:"public",table:"groups"},({eventType:et,new:g,old:o})=>{
@@ -2243,8 +2365,7 @@ export default function App() {
   },[toast]);
 
   const handleUpdateBracketTeams=async(matchId,team1,team2)=>{
-    setPlayoffMatches(prev=>prev.map(m=>m.id===matchId?{...m,team1,team2}:m));
-    setGroupMatches(prev=>prev.map(m=>m.id===matchId?{...m,team1,team2}:m));
+    setBracketOverrides(prev=>({...prev,[matchId]:{team1,team2}}));
     await supabase.from("bracket_teams").upsert({match_id:matchId,team1,team2},{onConflict:"match_id"});
   };
 
@@ -2698,7 +2819,7 @@ export default function App() {
 
             {/* Bracket Teams */}
             {adminTab==="bracket"&&(
-              <BracketEditor matches={[...groupMatches,...playoffMatches]} onUpdateTeams={handleUpdateBracketTeams} onSaved={()=>toast("Bracket teams saved","success")} />
+              <BracketEditor matches={[...groupMatches,...playoffMatches]} results={results} onUpdateTeams={handleUpdateBracketTeams} onSaved={()=>toast("Bracket teams saved","success")} />
             )}
 
             {/* Results */}
