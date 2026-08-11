@@ -34,31 +34,39 @@ const INVITE_TOKEN_RE = /^\/join\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 // reads from value, not from glow. Neutrals carry a faint warm cast to sit with
 // the gold rather than fight it.
 const C = {
-  gold:      '#C8A86A',   // EWC primary, nudged up for contrast on lighter ink
-  goldLight: '#F2C575',   // top stop of their trophy gradient
+  gold:      '#C8A86A',   // EWC primary — active nav, selected card, winner emphasis
+  goldLight: '#F2C575',   // winner names, highest-emphasis text
   goldDark:  '#987C4B',
   goldDeep:  '#4E442D',
-  orange:    '#FF5A1F',   // live / urgent
-  red:       '#F4425C',   // wrong picks, destructive
+  orange:    '#FF5A1F',   // live / urgent only
+  red:       '#F4425C',   // sub-hour countdown, wrong picks, destructive
   blue:      '#5B8CFF',   // "you" markers
   purple:    '#C8A86A',   // legacy alias → gold
-  // ink ramp
-  bg:        '#1A1A1D',   // page
-  bgDeep:    '#141417',   // header / wells
-  surface:   '#232327',   // cards
-  surfaceHi: '#2C2C31',   // hover
-  navy:      '#1A1A1D',   // legacy aliases
-  navyLight: '#232327',
-  line:      'rgba(255,255,255,0.10)',
-  lineSoft:  'rgba(255,255,255,0.06)',
+  // ink ramp — surfaces pulled down so gold and the page washes have headroom
+  bg:        '#17171A',   // page
+  bgDeep:    '#121214',   // header, wells, TBD card fill
+  surface:   '#1F1F23',   // standard cards
+  surfaceHi: '#28282D',   // raised / selected / live cards
+  navy:      '#17171A',   // legacy aliases
+  navyLight: '#1F1F23',
+  line:      'rgba(255,255,255,0.09)',
+  lineSoft:  'rgba(255,255,255,0.05)',
+  lineStrong:'rgba(255,255,255,0.18)',   // emphasised border (predict panel)
+  conn:      'rgba(200,168,106,0.30)',   // bracket connector rules
   white:     '#F7F7F8',
-  muted:     '#A0A0A6',
-  dim:       '#6E6E76',
+  muted:     '#9C9CA3',   // secondary text, losing team names
+  dim:       '#67676E',   // labels, metadata
+  dimmer:    '#48484E',   // TBD placeholders — recessed below dim
   green:     '#3ECF8E',
 };
-const GOLD_GRAD  = `linear-gradient(135deg, ${C.goldLight} 0%, ${C.gold} 45%, ${C.goldDark} 100%)`;
-const HOT_GRAD   = `linear-gradient(90deg, ${C.orange} 0%, #D1B26E 100%)`;
+const GOLD_GRAD  = `linear-gradient(135deg, ${C.goldLight} 0%, ${C.gold} 55%, ${C.goldDark} 100%)`;
 const NUM        = { fontVariantNumeric: 'tabular-nums' };  // scores never jitter
+// Directional light rather than a symmetric halo.
+const PAGE_BG = `
+  radial-gradient(1000px 520px at 15% -8%,  rgba(200,168,106,0.12) 0%, transparent 55%),
+  radial-gradient(900px 620px at 100% 30%,  rgba(255,90,31,0.05)   0%, transparent 60%),
+  radial-gradient(1100px 700px at 50% 120%, rgba(200,168,106,0.06) 0%, transparent 60%),
+  linear-gradient(180deg, #18181B 0%, #101012 100%)`;
 
 // ─── TEAMS — EWC 2026 (16 teams) ─────────────────────────────────────────────
 const TEAMS = {
@@ -193,35 +201,68 @@ const inputStyle = (extra={}) => ({
   ...extra,
 });
 
-// ─── COUNTDOWN PILL ──────────────────────────────────────────────────────────
+// ─── STATUS CHIP ─────────────────────────────────────────────────────────────
+// Chips mean "something is happening or was earned". Locked-and-waiting is the
+// absence of both, so it renders as plain text — previously it sat in the same
+// chip family as countdowns and was hard to tell apart at a glance.
 function CountdownPill({ lockTime, now, startTime }) {
   const ms = new Date(lockTime) - now;
+
   if (ms <= 0) {
-    if (startTime && now >= new Date(startTime).getTime()) {
+    const live = startTime && now >= new Date(startTime).getTime();
+    if (live) {
       return (
-        <div style={{ background:"rgba(190,158,89,0.15)", border:"1px solid rgba(190,158,89,0.5)", borderRadius:20, padding:"2px 8px", fontSize:9, fontWeight:700, fontFamily:F.main, letterSpacing:0.5, color:C.red, whiteSpace:"nowrap", animation:"livePulse 1.4s ease-in-out infinite" }}>
-          ● LIVE
+        <div style={{ display:"flex", alignItems:"center", gap:5, background:"rgba(255,90,31,0.12)",
+                      border:"1px solid rgba(255,90,31,0.4)", borderRadius:4, padding:"3px 8px",
+                      fontSize:10, fontWeight:700, fontFamily:F.main, letterSpacing:0.5,
+                      color:C.orange, whiteSpace:"nowrap" }}>
+          <span style={{ width:5, height:5, borderRadius:"50%", background:C.orange,
+                         animation:"ewcPulse 1.4s ease-in-out infinite" }} />
+          LIVE
         </div>
       );
     }
     return (
-      <div style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.12)", borderRadius:20, padding:"2px 8px", fontSize:9, fontWeight:700, fontFamily:F.main, letterSpacing:0.5, color:"rgba(255,255,255,0.3)", whiteSpace:"nowrap" }}>
-        🔒 LOCKED
-      </div>
+      <span style={{ fontSize:9.5, fontWeight:700, fontFamily:F.main, letterSpacing:1,
+                     textTransform:"uppercase", color:C.dim, whiteSpace:"nowrap" }}>
+        Locked
+      </span>
     );
   }
+
   const totalSecs = Math.floor(ms / 1000);
   const hours = Math.floor(totalSecs / 3600);
   const mins  = Math.floor((totalSecs % 3600) / 60);
   const secs  = totalSecs % 60;
-  const urgent = ms < 3_600_000; // < 1 hour → red
+  const urgent = ms < 3_600_000;
   const text = hours > 0
     ? `Locks in ${hours}h ${String(mins).padStart(2,"0")}m`
     : `${mins}m ${String(secs).padStart(2,"0")}s`;
   return (
-    <div style={{ background: urgent ? "rgba(190,158,89,0.12)" : "rgba(255,255,255,0.05)", border: `1px solid ${urgent ? "rgba(190,158,89,0.4)" : "rgba(255,255,255,0.1)"}`, borderRadius:20, padding:"2px 8px", fontSize:9, fontWeight:700, fontFamily:F.main, letterSpacing:0.5, color: urgent ? C.red : C.muted, whiteSpace:"nowrap", transition:"color 0.3s, border-color 0.3s" }}>
+    <div style={{ background: urgent ? "rgba(244,66,92,0.12)" : "rgba(255,255,255,0.04)",
+                  border: `1px solid ${urgent ? "rgba(244,66,92,0.4)" : C.line}`,
+                  borderRadius:4, padding:"3px 8px", fontSize:10, fontWeight:700,
+                  fontFamily:F.main, letterSpacing:0.5, color: urgent ? C.red : C.muted,
+                  whiteSpace:"nowrap" }}>
       {text}
     </div>
+  );
+}
+
+// Scored outcome chip — the border hue on the card already says how you did, this
+// gives the number.
+function ScoreChip({ score }) {
+  const map = {
+    3: { color:C.green, bg:"rgba(62,207,142,0.14)" },
+    1: { color:C.gold,  bg:"rgba(200,168,106,0.14)" },
+    0: { color:C.dim,   bg:"transparent" },
+  }[score];
+  return (
+    <span style={{ fontSize:10, fontWeight:700, fontFamily:F.main, letterSpacing:0.5,
+                   color:map.color, background:map.bg, borderRadius:4, padding:"3px 8px",
+                   whiteSpace:"nowrap" }}>
+      +{score}
+    </span>
   );
 }
 
@@ -260,45 +301,44 @@ function TeamBadge({ name, size="sm" }) {
 }
 
 // ─── BRACKET MATCH CARD ───────────────────────────────────────────────────────
-// One team row. A real component so the logo's error state is a legal hook
-// rather than a useState called inside a render callback.
-function BracketTeamRow({ name, score, isWinner, isPick, hasResult, last }) {
+// A real component so the logo's error state is a legal hook rather than a
+// useState called inside a render callback.
+function BracketTeamRow({ name, score, isWinner, isPick, hasResult, tbdCard, last, chip = 24, nameSize = 14 }) {
   const [imgErr, setImgErr] = useState(false);
   const tbd = isTBDTeam(name);
   const t = teamStyle(name);
   const lost = hasResult && !isWinner;
   return (
     <div style={{
-      padding:"11px 14px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:10,
-      borderTop: last ? `1px solid ${C.lineSoft}` : "none",
-      background: isWinner ? "rgba(200,168,106,0.07)" : "transparent",
+      padding:"9px 12px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:10,
+      borderTop: last ? `1px ${tbdCard ? "dashed" : "solid"} ${C.lineSoft}` : "none",
+      background: isWinner ? "rgba(200,168,106,0.06)" : "transparent",
     }}>
-      <div style={{ display:"flex", alignItems:"center", gap:11, minWidth:0 }}>
-        {/* winner gets a solid gold tick of a bar; everyone else keeps the gutter */}
-        <div style={{ width:3, height:22, borderRadius:2, background: isWinner ? C.gold : "transparent", flexShrink:0 }} />
-        {!tbd && (
-          <div style={{ width:26, height:26, borderRadius:4, background:t.bg, border:`1px solid ${t.color}44`,
-                        display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", flexShrink:0,
-                        opacity: lost ? 0.5 : 1 }}>
+      <div style={{ display:"flex", alignItems:"center", gap:10, minWidth:0 }}>
+        {tbd ? (
+          <div style={{ width:chip, height:chip, borderRadius:4, border:`1px dashed ${C.lineSoft}`, flexShrink:0 }} />
+        ) : (
+          <div style={{ width:chip, height:chip, borderRadius:4, background:t.bg, border:`1px solid ${t.color}44`,
+                        display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden",
+                        flexShrink:0, opacity: lost ? 0.6 : 1 }}>
             {t.logo && !imgErr
               ? <img src={t.logo} style={{ width:"88%", height:"88%", objectFit:"contain" }} onError={()=>setImgErr(true)} alt="" />
               : <span style={{ fontSize:9, fontWeight:700, color:t.color, fontFamily:F.main }}>{t.abbr}</span>}
           </div>
         )}
-        {tbd && <div style={{ width:26, height:26, borderRadius:4, border:`1px dashed ${C.lineSoft}`, flexShrink:0 }} />}
         <span style={{
-          fontSize:13.5, fontWeight:700, fontFamily:F.main, letterSpacing:0.3,
-          color: tbd ? C.dim : isWinner ? C.goldLight : lost ? C.muted : C.white,
+          fontSize:nameSize, fontWeight:700, fontFamily:F.main, letterSpacing:0.2,
+          color: tbd ? C.dimmer : isWinner ? C.goldLight : lost ? C.muted : C.white,
           whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis",
         }}>{tbd ? "TBD" : name}</span>
       </div>
       <div style={{ display:"flex", alignItems:"center", gap:9, flexShrink:0 }}>
         {!hasResult && isPick && (
           <span style={{ fontSize:9, fontWeight:700, fontFamily:F.main, letterSpacing:1, color:C.gold,
-                         border:`1px solid rgba(200,168,106,0.45)`, borderRadius:3, padding:"2px 6px" }}>PICK</span>
+                         border:"1px solid rgba(200,168,106,0.45)", borderRadius:3, padding:"3px 7px" }}>YOUR PICK</span>
         )}
         {hasResult && (
-          <span style={{ ...NUM, fontSize:20, fontWeight:700, fontFamily:F.main, lineHeight:1,
+          <span style={{ ...NUM, fontSize:22, fontWeight:700, fontFamily:F.main, lineHeight:1,
                          color: isWinner ? C.goldLight : C.dim }}>{score}</span>
         )}
       </div>
@@ -311,42 +351,48 @@ function BracketCard({ match, result, pred, onClick, isSelected, now, isAdmin })
   const res = result;
   const score = pred && res ? calcScore(pred, res) : null;
   const [hover, setHover] = useState(false);
+  const tbd = hasTBD(match);
+  const live = !res && !tbd && isLocked(match, now) && now >= new Date(match.startTime).getTime();
 
-  // Status drives the accent; no glow anywhere — depth comes from value + a
-  // single hairline, which is what keeps this from reading as generic neon.
-  const accent = score===3 ? C.green : score===1 ? C.red : isSelected ? C.gold : null;
-  const border = accent ? accent : hover ? "rgba(200,168,106,0.45)" : C.line;
+  // Weight maps to stakes: a dead TBD slot sinks, a decided card carries its
+  // outcome hue, a live one lifts. Depth is value + one hairline, never glow.
+  const border =
+      tbd        ? `1px dashed ${C.lineSoft}`
+    : isSelected ? `1.5px solid ${C.gold}`
+    : score===3  ? "1px solid rgba(62,207,142,0.4)"
+    : score===1  ? "1px solid rgba(200,168,106,0.4)"
+    : live       ? "1px solid rgba(255,90,31,0.4)"
+    : hover      ? `1px solid ${C.lineStrong}`
+    :              `1px solid ${C.line}`;
+  const fill = tbd ? C.bgDeep : (isSelected || live || hover) ? C.surfaceHi : C.surface;
 
   return (
     <div onClick={onClick} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)} style={{
-      background: hover && !isSelected ? C.surfaceHi : C.surface,
-      border:`1px solid ${border}`,
-      borderRadius:6, overflow:"hidden", cursor:"pointer",
-      transition:"background 0.12s, border-color 0.12s",
-      boxShadow: isSelected ? "0 6px 18px rgba(0,0,0,0.35)" : "0 1px 3px rgba(0,0,0,0.25)",
+      background: fill,
+      border,
+      borderRadius:5, overflow:"hidden", width:"100%", cursor: tbd ? "default" : "pointer",
+      transition:"background-color 0.12s, border-color 0.12s",
+      boxShadow: tbd ? "none" : isSelected ? "0 5px 16px rgba(0,0,0,0.4)" : "0 1px 2px rgba(0,0,0,0.3)",
     }}>
-      {/* Header: match label + status */}
-      <div style={{ padding:"7px 14px", background:"rgba(0,0,0,0.18)", borderBottom:`1px solid ${C.lineSoft}`,
-                    display:"flex", justifyContent:"space-between", alignItems:"center", gap:8 }}>
-        <span style={{ fontSize:9.5, color:isSelected?C.gold:C.dim, fontFamily:F.main, fontWeight:700,
-                       letterSpacing:1.4, textTransform:"uppercase", whiteSpace:"nowrap",
-                       overflow:"hidden", textOverflow:"ellipsis" }}>{match.label}</span>
-        {score !== null && (
-          <span style={{ fontSize:9.5, fontWeight:700, fontFamily:F.main, letterSpacing:1, flexShrink:0,
-                         color: score===3?C.green:score===1?C.gold:C.dim }}>+{score}</span>
-        )}
-        {score === null && !res && !hasTBD(match) && (
+      <div style={{ padding:"6px 12px", background: tbd ? "transparent" : "rgba(0,0,0,0.22)",
+                    borderBottom:`1px ${tbd ? "dashed" : "solid"} ${C.lineSoft}`,
+                    display:"flex", justifyContent:"space-between", alignItems:"center", gap:8, minHeight:26 }}>
+        <span style={{ fontSize:9, color: tbd ? C.dimmer : isSelected ? C.gold : C.dim, fontFamily:F.main,
+                       fontWeight:700, letterSpacing:1, textTransform:"uppercase",
+                       whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{match.label}</span>
+        {score !== null && <ScoreChip score={score} />}
+        {score === null && !res && !tbd && (
           <CountdownPill lockTime={getLockTime(match).toISOString()} now={now} startTime={match.startTime} />
         )}
       </div>
-      {isAdmin && (
-        <div style={{ fontSize:8, color:C.dim, fontFamily:"monospace", padding:"3px 14px",
+      {isAdmin && !tbd && (
+        <div style={{ fontSize:8, color:C.dimmer, fontFamily:"monospace", padding:"3px 12px",
                       borderBottom:`1px solid ${C.lineSoft}` }}>
           {match.startTime} · locks {fmtTime(getLockTime(match).toISOString())}
         </div>
       )}
-      <BracketTeamRow name={t1} score={res?.score1} isWinner={res?.winner===t1} isPick={pred?.winner===t1} hasResult={!!res} />
-      <BracketTeamRow name={t2} score={res?.score2} isWinner={res?.winner===t2} isPick={pred?.winner===t2} hasResult={!!res} last />
+      <BracketTeamRow name={t1} score={res?.score1} isWinner={res?.winner===t1} isPick={pred?.winner===t1} hasResult={!!res} tbdCard={tbd} />
+      <BracketTeamRow name={t2} score={res?.score2} isWinner={res?.winner===t2} isPick={pred?.winner===t2} hasResult={!!res} tbdCard={tbd} last />
     </div>
   );
 }
@@ -386,12 +432,12 @@ function PredictPanel({ match, result, pred, onPredict, onClose }) {
   const liveWinner = impliedWinner(match, s1, s2) || pred?.winner || null;
 
   return (
-    <div style={{ background:C.surface, border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"16px 18px", marginTop:12, boxShadow:"0 0 30px rgba(0,0,0,0.25)" }}>
+    <div style={{ background:C.surface, border:`1px solid ${C.lineStrong}`, borderRadius:8, padding:"18px 20px", marginTop:12, maxWidth:520 }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-        <div style={{ fontSize:13, fontWeight:700, fontFamily:F.main, color:C.gold, letterSpacing:2, textTransform:"uppercase" }}>{match.group?`Group ${match.group} · `:""}{match.label} — Bo{match.bo}</div>
+        <div style={{ fontSize:13, fontWeight:700, fontFamily:F.main, color:C.white, letterSpacing:1, textTransform:"uppercase" }}>{match.group?`Group ${match.group} · `:""}{match.label} — Bo{match.bo}</div>
         <button onClick={onClose} style={{ background:"none", border:"none", color:C.muted, cursor:"pointer", fontSize:16 }}>✕</button>
       </div>
-      <div style={{ fontSize:10, color:C.dim, fontFamily:F.main, letterSpacing:1, marginBottom:12 }}>
+      <div style={{ fontSize:10, color:C.dim, fontFamily:F.main, letterSpacing:1, marginBottom:16 }}>
         Starts {fmtTime(match.startTime)} KSA · Locks {fmtTime(getLockTime(match).toISOString())} KSA
       </div>
 
@@ -448,48 +494,118 @@ function PredictPanel({ match, result, pred, onPredict, onClose }) {
   );
 }
 
-// ─── BRACKET LAYOUT PRIMITIVES ───────────────────────────────────────────────
-// Rounds are equal-height columns of flex:1 slots, so with N slots the card
-// centres land at (2i+1)/2N of the column height. A round with half as many
-// slots therefore lands exactly on each pair's midpoint — no card-height
-// constant to keep in sync, correct whether or not the admin UTC line is on.
-//
-// Connectors are drawn from those same percentages, which is why they are real
-// elbows (two in-stubs, a vertical join, one out-stub) rather than a single
-// straight line that only visually implies the pairing.
-const CARD_W    = 320;
-const QUALIFY_W = 104;
-const LINE      = 'rgba(200,168,106,0.34)';
+// ─── MOMENTUM STRIP ──────────────────────────────────────────────────────────
+// The brief noted nothing conveyed tournament momentum. Five day nodes with the
+// current day pulsing, plus a progress line. Everything is derived from match
+// data and the shared clock — no new state.
+const EVENT_DAYS = [
+  { d: 12, label: "Aug 12", stage: "Group Stage" },
+  { d: 13, label: "Aug 13", stage: "Group Stage" },
+  { d: 14, label: "Aug 14", stage: "Group Stage" },
+  { d: 15, label: "Aug 15", stage: "Playoffs" },
+  { d: 16, label: "Aug 16", stage: "Playoffs" },
+];
 
-function Slot({ children }) {
-  return <div style={{ flex:1, display:"flex", alignItems:"center", minHeight:0, padding:"7px 0" }}>{children}</div>;
+function MomentumStrip({ now, results, totalMatches }) {
+  // Which tournament day are we on, in KSA terms?
+  const ksaDay = Number(new Date(now).toLocaleDateString("en-US", { timeZone:"Asia/Riyadh", day:"numeric" }));
+  const ksaMonth = Number(new Date(now).toLocaleDateString("en-US", { timeZone:"Asia/Riyadh", month:"numeric" }));
+  const beforeEvent = ksaMonth < 8 || (ksaMonth === 8 && ksaDay < 12);
+  const afterEvent  = ksaMonth > 8 || (ksaMonth === 8 && ksaDay > 16);
+  const currentIdx  = beforeEvent ? -1 : afterEvent ? EVENT_DAYS.length : EVENT_DAYS.findIndex(x => x.d === ksaDay);
+
+  const decided = Object.keys(results).length;
+  const stage   = currentIdx >= 0 && currentIdx < EVENT_DAYS.length ? EVENT_DAYS[currentIdx].stage : null;
+
+  const statusLine = beforeEvent
+    ? <>Starts <span style={{ color:C.white, fontWeight:600 }}>Aug 12</span> — {totalMatches} matches to predict</>
+    : afterEvent
+      ? <>Tournament complete — <span style={{ color:C.white, fontWeight:600 }}>{decided} of {totalMatches}</span> matches decided</>
+      : <>Day {currentIdx+1} of {EVENT_DAYS.length} · <span style={{ color:C.white, fontWeight:600 }}>{stage}</span> — {decided} of {totalMatches} matches decided</>;
+
+  return (
+    <div style={{ borderBottom:`1px solid ${C.lineSoft}`, background:"rgba(0,0,0,0.15)", padding:"14px 20px" }}>
+      <div style={{ maxWidth:1440, margin:"0 auto", display:"flex", alignItems:"center", gap:16, flexWrap:"wrap" }}>
+        <div style={{ display:"flex", alignItems:"flex-start" }}>
+          {EVENT_DAYS.map((day, i) => {
+            const past    = i < currentIdx;
+            const current = i === currentIdx;
+            const next    = i === currentIdx + 1;
+            const dot = current
+              ? { width:11, height:11, background:C.gold, border:"none",
+                  boxShadow:"0 0 0 3px rgba(200,168,106,0.22)", animation:"ewcPulse 1.8s ease-in-out infinite" }
+              : past
+                ? { width:9, height:9, background:C.gold, border:"none" }
+                : { width:9, height:9, background:"transparent",
+                    border:`1px ${next ? "solid" : "dashed"} ${C.lineStrong}` };
+            const labelColor = current ? C.goldLight : past ? C.muted : next ? C.dim : C.dimmer;
+            return (
+              <div key={day.d} style={{ display:"flex", alignItems:"flex-start" }}>
+                <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6 }}>
+                  <div style={{ ...dot, borderRadius:"50%", boxSizing:"border-box" }} />
+                  <span style={{ fontSize:9, fontFamily:F.main, fontWeight: current?700:600, letterSpacing:1,
+                                 textTransform:"uppercase", color:labelColor, whiteSpace:"nowrap" }}>{day.label}</span>
+                </div>
+                {i < EVENT_DAYS.length-1 && (
+                  <div style={{ width:26, height:1, margin:"0 2px 17px",
+                                background: past ? C.gold : C.lineStrong, alignSelf:"center" }} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ width:1, height:22, background:C.lineSoft, flexShrink:0 }} />
+        <div style={{ fontSize:12, fontFamily:F.body, color:C.muted }}>{statusLine}</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── BRACKET LAYOUT PRIMITIVES ───────────────────────────────────────────────
+// Load-bearing geometry — do not change without reading design/tokens.md.
+// A round is a flex column of N equal flex:1 slots, so card centres land at
+// (2i+1)/2N of the column height. A round with half as many slots therefore
+// lands exactly on each pair's midpoint, with no hard-coded card height — which
+// matters because cards grow (long names wrap, admin adds a debug line).
+//
+// Slots must NOT use gap: a 4-slot column accumulates three gaps where its
+// 2-unit connector column accumulates one, throwing the joins off by ~2.5px.
+// Symmetric slot padding spaces the cards without moving a centre.
+const CARD_W     = 300;
+const PO_CARD_W  = 280;   // playoffs run four columns, so QF/SF are narrower
+const PO_FINAL_W = 300;
+const QUALIFY_W  = 104;
+const HEAD_H     = 44;
+
+function Slot({ children, pad = 7 }) {
+  return <div style={{ flex:1, display:"flex", alignItems:"center", minHeight:0, padding:`${pad}px 0` }}>{children}</div>;
 }
 
 function RoundCol({ label, sub, color, w = CARD_W, children }) {
   return (
     <div style={{ flex:`0 0 ${w}px`, width:w, display:"flex", flexDirection:"column" }}>
-      <div style={{ height:38, display:"flex", flexDirection:"column", justifyContent:"flex-end", paddingBottom:8 }}>
-        {label && <span style={{ fontSize:10, fontWeight:700, color:color||C.muted, fontFamily:F.main, letterSpacing:1.6, textTransform:"uppercase" }}>{label}</span>}
-        {sub && <span style={{ fontSize:9, color:C.dim, fontFamily:F.main, letterSpacing:1.2, textTransform:"uppercase", marginTop:3 }}>{sub}</span>}
+      <div style={{ height:HEAD_H, display:"flex", flexDirection:"column", justifyContent:"flex-end", paddingBottom:10 }}>
+        {label && <span style={{ fontSize:13, fontWeight:700, color:color||C.white, fontFamily:F.main, letterSpacing:0.4, textTransform:"uppercase" }}>{label}</span>}
+        {sub && <span style={{ fontSize:9, color:C.dim, fontFamily:F.main, letterSpacing:1.5, textTransform:"uppercase", marginTop:3 }}>{sub}</span>}
       </div>
       <div style={{ flex:1, display:"flex", flexDirection:"column" }}>{children}</div>
     </div>
   );
 }
 
-// Joins 2N slots down to N. Each unit spans one pair: its two sources sit at
-// 25%/75% of the unit and the single output leaves at 50%.
+// Joins 2N slots down to N: two in-stubs at the source centres, a vertical join
+// between them, one out-stub at the midpoint.
 function ElbowCol({ pairs }) {
   return (
     <div style={{ flex:1, minWidth:44, display:"flex", flexDirection:"column" }}>
-      <div style={{ height:38 }} />
+      <div style={{ height:HEAD_H }} />
       <div style={{ flex:1, display:"flex", flexDirection:"column" }}>
         {Array.from({ length: pairs }).map((_, i) => (
           <div key={i} style={{ flex:1, position:"relative", minHeight:0 }}>
-            <div style={{ position:"absolute", left:0,     width:"50%", top:"25%", height:1, background:LINE }} />
-            <div style={{ position:"absolute", left:0,     width:"50%", top:"75%", height:1, background:LINE }} />
-            <div style={{ position:"absolute", left:"50%", width:1, top:"25%", height:"50%", background:LINE }} />
-            <div style={{ position:"absolute", left:"50%", width:"50%", top:"50%", height:1, background:LINE }} />
+            <div style={{ position:"absolute", left:0,     width:"50%", top:"25%", height:1, background:C.conn }} />
+            <div style={{ position:"absolute", left:0,     width:"50%", top:"75%", height:1, background:C.conn }} />
+            <div style={{ position:"absolute", left:"50%", width:1, top:"25%", height:"50%", background:C.conn }} />
+            <div style={{ position:"absolute", left:"50%", width:"50%", top:"50%", height:1, background:C.conn }} />
           </div>
         ))}
       </div>
@@ -497,15 +613,15 @@ function ElbowCol({ pairs }) {
   );
 }
 
-// 1:1 progression (LB round 1 → round 2, or a round → its qualified marker).
+// 1:1 progression (LB round 1 → round 2, or a round → its Advance marker).
 function LineCol({ count }) {
   return (
     <div style={{ flex:1, minWidth:32, display:"flex", flexDirection:"column" }}>
-      <div style={{ height:38 }} />
+      <div style={{ height:HEAD_H }} />
       <div style={{ flex:1, display:"flex", flexDirection:"column" }}>
         {Array.from({ length: count }).map((_, i) => (
           <div key={i} style={{ flex:1, position:"relative", minHeight:0 }}>
-            <div style={{ position:"absolute", left:0, right:0, top:"50%", height:1, background:LINE }} />
+            <div style={{ position:"absolute", left:0, right:0, top:"50%", height:1, background:C.conn }} />
           </div>
         ))}
       </div>
@@ -515,22 +631,32 @@ function LineCol({ count }) {
 
 function BracketBanner({ text, color }) {
   return (
-    <div style={{ display:"flex", alignItems:"center", gap:14, margin:"0 0 6px" }}>
-      <span style={{ fontSize:10, fontWeight:700, color, fontFamily:F.main, letterSpacing:2.4, textTransform:"uppercase", flexShrink:0 }}>{text}</span>
+    <div style={{ display:"flex", alignItems:"center", gap:14, margin:"0 0 8px" }}>
+      <span style={{ fontSize:11, fontWeight:700, color, fontFamily:F.main, letterSpacing:2, textTransform:"uppercase", flexShrink:0 }}>{text}</span>
       <div style={{ height:1, flex:1, background:C.lineSoft }} />
     </div>
   );
 }
 
-function QualifyTag() {
+function QualifyTag({ settled }) {
   return (
-    <div style={{ border:`1px solid rgba(200,168,106,0.38)`, borderRadius:4, padding:"8px 10px", textAlign:"center", background:"rgba(200,168,106,0.06)" }}>
-      <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:C.gold, letterSpacing:1.2, textTransform:"uppercase", whiteSpace:"nowrap" }}>Qualified</div>
+    <div style={{ border:`1px dashed ${settled ? "rgba(200,168,106,0.4)" : C.lineSoft}`, borderRadius:4,
+                  padding:"8px 10px", textAlign:"center", width:"100%",
+                  background: settled ? "rgba(200,168,106,0.05)" : "transparent" }}>
+      <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color: settled ? C.gold : C.dimmer,
+                    letterSpacing:1.2, textTransform:"uppercase", whiteSpace:"nowrap" }}>
+        {settled ? "Qualified" : "Pending"}
+      </div>
     </div>
   );
 }
 
-// ─── GROUP STAGE PAGE — two double-elim groups, bracket + schedule views ─────
+// Directional wash so the two halves read as different zones without a new hue.
+const washStyle = (grad) => ({
+  background: grad, borderRadius:10, overflowX:"auto", paddingBottom:8,
+});
+
+// ─── GROUP STAGE PAGE ────────────────────────────────────────────────────────
 function GroupStagePage({ groupMatches, predictions, results, playerId, onPredict, now, isAdmin }) {
   const [grp,      setGrp]      = useState("A");
   const [view,     setView]     = useState("bracket");
@@ -542,89 +668,79 @@ function GroupStagePage({ groupMatches, predictions, results, playerId, onPredic
 
   const cp = (m) => ({
     match: m, result: results[m.id], pred: predictions[playerId]?.[m.id],
-    onClick: () => setSelected(selected === m.id ? null : m.id),
+    onClick: () => { if (!hasTBD(m)) setSelected(selected === m.id ? null : m.id); },
     isSelected: selected === m.id, now, isAdmin,
   });
 
   const ubqf = byRound("UBQF"), ubsf = byRound("UBSF"), lbr1 = byRound("LBR1"), lbr2 = byRound("LBR2");
   const lbDay = grp === "A" ? 13 : 14;
 
-  // Schedule view — every group match (both groups), grouped by KSA day
-  const fmtDay = (iso) => new Date(iso).toLocaleDateString("en-US", { timeZone:"Asia/Riyadh", weekday:"long", month:"short", day:"numeric" });
-  const sorted = [...groupMatches].sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
-  const days = [];
-  sorted.forEach(m => {
-    const d = fmtDay(m.startTime);
-    const last = days[days.length-1];
-    if (!last || last.day !== d) days.push({ day:d, matches:[m] }); else last.matches.push(m);
-  });
-
   const pillBtn = (active) => ({
-    padding:"8px 22px", borderRadius:7, cursor:"pointer", fontFamily:F.main, fontWeight:700,
-    fontSize:12, letterSpacing:1.5, textTransform:"uppercase", transition:"all 0.15s",
-    border: `1px solid ${active ? "transparent" : "rgba(255,255,255,0.12)"}`,
-    background: active ? GOLD_GRAD : "rgba(255,255,255,0.04)",
-    color: active ? "#232327" : C.muted,
-    boxShadow: active ? "0 0 18px rgba(190,158,89,0.35)" : "none",
+    padding:"8px 20px", borderRadius:6, cursor:"pointer", fontFamily:F.main, fontWeight:700,
+    fontSize:12, letterSpacing:1, textTransform:"uppercase", transition:"background-color 0.12s",
+    border: active ? "none" : `1px solid ${C.line}`,
+    background: active ? GOLD_GRAD : "rgba(255,255,255,0.03)",
+    color: active ? "#151515" : C.muted,
   });
 
   return (
     <div>
-      {/* Group + view toggles */}
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16, flexWrap:"wrap", gap:10 }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18, flexWrap:"wrap", gap:10 }}>
         <div style={{ display:"flex", gap:8 }}>
           {view==="bracket" && ["A","B"].map(g => (
             <button key={g} onClick={()=>{ setGrp(g); setSelected(null); }} style={pillBtn(grp===g)}>Group {g}</button>
           ))}
         </div>
-        <div style={{ display:"flex", gap:3, background:C.surface, border:"1px solid rgba(255,255,255,0.08)", borderRadius:9, padding:3 }}>
+        <div style={{ display:"flex", gap:3, background:C.surface, border:`1px solid ${C.line}`, borderRadius:8, padding:3 }}>
           {[{id:"bracket",label:"Bracket"},{id:"schedule",label:"Schedule"}].map(v => (
-            <button key={v.id} onClick={()=>{ setView(v.id); setSelected(null); }} style={{ padding:"6px 16px", borderRadius:6, border:"none", cursor:"pointer", background:view===v.id?"rgba(190,158,89,0.16)":"transparent", color:view===v.id?C.gold:C.muted, fontFamily:F.main, fontWeight:700, fontSize:11, letterSpacing:1.5, textTransform:"uppercase", transition:"all 0.15s" }}>{v.label}</button>
+            <button key={v.id} onClick={()=>{ setView(v.id); setSelected(null); }} style={{
+              padding:"6px 18px", borderRadius:6, border:"none", cursor:"pointer",
+              background:view===v.id?"rgba(200,168,106,0.16)":"transparent",
+              color:view===v.id?C.gold:C.muted, fontFamily:F.main, fontWeight:700, fontSize:11,
+              letterSpacing:1.5, textTransform:"uppercase" }}>{v.label}</button>
           ))}
         </div>
       </div>
 
       {view==="bracket" && (
         <>
-          <div style={{ fontSize:10, color:C.muted, marginBottom:20, fontFamily:F.main, letterSpacing:2, textTransform:"uppercase" }}>
+          <div style={{ fontSize:10, color:C.dim, marginBottom:20, fontFamily:F.main, letterSpacing:1.5, textTransform:"uppercase" }}>
             Group {grp} · Aug 12–14 · All Bo5 · Top 4 advance · <span style={{color:C.gold}}>Click any match to predict</span>
           </div>
 
-          <div style={{ overflowX:"auto", paddingBottom:8 }}>
-            <div style={{ minWidth: 860 }}>
+          <BracketBanner text="Upper Bracket" color={C.gold} />
+          <div style={washStyle("radial-gradient(700px 300px at 0% 0%, rgba(200,168,106,0.07) 0%, transparent 65%)")}>
+            <div style={{ display:"flex", alignItems:"stretch", minWidth:900, padding:6 }}>
+              <RoundCol label="Quarter Finals" sub="Aug 12">
+                {ubqf.map(m => <Slot key={m.id}><BracketCard {...cp(m)} /></Slot>)}
+              </RoundCol>
+              <ElbowCol pairs={2} />
+              <RoundCol label="Semi Finals" sub="Aug 13">
+                {ubsf.map(m => <Slot key={m.id}><BracketCard {...cp(m)} /></Slot>)}
+              </RoundCol>
+              <LineCol count={2} />
+              <RoundCol label="Advance" w={QUALIFY_W}>
+                {ubsf.map(m => <Slot key={m.id}><QualifyTag settled={!!results[m.id]} /></Slot>)}
+              </RoundCol>
+            </div>
+          </div>
 
-              {/* ── UPPER BRACKET ─────────────────────────────────── */}
-              <BracketBanner text="Upper Bracket" color={C.gold} />
-              <div style={{ display:"flex", alignItems:"stretch", marginBottom:38 }}>
-                <RoundCol label="Quarter Finals" sub="Aug 12" color={C.gold}>
-                  {ubqf.map(m => <Slot key={m.id}><BracketCard {...cp(m)} /></Slot>)}
-                </RoundCol>
-                <ElbowCol pairs={2} />
-                <RoundCol label="Semi Finals" sub="Aug 13" color={C.gold}>
-                  {ubsf.map(m => <Slot key={m.id}><BracketCard {...cp(m)} /></Slot>)}
-                </RoundCol>
-                <LineCol count={2} />
-                <RoundCol label="Advance" color={C.goldLight} w={QUALIFY_W}>
-                  {ubsf.map(m => <Slot key={m.id}><QualifyTag /></Slot>)}
-                </RoundCol>
-              </div>
+          <div style={{ height:38 }} />
 
-              {/* ── LOWER BRACKET ─────────────────────────────────── */}
-              <BracketBanner text="Lower Bracket — Elimination" color={C.orange} />
-              <div style={{ display:"flex", alignItems:"stretch" }}>
-                <RoundCol label="Round 1" sub={`Aug ${lbDay}`} color={C.orange}>
-                  {lbr1.map(m => <Slot key={m.id}><BracketCard {...cp(m)} /></Slot>)}
-                </RoundCol>
-                <LineCol count={2} />
-                <RoundCol label="Round 2" sub="Aug 14" color={C.orange}>
-                  {lbr2.map(m => <Slot key={m.id}><BracketCard {...cp(m)} /></Slot>)}
-                </RoundCol>
-                <LineCol count={2} />
-                <RoundCol label="Advance" color={C.goldLight} w={QUALIFY_W}>
-                  {lbr2.map(m => <Slot key={m.id}><QualifyTag /></Slot>)}
-                </RoundCol>
-              </div>
-
+          <BracketBanner text="Lower Bracket — Elimination" color={C.orange} />
+          <div style={washStyle("radial-gradient(700px 300px at 0% 0%, rgba(255,90,31,0.06) 0%, transparent 65%)")}>
+            <div style={{ display:"flex", alignItems:"stretch", minWidth:900, padding:6 }}>
+              <RoundCol label="Round 1" sub={`Aug ${lbDay}`} color={C.orange}>
+                {lbr1.map(m => <Slot key={m.id}><BracketCard {...cp(m)} /></Slot>)}
+              </RoundCol>
+              <LineCol count={2} />
+              <RoundCol label="Round 2" sub="Aug 14" color={C.orange}>
+                {lbr2.map(m => <Slot key={m.id}><BracketCard {...cp(m)} /></Slot>)}
+              </RoundCol>
+              <LineCol count={2} />
+              <RoundCol label="Advance" w={QUALIFY_W}>
+                {lbr2.map(m => <Slot key={m.id}><QualifyTag settled={!!results[m.id]} /></Slot>)}
+              </RoundCol>
             </div>
           </div>
 
@@ -635,37 +751,170 @@ function GroupStagePage({ groupMatches, predictions, results, playerId, onPredic
       )}
 
       {view==="schedule" && (
-        <div>
-          {days.map(d => (
-            <div key={d.day} style={{ marginBottom:22 }}>
-              <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
-                <span style={{ fontSize:12, fontWeight:700, color:C.gold, fontFamily:F.main, letterSpacing:2.5, textTransform:"uppercase", flexShrink:0 }}>{d.day}</span>
-                <div style={{ height:1, flex:1, background:"linear-gradient(90deg, rgba(190,158,89,0.3), transparent)" }} />
-                <span style={{ fontSize:9, color:C.dim, fontFamily:F.main, letterSpacing:1.5, flexShrink:0 }}>{d.matches.length} matches · KSA</span>
-              </div>
-              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                {d.matches.map(m => (
-                  <MatchCard key={m.id} match={m} playerId={playerId} predictions={predictions}
-                    results={results} onPredict={onPredict} onSetResult={()=>{}} isAdmin={false} readOnly={!playerId} now={now} />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+        <ScheduleView matches={groupMatches} results={results} predictions={predictions}
+          playerId={playerId} now={now} selected={selected} onSelect={setSelected} />
       )}
 
-      {view==="bracket" && selected && selectedMatch && playerId && (
+      {selected && selectedMatch && playerId && (
         <PredictPanel match={selectedMatch} result={results[selected]} pred={predictions[playerId]?.[selected]}
           onPredict={onPredict} onClose={() => setSelected(null)} />
       )}
-      {view==="bracket" && selected && !playerId && (
+      {selected && !playerId && (
         <div style={{ textAlign:"center", color:C.muted, fontFamily:F.main, fontSize:12, marginTop:12, letterSpacing:1 }}>Log in as a player to predict</div>
       )}
     </div>
   );
 }
 
-// ─── PLAYOFFS BRACKET PAGE — single elimination + 3rd place match ────────────
+// ─── SCHEDULE VIEW — a timeline, not a stack of cards ────────────────────────
+function ScheduleFixtureSide({ name, align, dimmed }) {
+  const [imgErr, setImgErr] = useState(false);
+  const tbd = isTBDTeam(name);
+  const t = teamStyle(name);
+  const chip = tbd
+    ? <div style={{ width:24, height:24, borderRadius:4, border:`1px dashed ${C.lineSoft}`, flexShrink:0 }} />
+    : <div style={{ width:24, height:24, borderRadius:4, background:t.bg, border:`1px solid ${t.color}44`,
+                    display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden",
+                    flexShrink:0, opacity: dimmed ? 0.6 : 1 }}>
+        {t.logo && !imgErr
+          ? <img src={t.logo} style={{ width:"88%", height:"88%", objectFit:"contain" }} onError={()=>setImgErr(true)} alt="" />
+          : <span style={{ fontSize:9, fontWeight:700, color:t.color, fontFamily:F.main }}>{t.abbr}</span>}
+      </div>;
+  const label = (
+    <span style={{ fontSize:13, fontWeight:700, fontFamily:F.main, letterSpacing:0.2,
+                   color: tbd ? C.dimmer : dimmed ? C.muted : C.white,
+                   whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+      {tbd ? "TBD" : name}
+    </span>
+  );
+  return (
+    <div style={{ display:"flex", alignItems:"center", gap:9, minWidth:0, flex:1,
+                  justifyContent: align==="right" ? "flex-end" : "flex-start" }}>
+      {align==="right" ? <>{label}{chip}</> : <>{chip}{label}</>}
+    </div>
+  );
+}
+
+function ScheduleView({ matches, results, now, selected, onSelect }) {
+  const fmtDay  = (iso) => new Date(iso).toLocaleDateString("en-US", { timeZone:"Asia/Riyadh", weekday:"long", month:"short", day:"numeric" });
+  const fmtHour = (iso) => new Date(iso).toLocaleTimeString("en-US", { timeZone:"Asia/Riyadh", hour:"2-digit", minute:"2-digit", hour12:false });
+
+  const sorted = [...matches].sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
+  const days = [];
+  sorted.forEach(m => {
+    const d = fmtDay(m.startTime);
+    const last = days[days.length-1];
+    if (!last || last.day !== d) days.push({ day:d, matches:[m] }); else last.matches.push(m);
+  });
+
+  return (
+    <div>
+      {days.map(d => (
+        <div key={d.day} style={{ marginBottom:26 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
+            <span style={{ fontSize:12, fontWeight:700, color:C.white, fontFamily:F.main, letterSpacing:2, textTransform:"uppercase", flexShrink:0 }}>{d.day}</span>
+            <div style={{ height:1, flex:1, background:C.lineSoft }} />
+            <span style={{ fontSize:9, color:C.dim, fontFamily:F.main, letterSpacing:1.5, textTransform:"uppercase", flexShrink:0 }}>
+              {d.matches.length} matches · KSA
+            </span>
+          </div>
+
+          {d.matches.map((m, i) => {
+            const res    = results[m.id];
+            const locked = isLocked(m, now);
+            const live   = !res && locked && now >= new Date(m.startTime).getTime();
+            const msLeft = getLockTime(m).getTime() - now;
+            const urgent = !locked && msLeft < 3600000;
+            const isSel  = selected === m.id;
+            const tbd    = hasTBD(m);
+
+            const statusWord  = res ? "Final" : live ? "Live" : locked ? "Locked" : urgent ? "Locking" : "Upcoming";
+            const statusColor = res ? C.green : live ? C.orange : urgent ? C.red : C.muted;
+            const timeColor   = res ? C.white : live ? C.orange : urgent ? C.red : C.white;
+
+            return (
+              <div key={m.id}
+                onClick={()=>{ if(!tbd) onSelect(isSel ? null : m.id); }}
+                style={{ display:"flex", gap:12, padding:"12px 0", cursor: tbd ? "default" : "pointer",
+                         borderBottom: i === d.matches.length-1 ? "none" : `1px solid ${C.lineSoft}` }}>
+                <div style={{ width:64, flexShrink:0, textAlign:"right" }}>
+                  <div style={{ ...NUM, fontSize:16, fontWeight:700, fontFamily:F.main, color:timeColor, lineHeight:1.2 }}>
+                    {fmtHour(m.startTime)}
+                  </div>
+                  <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, letterSpacing:1,
+                                textTransform:"uppercase", color:statusColor, marginTop:3 }}>
+                    {statusWord}
+                  </div>
+                </div>
+                <div style={{ width:1, background:C.lineSoft, flexShrink:0 }} />
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:9, fontFamily:F.main, fontWeight:700, letterSpacing:1,
+                                textTransform:"uppercase", color: isSel ? C.gold : C.dim, marginBottom:6 }}>
+                    {m.group?`Group ${m.group} · `:""}{m.label} · Bo{m.bo||5}{isSel?" · Selected":""}
+                  </div>
+                  <div style={{ display:"flex", alignItems:"center", gap:12, justifyContent:"space-between" }}>
+                    <ScheduleFixtureSide name={m.team1} align="left" dimmed={!!res && res.winner!==m.team1} />
+                    {res ? (
+                      <span style={{ ...NUM, fontSize:15, fontWeight:700, fontFamily:F.main, color:C.goldLight, flexShrink:0 }}>
+                        {res.score1} – {res.score2}
+                      </span>
+                    ) : (
+                      <span style={{ fontSize:12, fontFamily:F.main, color:C.dim, flexShrink:0 }}>vs</span>
+                    )}
+                    <ScheduleFixtureSide name={m.team2} align="right" dimmed={!!res && res.winner!==m.team2} />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── PLAYOFFS BRACKET PAGE ───────────────────────────────────────────────────
+// The Grand Final is the one card allowed extra weight: a gold top edge marks
+// the terminal match without resorting to glow.
+function FinalCard({ match, result, pred, onClick, isSelected, now, headerLabel, accent, nameSize, chip }) {
+  const res = result;
+  const score = pred && res ? calcScore(pred, res) : null;
+  const tbd = hasTBD(match);
+  return (
+    <div onClick={onClick} style={{
+      background: C.surfaceHi,
+      borderTop: `2px solid ${accent}`,
+      borderLeft:`1px solid ${isSelected ? C.gold : C.line}`,
+      borderRight:`1px solid ${isSelected ? C.gold : C.line}`,
+      borderBottom:`1px solid ${isSelected ? C.gold : C.line}`,
+      borderRadius:5, overflow:"hidden", width:"100%", cursor: tbd ? "default" : "pointer",
+      boxShadow: "0 6px 20px rgba(0,0,0,0.4)",
+      transition:"border-color 0.12s",
+    }}>
+      <div style={{ padding:"8px 14px", background:"rgba(200,168,106,0.08)", borderBottom:`1px solid ${C.lineSoft}`,
+                    display:"flex", justifyContent:"space-between", alignItems:"center", gap:8 }}>
+        <span style={{ fontSize:10, fontWeight:700, fontFamily:F.main, color:accent, letterSpacing:1.5, textTransform:"uppercase" }}>
+          {headerLabel}
+        </span>
+        {score !== null && <ScoreChip score={score} />}
+        {score === null && !res && !tbd && (
+          <CountdownPill lockTime={getLockTime(match).toISOString()} now={now} startTime={match.startTime} />
+        )}
+      </div>
+      <div style={{ padding:"3px 0" }}>
+        <div style={{ padding:"9px 14px" }}>
+          <BracketTeamRow name={match.team1} score={res?.score1} isWinner={res?.winner===match.team1}
+            isPick={pred?.winner===match.team1} hasResult={!!res} tbdCard={tbd} chip={chip} nameSize={nameSize} />
+        </div>
+        <div style={{ padding:"9px 14px" }}>
+          <BracketTeamRow name={match.team2} score={res?.score2} isWinner={res?.winner===match.team2}
+            isPick={pred?.winner===match.team2} hasResult={!!res} tbdCard={tbd} chip={chip} nameSize={nameSize} last />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredict, now, isAdmin }) {
   const [selected, setSelected] = useState(null);
   const byRound = (r) => playoffMatches.filter(m => m.round === r);
@@ -673,7 +922,7 @@ function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredic
 
   const cp = (m) => ({
     match: m, result: results[m.id], pred: predictions[playerId]?.[m.id],
-    onClick: () => setSelected(selected === m.id ? null : m.id),
+    onClick: () => { if (!hasTBD(m)) setSelected(selected === m.id ? null : m.id); },
     isSelected: selected === m.id, now, isAdmin,
   });
 
@@ -681,45 +930,34 @@ function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredic
 
   return (
     <div>
-      <div style={{ fontSize:10, color:C.muted, marginBottom:20, fontFamily:F.main, letterSpacing:2, textTransform:"uppercase" }}>
+      <div style={{ fontSize:10, color:C.dim, marginBottom:20, fontFamily:F.main, letterSpacing:1.5, textTransform:"uppercase" }}>
         Playoffs · Aug 15–16 · Single elimination · All Bo7 · <span style={{color:C.gold}}>Click any match to predict</span>
       </div>
 
-      <div style={{ overflowX:"auto", paddingBottom:8 }}>
-        <div style={{ minWidth: 860 }}>
-
-          <div style={{ display:"flex", alignItems:"stretch" }}>
-            <RoundCol label="Quarter Finals" sub="Aug 15" color={C.gold}>
-              {qf.map(m => <Slot key={m.id}><BracketCard {...cp(m)} /></Slot>)}
-            </RoundCol>
-            <ElbowCol pairs={2} />
-            <RoundCol label="Semi Finals" sub="Aug 16" color={C.gold}>
-              {sf.map(m => <Slot key={m.id}><BracketCard {...cp(m)} /></Slot>)}
-            </RoundCol>
-            <ElbowCol pairs={1} />
-            <RoundCol label="Grand Final" sub="Aug 16" color={C.goldLight}>
-              {gf.map(m => <Slot key={m.id}><BracketCard {...cp(m)} /></Slot>)}
-            </RoundCol>
-          </div>
-
-          {/* 3rd place match */}
-          {third.length > 0 && (
-            <div style={{ marginTop:34 }}>
-              <BracketBanner text="3rd Place Match" color={C.orange} />
-              <div style={{ display:"flex", alignItems:"stretch" }}>
-                <div style={{ flex:1 }} />
-                <div style={{ width:CARD_W, flexShrink:0 }}>
-                  {third.map(m => <BracketCard key={m.id} {...cp(m)} />)}
-                </div>
-                <div style={{ flex:1, display:"flex", alignItems:"center", paddingLeft:20 }}>
-                  <div style={{ fontSize:9, color:C.dim, fontFamily:F.main, letterSpacing:1.5, textTransform:"uppercase", lineHeight:1.9 }}>
-                    Semi final losers<br/>play for bronze
-                  </div>
-                </div>
-              </div>
+      <div style={washStyle("radial-gradient(900px 400px at 100% 0%, rgba(200,168,106,0.08) 0%, transparent 60%)")}>
+        <div style={{ display:"flex", alignItems:"stretch", minWidth:1100, padding:6 }}>
+          <RoundCol label="Quarter Finals" sub="Aug 15" w={PO_CARD_W}>
+            {qf.map(m => <Slot key={m.id} pad={6}><BracketCard {...cp(m)} /></Slot>)}
+          </RoundCol>
+          <ElbowCol pairs={2} />
+          <RoundCol label="Semi Finals" sub="Aug 16" w={PO_CARD_W}>
+            {sf.map(m => <Slot key={m.id} pad={6}><BracketCard {...cp(m)} /></Slot>)}
+          </RoundCol>
+          <ElbowCol pairs={1} />
+          <div style={{ flex:`0 0 ${PO_FINAL_W}px`, width:PO_FINAL_W, display:"flex", flexDirection:"column" }}>
+            <div style={{ height:HEAD_H, display:"flex", flexDirection:"column", justifyContent:"flex-end", paddingBottom:10 }}>
+              <span style={{ fontSize:13, fontWeight:700, color:C.white, fontFamily:F.main, letterSpacing:0.4, textTransform:"uppercase" }}>Final</span>
+              <span style={{ fontSize:9, color:C.dim, fontFamily:F.main, letterSpacing:1.5, textTransform:"uppercase", marginTop:3 }}>Aug 16</span>
             </div>
-          )}
-
+            <div style={{ flex:1, display:"flex", flexDirection:"column", justifyContent:"center", gap:14 }}>
+              {gf.map(m => (
+                <FinalCard key={m.id} {...cp(m)} headerLabel={`Grand Final · Bo${m.bo||7}`} accent={C.gold} nameSize={17} chip={28} />
+              ))}
+              {third.map(m => (
+                <FinalCard key={m.id} {...cp(m)} headerLabel={`3rd Place Match · Bo${m.bo||7}`} accent={C.orange} nameSize={13} chip={24} />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1203,9 +1441,9 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
   ];
 
   return (
-    <div style={{ minHeight:"100vh", background:`radial-gradient(1200px 600px at 50% -10%, rgba(190,158,89,0.10) 0%, transparent 60%), linear-gradient(180deg, #1A1A1D 0%, #141417 100%)`, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:20, position:"relative" }}>
+    <div style={{ minHeight:"100vh", background:PAGE_BG, backgroundAttachment:"fixed", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:20, position:"relative" }}>
       <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
-      <style>{`::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:${C.navy}}::-webkit-scrollbar-thumb{background:${C.goldDark};border-radius:3px}@keyframes livePulse{0%,100%{opacity:1}50%{opacity:0.45}}`}</style>
+      <style>{`::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:#121214}::-webkit-scrollbar-thumb{background:#5c4d31;border-radius:4px}@keyframes ewcPulse{0%,100%{opacity:1}50%{opacity:0.35}}`}</style>
       {/* Streaks */}
       <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"15%",left:"-10%",width:600,height:3,background:"linear-gradient(90deg,transparent,rgba(190,158,89,0.45),transparent)",transform:"rotate(-35deg)",filter:"blur(8px)" }} />
       <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"10%",right:"-5%",width:500,height:2,background:"linear-gradient(90deg,transparent,rgba(255,54,0,0.35),transparent)",transform:"rotate(35deg)",filter:"blur(6px)" }} />
@@ -1695,31 +1933,26 @@ export default function App() {
   if(!authId&&!isAdmin)return <LoginScreen players={players} onLogin={id=>{setAuthId(id);setIsAdmin(false);}} onAdminLogin={()=>{setIsAdmin(true);setAuthId(null);}} adminHash={adminHash} />;
 
   const NAV=[
-    {id:"predict",     icon:"🎯",label:"Group Stage"},
-    {id:"playoffs",    icon:"🏆",label:"Playoffs"},
-    ...(myGroup&&!isAdmin?[{id:"mygroup",icon:"🏠",label:"My Group"}]:[]),
-    {id:"leaderboard", icon:"📊",label:"Standings"},
-    {id:"others",      icon:"👁", label:"Others' Picks"},
-    ...(isAdmin?[{id:"admin",icon:"⚙️",label:"Admin"}]:[]),
+    {id:"predict",     label:"Group Stage"},
+    {id:"playoffs",    label:"Playoffs"},
+    ...(myGroup&&!isAdmin?[{id:"mygroup",label:"My Group"}]:[]),
+    {id:"leaderboard", label:"Standings"},
+    {id:"others",      label:"Others' Picks"},
+    ...(isAdmin?[{id:"admin",label:"Admin"}]:[]),
   ];
 
   return (
-    <div style={{ minHeight:"100vh", background:`radial-gradient(1200px 600px at 50% -10%, rgba(190,158,89,0.10) 0%, transparent 60%), linear-gradient(180deg, #1A1A1D 0%, #141417 100%)`, color:C.white, fontFamily:F.body, position:"relative" }}>
+    <div style={{ minHeight:"100vh", background:PAGE_BG, backgroundAttachment:"fixed", color:C.white, fontFamily:F.body, position:"relative" }}>
       <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
-      <style>{`::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:${C.navy}}::-webkit-scrollbar-thumb{background:${C.goldDark};border-radius:3px}@keyframes livePulse{0%,100%{opacity:1}50%{opacity:0.45}}`}</style>
-
-      {/* Background streaks */}
-      <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"15%",left:"-10%",width:600,height:3,background:"linear-gradient(90deg,transparent,rgba(190,158,89,0.45),transparent)",transform:"rotate(-35deg)",filter:"blur(8px)" }} />
-      <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"10%",right:"-5%",width:500,height:2,background:"linear-gradient(90deg,transparent,rgba(255,54,0,0.35),transparent)",transform:"rotate(35deg)",filter:"blur(6px)" }} />
-      <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"55%",left:"5%",width:400,height:2,background:"linear-gradient(90deg,transparent,rgba(190,158,89,0.45),transparent)",transform:"rotate(-20deg)",filter:"blur(6px)" }} />
+      <style>{`::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:#121214}::-webkit-scrollbar-thumb{background:#5c4d31;border-radius:4px}@keyframes ewcPulse{0%,100%{opacity:1}50%{opacity:0.35}}`}</style>
 
       {/* HEADER */}
-      <div style={{ position:"sticky",top:0,zIndex:100,background:"rgba(20,20,23,0.94)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",borderBottom:`1px solid rgba(190,158,89,0.35)`,padding:"16px 20px" }}>
+      <div style={{ position:"sticky",top:0,zIndex:100,background:"rgba(18,18,20,0.94)",backdropFilter:"blur(18px)",WebkitBackdropFilter:"blur(18px)",borderBottom:`1px solid rgba(200,168,106,0.28)`,padding:"14px 20px" }}>
         <div style={{ maxWidth:1440,margin:"0 auto" }}>
           <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexWrap:"wrap",gap:10 }}>
             <div>
-              <div style={{ fontSize:20,fontWeight:700,fontFamily:F.main,background:`linear-gradient(90deg, ${C.white} 0%, ${C.goldLight} 55%, ${C.gold} 100%)`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:3,textTransform:"uppercase" }}>EWC 2026 · Rocket League</div>
-              <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:3,textTransform:"uppercase",marginTop:2 }}>Aug 12–16 · Riyadh · $1,000,000 · 16 Teams</div>
+              <div style={{ fontSize:19,fontWeight:700,fontFamily:F.main,color:C.white,letterSpacing:1.5,textTransform:"uppercase" }}>EWC 2026 <span style={{ color:C.gold }}>·</span> Rocket League</div>
+              <div style={{ fontSize:10,color:C.dim,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase",marginTop:3 }}>Aug 12–16 · Riyadh · $1,000,000 · 16 Teams</div>
             </div>
             {/* Profile Pill Dropdown */}
             <div ref={pillRef} style={{ position:"relative" }}>
@@ -1761,13 +1994,16 @@ export default function App() {
               )}
             </div>
           </div>
-          <div style={{ display:"flex",gap:2,flexWrap:"wrap" }}>
+          <div style={{ display:"flex",gap:4,flexWrap:"wrap" }}>
             {NAV.map(n=>(
-              <button key={n.id} onClick={()=>setPage(n.id)} style={{ padding:"7px 14px",borderRadius:6,border:"none",cursor:"pointer",background:page===n.id?"rgba(190,158,89,0.12)":"transparent",color:page===n.id?C.goldLight:C.muted,fontFamily:F.main,fontWeight:700,fontSize:12,letterSpacing:1.5,textTransform:"uppercase",borderBottom:page===n.id?`2px solid ${C.gold}`:"2px solid transparent",transition:"all 0.15s" }}>{n.icon} {n.label}</button>
+              <button key={n.id} onClick={()=>setPage(n.id)} style={{ padding:"7px 14px",borderRadius:"5px 5px 0 0",border:"none",cursor:"pointer",background:page===n.id?"rgba(200,168,106,0.12)":"transparent",color:page===n.id?C.goldLight:C.muted,fontFamily:F.main,fontWeight:700,fontSize:11.5,letterSpacing:1.2,textTransform:"uppercase",borderBottom:page===n.id?`2px solid ${C.gold}`:"2px solid transparent",transition:"background-color 0.12s" }}>{n.label}</button>
             ))}
           </div>
         </div>
       </div>
+
+      {/* MOMENTUM STRIP */}
+      <MomentumStrip now={now} results={results} totalMatches={ALL_MATCHES.length} />
 
       {/* PAGE CONTENT */}
       <div style={{ position:"relative",zIndex:1,maxWidth:1440,margin:"0 auto",padding:"24px 20px 40px" }}>
@@ -1826,7 +2062,7 @@ export default function App() {
                 return (
                   <div key={p.id} style={{ background:bg,border:`1px solid ${borderCol}`,borderRadius:12,padding:"14px 18px",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"space-between" }}>
                     <div style={{ display:"flex",alignItems:"center",gap:14 }}>
-                      <span style={{ fontSize:22,width:30,textAlign:"center" }}>{i===0?"🥇":i===1?"🥈":i===2?"🥉":<span style={{ fontSize:13,color:C.dim,fontFamily:F.main,fontWeight:700 }}>{`#${i+1}`}</span>}</span>
+                      <span style={{ ...NUM, width:34,textAlign:"center",fontFamily:F.main,fontWeight:700, fontSize:i===0?26:22, color:i===0?C.gold:i<3?C.muted:C.dim }}>{String(i+1).padStart(2,"0")}</span>
                       <div>
                         <div style={{ fontSize:15,fontWeight:700,fontFamily:F.main,display:"flex",alignItems:"center",gap:6,textTransform:"uppercase",letterSpacing:1 }}>
                           {p.nickname}{p.id===authId&&<span style={{ fontSize:9,color:C.blue,background:"rgba(15,88,244,0.2)",padding:"1px 7px",borderRadius:4,border:"1px solid rgba(15,88,244,0.4)",letterSpacing:1 }}>YOU</span>}
@@ -1838,7 +2074,7 @@ export default function App() {
                       </div>
                     </div>
                     <div style={{ textAlign:"right" }}>
-                      <div style={{ fontSize:30,fontWeight:700,fontFamily:F.main,color:i===0?C.red:C.white }}>{p.score}<span style={{ fontSize:12,color:C.muted,marginLeft:4,letterSpacing:1 }}>pts</span></div>
+                      <div style={{ ...NUM, fontSize:i===0?28:24,fontWeight:700,fontFamily:F.main,color:i===0?C.gold:C.white }}>{p.score}<span style={{ fontSize:11,color:C.dim,marginLeft:4,letterSpacing:1 }}>PTS</span></div>
                       {p.bonus!==0&&<div style={{ fontSize:10,color:C.dim,fontFamily:F.main,letterSpacing:0.5 }}>{p.predScore} pred {p.bonus>0?"+":""}{p.bonus} bonus</div>}
                     </div>
                   </div>
@@ -1929,7 +2165,7 @@ export default function App() {
               return (
               <div key={p.id} style={{ background:bg, border:`1px solid ${borderCol}`, borderRadius:12, padding:"14px 18px", marginBottom:8, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                 <div style={{ display:"flex",alignItems:"center",gap:14 }}>
-                  <span style={{ fontSize:22,width:30,textAlign:"center" }}>{i===0?"🥇":i===1?"🥈":i===2?"🥉":<span style={{ fontSize:13,color:C.dim,fontFamily:F.main,fontWeight:700 }}>{`#${i+1}`}</span>}</span>
+                  <span style={{ ...NUM, width:34,textAlign:"center",fontFamily:F.main,fontWeight:700, fontSize:i===0?26:22, color:i===0?C.gold:i<3?C.muted:C.dim }}>{String(i+1).padStart(2,"0")}</span>
                   <div>
                     <div style={{ fontSize:15,fontWeight:700,fontFamily:F.main,display:"flex",alignItems:"center",gap:6,textTransform:"uppercase",letterSpacing:1,flexWrap:"wrap" }}>
                       {p.nickname}
@@ -1943,7 +2179,7 @@ export default function App() {
                   </div>
                 </div>
                 <div style={{ textAlign:"right" }}>
-                  <div style={{ fontSize:30,fontWeight:700,fontFamily:F.main,color:i===0?C.red:C.white }}>{p.score}<span style={{ fontSize:12,color:C.muted,marginLeft:4,letterSpacing:1 }}>pts</span></div>
+                  <div style={{ ...NUM, fontSize:i===0?28:24,fontWeight:700,fontFamily:F.main,color:i===0?C.gold:C.white }}>{p.score}<span style={{ fontSize:11,color:C.dim,marginLeft:4,letterSpacing:1 }}>PTS</span></div>
                   {p.bonus!==0&&<div style={{ fontSize:10,color:C.dim,fontFamily:F.main,letterSpacing:0.5 }}>{p.predScore} pred {p.bonus>0?"+":""}{p.bonus} bonus</div>}
                 </div>
               </div>
