@@ -30,25 +30,35 @@ const INVITE_TOKEN_RE = /^\/join\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 // Champagne gold on near-black is the EWC signature; orange→gold is their hot
 // accent gradient. Names kept stable (red/blue/purple) so existing call sites
 // keep working — the values are now the EWC equivalents.
+// Surfaces step *up* in lightness with elevation (page → card → hover) so depth
+// reads from value, not from glow. Neutrals carry a faint warm cast to sit with
+// the gold rather than fight it.
 const C = {
-  gold:      '#BE9E59',   // EWC primary — rgb(190,158,89)
+  gold:      '#C8A86A',   // EWC primary, nudged up for contrast on lighter ink
   goldLight: '#F2C575',   // top stop of their trophy gradient
-  goldDark:  '#987C4B',   // mid stop
-  goldDeep:  '#4E442D',   // bottom stop
-  orange:    '#FF3600',   // hot accent, live states
-  red:       '#F40F30',   // EWC red — errors / wrong picks
-  blue:      '#0F58F4',   // EWC blue — "you" / info
-  purple:    '#BE9E59',   // legacy alias → gold (group badges)
-  navy:      '#0A0A0A',   // page base
-  navyLight: '#151515',   // card surface — rgb(21,21,21)
-  surface:   '#151515',
-  white:     '#FFFFFF',
-  muted:     '#8C8C8C',   // rgb(140,140,140)
-  dim:       '#5A5A5A',
-  green:     '#13C46F',   // their positive #139E5C, lifted for dark-bg legibility
+  goldDark:  '#987C4B',
+  goldDeep:  '#4E442D',
+  orange:    '#FF5A1F',   // live / urgent
+  red:       '#F4425C',   // wrong picks, destructive
+  blue:      '#5B8CFF',   // "you" markers
+  purple:    '#C8A86A',   // legacy alias → gold
+  // ink ramp
+  bg:        '#1A1A1D',   // page
+  bgDeep:    '#141417',   // header / wells
+  surface:   '#232327',   // cards
+  surfaceHi: '#2C2C31',   // hover
+  navy:      '#1A1A1D',   // legacy aliases
+  navyLight: '#232327',
+  line:      'rgba(255,255,255,0.10)',
+  lineSoft:  'rgba(255,255,255,0.06)',
+  white:     '#F7F7F8',
+  muted:     '#A0A0A6',
+  dim:       '#6E6E76',
+  green:     '#3ECF8E',
 };
 const GOLD_GRAD  = `linear-gradient(135deg, ${C.goldLight} 0%, ${C.gold} 45%, ${C.goldDark} 100%)`;
 const HOT_GRAD   = `linear-gradient(90deg, ${C.orange} 0%, #D1B26E 100%)`;
+const NUM        = { fontVariantNumeric: 'tabular-nums' };  // scores never jitter
 
 // ─── TEAMS — EWC 2026 (16 teams) ─────────────────────────────────────────────
 const TEAMS = {
@@ -191,7 +201,7 @@ function TeamBadge({ name, size="sm" }) {
         width: sz,
         height: sz,
         borderRadius: 7,
-        background: isTBD ? "#1c1c1c" : (["TSM", "R8 Esports", "Shopify Rebellion", "Vitality"].includes(name) ? "#FFFFFF" : t.bg),
+        background: isTBD ? "#2C2C31" : (["TSM", "R8 Esports", "Shopify Rebellion", "Vitality"].includes(name) ? "#FFFFFF" : t.bg),
         border: `2px solid ${isTBD ? "#3d3d3d" : t.color}`,
         display: "flex",
         alignItems: "center",
@@ -215,36 +225,47 @@ function TeamBadge({ name, size="sm" }) {
 }
 
 // ─── BRACKET MATCH CARD ───────────────────────────────────────────────────────
-// One team row inside a BracketCard. Split out into a real component so the
-// logo's error state is a legal hook rather than a useState inside a callback.
+// One team row. A real component so the logo's error state is a legal hook
+// rather than a useState called inside a render callback.
 function BracketTeamRow({ name, score, isWinner, isPick, hasResult, last }) {
   const [imgErr, setImgErr] = useState(false);
   const tbd = isTBDTeam(name);
   const t = teamStyle(name);
+  const lost = hasResult && !isWinner;
   return (
     <div style={{
-      padding:"10px 14px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8,
-      borderBottom: last ? "none" : "1px solid rgba(255,255,255,0.05)",
-      background: isWinner ? "rgba(190,158,89,0.10)" : "transparent",
-      borderLeft: isWinner ? `3px solid ${C.gold}` : "3px solid transparent",
+      padding:"11px 14px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:10,
+      borderTop: last ? `1px solid ${C.lineSoft}` : "none",
+      background: isWinner ? "rgba(200,168,106,0.07)" : "transparent",
     }}>
-      <div style={{ display:"flex", alignItems:"center", gap:10, minWidth:0 }}>
+      <div style={{ display:"flex", alignItems:"center", gap:11, minWidth:0 }}>
+        {/* winner gets a solid gold tick of a bar; everyone else keeps the gutter */}
+        <div style={{ width:3, height:22, borderRadius:2, background: isWinner ? C.gold : "transparent", flexShrink:0 }} />
         {!tbd && (
-          <div style={{ width:26, height:26, borderRadius:5, background:t.bg, border:`1px solid ${t.color}55`, display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", flexShrink:0 }}>
+          <div style={{ width:26, height:26, borderRadius:4, background:t.bg, border:`1px solid ${t.color}44`,
+                        display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", flexShrink:0,
+                        opacity: lost ? 0.5 : 1 }}>
             {t.logo && !imgErr
               ? <img src={t.logo} style={{ width:"88%", height:"88%", objectFit:"contain" }} onError={()=>setImgErr(true)} alt="" />
               : <span style={{ fontSize:9, fontWeight:700, color:t.color, fontFamily:F.main }}>{t.abbr}</span>}
           </div>
         )}
+        {tbd && <div style={{ width:26, height:26, borderRadius:4, border:`1px dashed ${C.lineSoft}`, flexShrink:0 }} />}
         <span style={{
-          fontSize:14, fontWeight:700, fontFamily:F.main, letterSpacing:0.8, textTransform:"uppercase",
-          color: tbd ? "rgba(255,255,255,0.22)" : isWinner ? C.goldLight : C.white,
+          fontSize:13.5, fontWeight:700, fontFamily:F.main, letterSpacing:0.3,
+          color: tbd ? C.dim : isWinner ? C.goldLight : lost ? C.muted : C.white,
           whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis",
         }}>{tbd ? "TBD" : name}</span>
       </div>
-      <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
-        {!hasResult && isPick && <span style={{ fontSize:11, color:C.gold, fontFamily:F.main }}>★</span>}
-        {hasResult && <span style={{ fontSize:19, fontWeight:700, fontFamily:F.main, color: isWinner ? C.goldLight : C.dim, lineHeight:1 }}>{score}</span>}
+      <div style={{ display:"flex", alignItems:"center", gap:9, flexShrink:0 }}>
+        {!hasResult && isPick && (
+          <span style={{ fontSize:9, fontWeight:700, fontFamily:F.main, letterSpacing:1, color:C.gold,
+                         border:`1px solid rgba(200,168,106,0.45)`, borderRadius:3, padding:"2px 6px" }}>PICK</span>
+        )}
+        {hasResult && (
+          <span style={{ ...NUM, fontSize:20, fontWeight:700, fontFamily:F.main, lineHeight:1,
+                         color: isWinner ? C.goldLight : C.dim }}>{score}</span>
+        )}
       </div>
     </div>
   );
@@ -256,33 +277,39 @@ function BracketCard({ match, result, pred, onClick, isSelected, now, isAdmin })
   const score = pred && res ? calcScore(pred, res) : null;
   const [hover, setHover] = useState(false);
 
-  const borderColor = score===3 ? "rgba(19,196,111,0.55)"
-                    : score===1 ? "rgba(244,15,48,0.45)"
-                    : isSelected ? C.gold
-                    : hover ? "rgba(190,158,89,0.5)"
-                    : "rgba(255,255,255,0.09)";
-  const glowShadow  = score===3 ? "0 0 22px rgba(19,196,111,0.18)"
-                    : isSelected ? "0 0 26px rgba(190,158,89,0.28)"
-                    : hover ? "0 0 18px rgba(190,158,89,0.14)"
-                    : "0 2px 10px rgba(0,0,0,0.5)";
+  // Status drives the accent; no glow anywhere — depth comes from value + a
+  // single hairline, which is what keeps this from reading as generic neon.
+  const accent = score===3 ? C.green : score===1 ? C.red : isSelected ? C.gold : null;
+  const border = accent ? accent : hover ? "rgba(200,168,106,0.45)" : C.line;
 
   return (
     <div onClick={onClick} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)} style={{
-      background: C.surface,
-      border:`1px solid ${borderColor}`,
-      borderRadius:10, overflow:"hidden", cursor:"pointer", transition:"all 0.15s",
-      boxShadow: glowShadow,
-      transform: isSelected ? "translateY(-1px)" : "none",
+      background: hover && !isSelected ? C.surfaceHi : C.surface,
+      border:`1px solid ${border}`,
+      borderRadius:6, overflow:"hidden", cursor:"pointer",
+      transition:"background 0.12s, border-color 0.12s",
+      boxShadow: isSelected ? "0 6px 18px rgba(0,0,0,0.35)" : "0 1px 3px rgba(0,0,0,0.25)",
     }}>
-      {/* Label bar */}
-      <div style={{ padding:"7px 14px", background:"rgba(0,0,0,0.45)", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:8 }}>
-          <span style={{ fontSize:10, color:isSelected?C.gold:C.muted, fontFamily:F.main, fontWeight:700, letterSpacing:2, textTransform:"uppercase", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{match.label}</span>
-          {score !== null && <span style={{ fontSize:10, fontWeight:700, fontFamily:F.main, letterSpacing:1, flexShrink:0, color:score===3?C.green:score===1?C.gold:"rgba(255,255,255,0.3)" }}>+{score} PTS</span>}
-          {score === null && !res && !hasTBD(match) && <CountdownPill lockTime={getLockTime(match).toISOString()} now={now} startTime={match.startTime} />}
-        </div>
-        {isAdmin && <div style={{ fontSize:8, color:"rgba(255,54,0,0.65)", fontFamily:"monospace", marginTop:3 }}>⚙ {match.startTime} · locks {fmtTime(getLockTime(match).toISOString())}</div>}
+      {/* Header: match label + status */}
+      <div style={{ padding:"7px 14px", background:"rgba(0,0,0,0.18)", borderBottom:`1px solid ${C.lineSoft}`,
+                    display:"flex", justifyContent:"space-between", alignItems:"center", gap:8 }}>
+        <span style={{ fontSize:9.5, color:isSelected?C.gold:C.dim, fontFamily:F.main, fontWeight:700,
+                       letterSpacing:1.4, textTransform:"uppercase", whiteSpace:"nowrap",
+                       overflow:"hidden", textOverflow:"ellipsis" }}>{match.label}</span>
+        {score !== null && (
+          <span style={{ fontSize:9.5, fontWeight:700, fontFamily:F.main, letterSpacing:1, flexShrink:0,
+                         color: score===3?C.green:score===1?C.gold:C.dim }}>+{score}</span>
+        )}
+        {score === null && !res && !hasTBD(match) && (
+          <CountdownPill lockTime={getLockTime(match).toISOString()} now={now} startTime={match.startTime} />
+        )}
       </div>
+      {isAdmin && (
+        <div style={{ fontSize:8, color:C.dim, fontFamily:"monospace", padding:"3px 14px",
+                      borderBottom:`1px solid ${C.lineSoft}` }}>
+          {match.startTime} · locks {fmtTime(getLockTime(match).toISOString())}
+        </div>
+      )}
       <BracketTeamRow name={t1} score={res?.score1} isWinner={res?.winner===t1} isPick={pred?.winner===t1} hasResult={!!res} />
       <BracketTeamRow name={t2} score={res?.score2} isWinner={res?.winner===t2} isPick={pred?.winner===t2} hasResult={!!res} last />
     </div>
@@ -306,7 +333,7 @@ function PredictPanel({ match, result, pred, onPredict, onClose }) {
   };
 
   return (
-    <div style={{ background:"rgba(21,21,21,0.97)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"16px 18px", marginTop:12, boxShadow:"0 0 30px rgba(0,0,0,0.5)" }}>
+    <div style={{ background:C.surface, border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"16px 18px", marginTop:12, boxShadow:"0 0 30px rgba(0,0,0,0.25)" }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
         <div style={{ fontSize:13, fontWeight:700, fontFamily:F.main, color:C.gold, letterSpacing:2, textTransform:"uppercase" }}>{match.group?`Group ${match.group} · `:""}{match.label} — Bo{match.bo}</div>
         <button onClick={onClose} style={{ background:"none", border:"none", color:C.muted, cursor:"pointer", fontSize:16 }}>✕</button>
@@ -348,7 +375,7 @@ function PredictPanel({ match, result, pred, onPredict, onClose }) {
                 boxShadow:pred?.winner===team?`0 0 12px ${t.color}60`:"none",
                 transition:"all 0.15s",
               }}>
-                {team.split(" ").slice(-1)[0]} wins
+                {team} wins
               </button>
             ))}
           </div>
@@ -360,54 +387,83 @@ function PredictPanel({ match, result, pred, onPredict, onClose }) {
 }
 
 // ─── BRACKET LAYOUT PRIMITIVES ───────────────────────────────────────────────
-// Rounds are equal-height flex columns using space-around, so a 2-card round
-// centres itself against the pairs of a 4-card round automatically. No card
-// height constant to keep in sync — cards can grow (admin UTC line, long team
-// names) without knocking the bracket out of alignment.
-const CONN     = 26;   // minimum connector length
-const CARD_W   = 330;  // bracket card width — cards stay readable, connectors take the slack
-const QUALIFY_W = 116;
+// Rounds are equal-height columns of flex:1 slots, so with N slots the card
+// centres land at (2i+1)/2N of the column height. A round with half as many
+// slots therefore lands exactly on each pair's midpoint — no card-height
+// constant to keep in sync, correct whether or not the admin UTC line is on.
+//
+// Connectors are drawn from those same percentages, which is why they are real
+// elbows (two in-stubs, a vertical join, one out-stub) rather than a single
+// straight line that only visually implies the pairing.
+const CARD_W    = 320;
+const QUALIFY_W = 104;
+const LINE      = 'rgba(200,168,106,0.34)';
 
-function RoundCol({ label, sub, color, w = CARD_W, flex = 1, children }) {
+function Slot({ children }) {
+  return <div style={{ flex:1, display:"flex", alignItems:"center", minHeight:0, padding:"7px 0" }}>{children}</div>;
+}
+
+function RoundCol({ label, sub, color, w = CARD_W, children }) {
   return (
-    <div style={{ flex, minWidth: 0, display: "flex", flexDirection: "column" }}>
-      <div style={{ height: 34, width: w, maxWidth: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-        {label && <span style={{ fontSize: 10, fontWeight: 700, color: color || C.muted, fontFamily: F.main, letterSpacing: 2.5, textTransform: "uppercase" }}>{label}</span>}
-        {sub && <span style={{ fontSize: 9, color: C.dim, fontFamily: F.main, letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>{sub}</span>}
+    <div style={{ flex:`0 0 ${w}px`, width:w, display:"flex", flexDirection:"column" }}>
+      <div style={{ height:38, display:"flex", flexDirection:"column", justifyContent:"flex-end", paddingBottom:8 }}>
+        {label && <span style={{ fontSize:10, fontWeight:700, color:color||C.muted, fontFamily:F.main, letterSpacing:1.6, textTransform:"uppercase" }}>{label}</span>}
+        {sub && <span style={{ fontSize:9, color:C.dim, fontFamily:F.main, letterSpacing:1.2, textTransform:"uppercase", marginTop:3 }}>{sub}</span>}
       </div>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-around", gap: 12 }}>
-        {children}
+      <div style={{ flex:1, display:"flex", flexDirection:"column" }}>{children}</div>
+    </div>
+  );
+}
+
+// Joins 2N slots down to N. Each unit spans one pair: its two sources sit at
+// 25%/75% of the unit and the single output leaves at 50%.
+function ElbowCol({ pairs }) {
+  return (
+    <div style={{ flex:1, minWidth:44, display:"flex", flexDirection:"column" }}>
+      <div style={{ height:38 }} />
+      <div style={{ flex:1, display:"flex", flexDirection:"column" }}>
+        {Array.from({ length: pairs }).map((_, i) => (
+          <div key={i} style={{ flex:1, position:"relative", minHeight:0 }}>
+            <div style={{ position:"absolute", left:0,     width:"50%", top:"25%", height:1, background:LINE }} />
+            <div style={{ position:"absolute", left:0,     width:"50%", top:"75%", height:1, background:LINE }} />
+            <div style={{ position:"absolute", left:"50%", width:1, top:"25%", height:"50%", background:LINE }} />
+            <div style={{ position:"absolute", left:"50%", width:"50%", top:"50%", height:1, background:LINE }} />
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
-// A single slot in a round. The card keeps a fixed, legible width and the
-// OUTGOING connector is flex:1, so the line stretches across all remaining
-// column space and meets the next round's card edge-to-edge — no dead gap.
-function Seat({ out, w = CARD_W, children }) {
+// 1:1 progression (LB round 1 → round 2, or a round → its qualified marker).
+function LineCol({ count }) {
   return (
-    <div style={{ display: "flex", alignItems: "center" }}>
-      <div style={{ width: w, maxWidth: "100%", flexShrink: 0 }}>{children}</div>
-      {out && <div style={{ flex: 1, minWidth: CONN, height: 1, background: "linear-gradient(90deg, rgba(190,158,89,0.45), rgba(190,158,89,0.18))" }} />}
+    <div style={{ flex:1, minWidth:32, display:"flex", flexDirection:"column" }}>
+      <div style={{ height:38 }} />
+      <div style={{ flex:1, display:"flex", flexDirection:"column" }}>
+        {Array.from({ length: count }).map((_, i) => (
+          <div key={i} style={{ flex:1, position:"relative", minHeight:0 }}>
+            <div style={{ position:"absolute", left:0, right:0, top:"50%", height:1, background:LINE }} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-function BracketBanner({ text, color, glow }) {
+function BracketBanner({ text, color }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "0 0 14px" }}>
-      <div style={{ height: 1, flex: 1, background: `linear-gradient(90deg, transparent, ${glow})` }} />
-      <span style={{ fontSize: 10, fontWeight: 700, color, fontFamily: F.main, letterSpacing: 4, textTransform: "uppercase", flexShrink: 0 }}>{text}</span>
-      <div style={{ height: 1, flex: 1, background: `linear-gradient(90deg, ${glow}, transparent)` }} />
+    <div style={{ display:"flex", alignItems:"center", gap:14, margin:"0 0 6px" }}>
+      <span style={{ fontSize:10, fontWeight:700, color, fontFamily:F.main, letterSpacing:2.4, textTransform:"uppercase", flexShrink:0 }}>{text}</span>
+      <div style={{ height:1, flex:1, background:C.lineSoft }} />
     </div>
   );
 }
 
 function QualifyTag() {
   return (
-    <div style={{ background: "rgba(190,158,89,0.10)", border: "1px solid rgba(190,158,89,0.4)", borderRadius: 7, padding: "9px 12px", textAlign: "center" }}>
-      <div style={{ fontSize: 9, fontWeight: 700, fontFamily: F.main, color: C.gold, letterSpacing: 1.5, textTransform: "uppercase", whiteSpace: "nowrap" }}>✓ Qualifies</div>
+    <div style={{ border:`1px solid rgba(200,168,106,0.38)`, borderRadius:4, padding:"8px 10px", textAlign:"center", background:"rgba(200,168,106,0.06)" }}>
+      <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:C.gold, letterSpacing:1.2, textTransform:"uppercase", whiteSpace:"nowrap" }}>Qualified</div>
     </div>
   );
 }
@@ -446,7 +502,7 @@ function GroupStagePage({ groupMatches, predictions, results, playerId, onPredic
     fontSize:12, letterSpacing:1.5, textTransform:"uppercase", transition:"all 0.15s",
     border: `1px solid ${active ? "transparent" : "rgba(255,255,255,0.12)"}`,
     background: active ? GOLD_GRAD : "rgba(255,255,255,0.04)",
-    color: active ? "#151515" : C.muted,
+    color: active ? "#232327" : C.muted,
     boxShadow: active ? "0 0 18px rgba(190,158,89,0.35)" : "none",
   });
 
@@ -460,7 +516,7 @@ function GroupStagePage({ groupMatches, predictions, results, playerId, onPredic
           ))}
         </div>
         <div style={{ display:"flex", gap:3, background:C.surface, border:"1px solid rgba(255,255,255,0.08)", borderRadius:9, padding:3 }}>
-          {[{id:"bracket",label:"🗂 Bracket"},{id:"schedule",label:"📅 Schedule"}].map(v => (
+          {[{id:"bracket",label:"Bracket"},{id:"schedule",label:"Schedule"}].map(v => (
             <button key={v.id} onClick={()=>{ setView(v.id); setSelected(null); }} style={{ padding:"6px 16px", borderRadius:6, border:"none", cursor:"pointer", background:view===v.id?"rgba(190,158,89,0.16)":"transparent", color:view===v.id?C.gold:C.muted, fontFamily:F.main, fontWeight:700, fontSize:11, letterSpacing:1.5, textTransform:"uppercase", transition:"all 0.15s" }}>{v.label}</button>
           ))}
         </div>
@@ -476,30 +532,34 @@ function GroupStagePage({ groupMatches, predictions, results, playerId, onPredic
             <div style={{ minWidth: 860 }}>
 
               {/* ── UPPER BRACKET ─────────────────────────────────── */}
-              <BracketBanner text="Upper Bracket" color={C.gold} glow="rgba(190,158,89,0.35)" />
-              <div style={{ display:"flex", alignItems:"stretch", minHeight:360, marginBottom:34 }}>
-                <RoundCol label="UB Quarter Finals" sub="Aug 12" color={C.gold} flex={1.2}>
-                  {ubqf.map(m => <Seat key={m.id} out><BracketCard {...cp(m)} /></Seat>)}
+              <BracketBanner text="Upper Bracket" color={C.gold} />
+              <div style={{ display:"flex", alignItems:"stretch", marginBottom:38 }}>
+                <RoundCol label="Quarter Finals" sub="Aug 12" color={C.gold}>
+                  {ubqf.map(m => <Slot key={m.id}><BracketCard {...cp(m)} /></Slot>)}
                 </RoundCol>
-                <RoundCol label="UB Semi Finals" sub="Aug 13" color={C.gold} flex={1.2}>
-                  {ubsf.map(m => <Seat key={m.id} out><BracketCard {...cp(m)} /></Seat>)}
+                <ElbowCol pairs={2} />
+                <RoundCol label="Semi Finals" sub="Aug 13" color={C.gold}>
+                  {ubsf.map(m => <Slot key={m.id}><BracketCard {...cp(m)} /></Slot>)}
                 </RoundCol>
-                <RoundCol label="Qualified" color={C.goldLight} w={QUALIFY_W} flex="0 0 auto">
-                  {ubsf.map(m => <Seat key={m.id} w={QUALIFY_W}><QualifyTag /></Seat>)}
+                <LineCol count={2} />
+                <RoundCol label="Advance" color={C.goldLight} w={QUALIFY_W}>
+                  {ubsf.map(m => <Slot key={m.id}><QualifyTag /></Slot>)}
                 </RoundCol>
               </div>
 
               {/* ── LOWER BRACKET ─────────────────────────────────── */}
-              <BracketBanner text="Lower Bracket · Elimination" color={C.orange} glow="rgba(255,54,0,0.3)" />
-              <div style={{ display:"flex", alignItems:"stretch", minHeight:200 }}>
-                <RoundCol label="LB Round 1" sub={`Aug ${lbDay}`} color={C.orange} flex={1.2}>
-                  {lbr1.map(m => <Seat key={m.id} out><BracketCard {...cp(m)} /></Seat>)}
+              <BracketBanner text="Lower Bracket — Elimination" color={C.orange} />
+              <div style={{ display:"flex", alignItems:"stretch" }}>
+                <RoundCol label="Round 1" sub={`Aug ${lbDay}`} color={C.orange}>
+                  {lbr1.map(m => <Slot key={m.id}><BracketCard {...cp(m)} /></Slot>)}
                 </RoundCol>
-                <RoundCol label="LB Round 2" sub="Aug 14" color={C.orange} flex={1.2}>
-                  {lbr2.map(m => <Seat key={m.id} out><BracketCard {...cp(m)} /></Seat>)}
+                <LineCol count={2} />
+                <RoundCol label="Round 2" sub="Aug 14" color={C.orange}>
+                  {lbr2.map(m => <Slot key={m.id}><BracketCard {...cp(m)} /></Slot>)}
                 </RoundCol>
-                <RoundCol label="Qualified" color={C.goldLight} w={QUALIFY_W} flex="0 0 auto">
-                  {lbr2.map(m => <Seat key={m.id} w={QUALIFY_W}><QualifyTag /></Seat>)}
+                <LineCol count={2} />
+                <RoundCol label="Advance" color={C.goldLight} w={QUALIFY_W}>
+                  {lbr2.map(m => <Slot key={m.id}><QualifyTag /></Slot>)}
                 </RoundCol>
               </div>
 
@@ -566,25 +626,27 @@ function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredic
       <div style={{ overflowX:"auto", paddingBottom:8 }}>
         <div style={{ minWidth: 860 }}>
 
-          <div style={{ display:"flex", alignItems:"stretch", minHeight:420 }}>
+          <div style={{ display:"flex", alignItems:"stretch" }}>
             <RoundCol label="Quarter Finals" sub="Aug 15" color={C.gold}>
-              {qf.map(m => <Seat key={m.id} out><BracketCard {...cp(m)} /></Seat>)}
+              {qf.map(m => <Slot key={m.id}><BracketCard {...cp(m)} /></Slot>)}
             </RoundCol>
+            <ElbowCol pairs={2} />
             <RoundCol label="Semi Finals" sub="Aug 16" color={C.gold}>
-              {sf.map(m => <Seat key={m.id} out><BracketCard {...cp(m)} /></Seat>)}
+              {sf.map(m => <Slot key={m.id}><BracketCard {...cp(m)} /></Slot>)}
             </RoundCol>
-            <RoundCol label="Grand Final 🏆" sub="Aug 16" color={C.goldLight} flex="0 0 auto">
-              {gf.map(m => <Seat key={m.id}><BracketCard {...cp(m)} /></Seat>)}
+            <ElbowCol pairs={1} />
+            <RoundCol label="Grand Final" sub="Aug 16" color={C.goldLight}>
+              {gf.map(m => <Slot key={m.id}><BracketCard {...cp(m)} /></Slot>)}
             </RoundCol>
           </div>
 
           {/* 3rd place match */}
           {third.length > 0 && (
             <div style={{ marginTop:34 }}>
-              <BracketBanner text="3rd Place Match 🥉" color={C.orange} glow="rgba(255,54,0,0.3)" />
+              <BracketBanner text="3rd Place Match" color={C.orange} />
               <div style={{ display:"flex", alignItems:"stretch" }}>
                 <div style={{ flex:1 }} />
-                <div style={{ width:CARD_W, maxWidth:"100%", flexShrink:0 }}>
+                <div style={{ width:CARD_W, flexShrink:0 }}>
                   {third.map(m => <BracketCard key={m.id} {...cp(m)} />)}
                 </div>
                 <div style={{ flex:1, display:"flex", alignItems:"center", paddingLeft:20 }}>
@@ -637,7 +699,7 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
     <div
       onMouseEnter={()=>setHovered(true)}
       onMouseLeave={()=>setHovered(false)}
-      style={{ background:"linear-gradient(135deg, rgba(21,21,21,0.9), rgba(28,28,28,0.9))", border:`1px solid ${borderColor}`, borderRadius:8, padding:"14px 16px", position:"relative", transition:"all 0.2s", boxShadow:glowShadow }}
+      style={{ background:"linear-gradient(135deg, #232327, #232327)", border:`1px solid ${borderColor}`, borderRadius:8, padding:"14px 16px", position:"relative", transition:"all 0.2s", boxShadow:glowShadow }}
     >
       {/* Score badge / countdown pill */}
       {score!==null&&<div style={{ position:"absolute",top:10,right:10,borderRadius:5,padding:"2px 9px",background:score===3?C.green:score===1?C.red:"rgba(140,140,140,0.4)",color:score===1?C.white:"#000",fontWeight:700,fontSize:11,fontFamily:F.main,letterSpacing:1 }}>+{score} PTS</div>}
@@ -653,7 +715,7 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
       <div style={{ display:"flex",alignItems:"center",gap:8 }}>
         <div style={{ flex:1 }}><TeamBadge name={match.team1} /></div>
         {result?(
-          <div style={{ display:"flex",alignItems:"center",gap:6,background:"rgba(0,0,0,0.5)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:8,padding:"4px 14px",flexShrink:0 }}>
+          <div style={{ display:"flex",alignItems:"center",gap:6,background:"rgba(0,0,0,0.25)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:8,padding:"4px 14px",flexShrink:0 }}>
             <span style={{ fontSize:22,fontWeight:700,fontFamily:F.main,color:result.winner===match.team1?C.green:C.dim }}>{result.score1}</span>
             <span style={{ color:"rgba(255,255,255,0.08)" }}>:</span>
             <span style={{ fontSize:22,fontWeight:700,fontFamily:F.main,color:result.winner===match.team2?C.green:C.dim }}>{result.score2}</span>
@@ -693,14 +755,14 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
               border:`1px solid ${pred?.winner===team?t.color:"rgba(255,255,255,0.1)"}`,
               color:pred?.winner===team?"#000":C.muted,
               boxShadow:pred?.winner===team?`0 0 12px ${t.color}60`:"none",
-            }}>{team.split(" ").slice(-1)[0]} wins</button>
+            }}>{team} wins</button>
           ))}
         </div>
       )}
 
       {pred&&!result&&!readOnly&&(
         <div style={{ marginTop:8,fontSize:10,color:C.dim,fontFamily:F.main,letterSpacing:1 }}>
-          YOUR PICK: <span style={{ color:C.muted }}>{pred.winner?.split(" ").slice(-1)[0]}{pred.score1!=null?` (${pred.score1}–${pred.score2})`:""}</span>
+          YOUR PICK: <span style={{ color:C.muted }}>{pred.winner}{pred.score1!=null?` (${pred.score1}–${pred.score2})`:""}</span>
         </div>
       )}
 
@@ -709,7 +771,7 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
           <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:1 }}>PREDICTION:</div>
           <div style={{ background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,padding:"3px 10px",fontSize:12,fontFamily:F.main,fontWeight:700,
             color:result?(calcScore(pred,result)===3?C.green:calcScore(pred,result)===1?C.red:"rgba(255,255,255,0.3)"):C.muted }}>
-            {pred.winner?.split(" ").slice(-1)[0]}{pred.score1!=null?` · ${pred.score1}–${pred.score2}`:""}
+            {pred.winner}{pred.score1!=null?` · ${pred.score1}–${pred.score2}`:""}
           </div>
           {result&&<div style={{ fontSize:10,fontFamily:F.main,color:C.dim,letterSpacing:1 }}>{calcScore(pred,result)===3?"✓ EXACT":calcScore(pred,result)===1?"✓ WINNER":"✗ WRONG"}</div>}
         </div>
@@ -724,7 +786,7 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
           <span style={{ color:"rgba(255,255,255,0.1)" }}>–</span>
           <input type="number" min={0} max={maxWins(match)} value={as2} onChange={e=>setAs2(e.target.value)} placeholder="T2"
             style={{ ...inputStyle({ width:42, fontSize:13, padding:"4px 6px", border:`1px solid ${result?"rgba(190,158,89,0.4)":"rgba(255,255,255,0.1)"}` }) }} />
-          <button onClick={submitResult} style={{ padding:"5px 12px",borderRadius:5,border:"none",cursor:"pointer",background:GOLD_GRAD,color:"#151515",fontFamily:F.main,fontWeight:700,fontSize:11,letterSpacing:1 }}>{result?"UPDATE ✓":"SET ✓"}</button>
+          <button onClick={submitResult} style={{ padding:"5px 12px",borderRadius:5,border:"none",cursor:"pointer",background:GOLD_GRAD,color:"#232327",fontFamily:F.main,fontWeight:700,fontSize:11,letterSpacing:1 }}>{result?"UPDATE ✓":"SET ✓"}</button>
           {result&&<button onClick={()=>onSetResult(match.id,null)} style={{ padding:"5px 10px",borderRadius:5,border:`1px solid rgba(244,15,48,0.35)`,cursor:"pointer",background:"rgba(244,15,48,0.1)",color:C.red,fontFamily:F.main,fontWeight:700,fontSize:11 }}>CLEAR ✕</button>}
         </div>
       )}
@@ -749,7 +811,7 @@ function BonusPointsPanel({ players, bonusPoints, onAdd, onDelete }) {
     <div>
       <div style={{ fontSize:14,fontWeight:700,fontFamily:F.main,color:C.gold,letterSpacing:2,marginBottom:6,textTransform:"uppercase" }}>⭐ Bonus / Penalty Points</div>
       <div style={{ fontSize:11,color:C.muted,fontFamily:F.body,marginBottom:16 }}>Use negative numbers to deduct points (e.g. -5).</div>
-      <div style={{ background:"rgba(21,21,21,0.92)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"16px 18px",marginBottom:20 }}>
+      <div style={{ background:C.surface,border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"16px 18px",marginBottom:20 }}>
         <div style={{ display:"flex",gap:8,flexWrap:"wrap",alignItems:"flex-end" }}>
           <div style={{ flex:1,minWidth:130 }}>
             <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,marginBottom:4,letterSpacing:1 }}>PLAYER</div>
@@ -769,7 +831,7 @@ function BonusPointsPanel({ players, bonusPoints, onAdd, onDelete }) {
             <input value={reason} onChange={e=>setReason(e.target.value)} placeholder="e.g. Tiebreaker bonus" onKeyDown={e=>e.key==="Enter"&&handleAdd()}
               style={{ ...inputStyle({ width:"100%", padding:"9px 10px", fontSize:13, boxSizing:"border-box" }) }} />
           </div>
-          <button onClick={handleAdd} style={{ padding:"9px 18px",background:GOLD_GRAD,border:"none",borderRadius:7,cursor:"pointer",color:"#151515",fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:1 }}>ADD ✓</button>
+          <button onClick={handleAdd} style={{ padding:"9px 18px",background:GOLD_GRAD,border:"none",borderRadius:7,cursor:"pointer",color:"#232327",fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:1 }}>ADD ✓</button>
         </div>
         {error&&<div style={{ color:C.red,fontSize:11,fontFamily:F.main,marginTop:8,letterSpacing:1 }}>⚠ {error}</div>}
       </div>
@@ -777,7 +839,7 @@ function BonusPointsPanel({ players, bonusPoints, onAdd, onDelete }) {
         const myBonus=bonusPoints.filter(b=>b.player_id===p.id); const total=getBonusTotal(p.id);
         if(myBonus.length===0)return null;
         return (
-          <div key={p.id} style={{ background:"rgba(21,21,21,0.92)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"14px 16px",marginBottom:10 }}>
+          <div key={p.id} style={{ background:C.surface,border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"14px 16px",marginBottom:10 }}>
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
               <div style={{ fontSize:13,fontWeight:700,fontFamily:F.main,color:C.white }}>{p.nickname}</div>
               <div style={{ fontSize:13,fontWeight:700,fontFamily:F.main,color:total>0?C.green:total<0?C.red:C.muted }}>{total>0?"+":""}{total} bonus pts</div>
@@ -842,7 +904,7 @@ function BracketEditor({ matches, onUpdateTeams, onSaved }) {
               <div style={{ height:1,flex:1,background:"rgba(15,88,244,0.2)" }} />
             </div>
           )}
-          <div style={{ background:"rgba(21,21,21,0.92)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,padding:"12px 16px",marginBottom:10 }}>
+          <div style={{ background:C.surface,border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,padding:"12px 16px",marginBottom:10 }}>
             <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase",marginBottom:8 }}>{m.label} · {fmtTime(m.startTime)} KSA</div>
             <div style={{ display:"flex",gap:8,alignItems:"center",flexWrap:"wrap" }}>
               <input value={teams[m.id]?.team1||""} onChange={e=>setTeams(t=>({...t,[m.id]:{...t[m.id],team1:e.target.value}}))}
@@ -857,7 +919,7 @@ function BracketEditor({ matches, onUpdateTeams, onSaved }) {
         </div>
         );
       })}
-      <button onClick={save} style={{ width:"100%",padding:12,background:GOLD_GRAD,border:"none",borderRadius:10,cursor:"pointer",color:"#151515",fontFamily:F.main,fontWeight:700,fontSize:14,marginTop:8,letterSpacing:2,textTransform:"uppercase" }}>
+      <button onClick={save} style={{ width:"100%",padding:12,background:GOLD_GRAD,border:"none",borderRadius:10,cursor:"pointer",color:"#232327",fontFamily:F.main,fontWeight:700,fontSize:14,marginTop:8,letterSpacing:2,textTransform:"uppercase" }}>
         Save All Team Names ✓
       </button>
     </div>
@@ -1056,7 +1118,7 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
   ];
 
   return (
-    <div style={{ minHeight:"100vh", background:`radial-gradient(1200px 600px at 50% -10%, rgba(190,158,89,0.10) 0%, transparent 60%), linear-gradient(180deg, #0A0A0A 0%, #050505 100%)`, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:20, position:"relative" }}>
+    <div style={{ minHeight:"100vh", background:`radial-gradient(1200px 600px at 50% -10%, rgba(190,158,89,0.10) 0%, transparent 60%), linear-gradient(180deg, #1A1A1D 0%, #141417 100%)`, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:20, position:"relative" }}>
       <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
       <style>{`::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:${C.navy}}::-webkit-scrollbar-thumb{background:${C.goldDark};border-radius:3px}@keyframes livePulse{0%,100%{opacity:1}50%{opacity:0.45}}`}</style>
       {/* Streaks */}
@@ -1070,7 +1132,7 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
         <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:3,marginTop:8,textTransform:"uppercase" }}>Aug 12–16 · Riyadh · $1,000,000 · 16 Teams</div>
       </div>
 
-      <div style={{ position:"relative",zIndex:1,background:"rgba(21,21,21,0.96)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:16,padding:32,width:"100%",maxWidth:400,boxShadow:"0 0 60px rgba(0,0,0,0.5)" }}>
+      <div style={{ position:"relative",zIndex:1,background:C.surface,border:"1px solid rgba(255,255,255,0.08)",borderRadius:16,padding:32,width:"100%",maxWidth:400,boxShadow:"0 0 60px rgba(0,0,0,0.25)" }}>
         {/* Tabs */}
         <div style={{ display:"flex",marginBottom:24,background:"rgba(255,255,255,0.04)",borderRadius:10,padding:4 }}>
           {TABS.map(t=>(
@@ -1163,7 +1225,7 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
             {regMsg&&<div style={{ fontSize:12,fontFamily:F.main,letterSpacing:0.5,color:regMsg.ok?C.green:C.red }}>{regMsg.ok?"✓":"⚠"} {regMsg.text}</div>}
 
             <button onClick={handleRegister} disabled={regLoading||rlCountdown>0}
-              style={{ padding:"13px 0",background:(regLoading||rlCountdown>0)?"rgba(190,158,89,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#151515",fontWeight:700,fontFamily:F.main,fontSize:14,cursor:(regLoading||rlCountdown>0)?"default":"pointer",letterSpacing:2,textTransform:"uppercase",marginTop:2 }}>
+              style={{ padding:"13px 0",background:(regLoading||rlCountdown>0)?"rgba(190,158,89,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#232327",fontWeight:700,fontFamily:F.main,fontSize:14,cursor:(regLoading||rlCountdown>0)?"default":"pointer",letterSpacing:2,textTransform:"uppercase",marginTop:2 }}>
               {regLoading?"Creating account…":rlCountdown>0?`Wait ${Math.ceil(rlCountdown/60)}m ${rlCountdown%60}s`:"Create Account →"}
             </button>
           </div>
@@ -1192,7 +1254,7 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
             {loginErr&&<div style={{ color:C.red,fontSize:12,fontFamily:F.main,letterSpacing:0.5 }}>⚠ {loginErr}</div>}
 
             <button onClick={handleLogin} disabled={loginLoading}
-              style={{ padding:"13px 0",background:loginLoading?"rgba(190,158,89,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#151515",fontWeight:700,fontFamily:F.main,fontSize:14,cursor:loginLoading?"default":"pointer",letterSpacing:2,textTransform:"uppercase" }}>
+              style={{ padding:"13px 0",background:loginLoading?"rgba(190,158,89,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#232327",fontWeight:700,fontFamily:F.main,fontSize:14,cursor:loginLoading?"default":"pointer",letterSpacing:2,textTransform:"uppercase" }}>
               {loginLoading?"Logging in…":"Let's Predict →"}
             </button>
           </div>
@@ -1212,7 +1274,7 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
             </div>
             {adminErr&&<div style={{ color:C.red,fontSize:12,fontFamily:F.main,letterSpacing:0.5 }}>⚠ {adminErr}</div>}
             <button onClick={handleAdminLogin}
-              style={{ padding:"13px 0",background:GOLD_GRAD,border:"none",borderRadius:8,color:"#151515",fontWeight:700,fontFamily:F.main,fontSize:14,cursor:"pointer",letterSpacing:2,textTransform:"uppercase" }}>
+              style={{ padding:"13px 0",background:GOLD_GRAD,border:"none",borderRadius:8,color:"#232327",fontWeight:700,fontFamily:F.main,fontSize:14,cursor:"pointer",letterSpacing:2,textTransform:"uppercase" }}>
               Login as Admin →
             </button>
           </div>
@@ -1224,7 +1286,7 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
 
 function LoadingScreen() {
   return (
-    <div style={{ minHeight:"100vh", background:`linear-gradient(180deg, #0A0A0A 0%, #050505 100%)`, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:20 }}>
+    <div style={{ minHeight:"100vh", background:`linear-gradient(180deg, #1A1A1D 0%, #141417 100%)`, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:20 }}>
       <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap" rel="stylesheet" />
       <div style={{ fontSize:22,fontWeight:700,fontFamily:F.main,background:`linear-gradient(90deg, ${C.white} 0%, ${C.goldLight} 55%, ${C.gold} 100%)`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:4,textTransform:"uppercase" }}>EWC 2026 · Rocket League</div>
       <div style={{ width:36,height:36,border:`3px solid rgba(255,255,255,0.08)`,borderTop:`3px solid ${C.red}`,borderRadius:"50%",animation:"spin 0.8s linear infinite" }} />
@@ -1557,7 +1619,7 @@ export default function App() {
   ];
 
   return (
-    <div style={{ minHeight:"100vh", background:`radial-gradient(1200px 600px at 50% -10%, rgba(190,158,89,0.10) 0%, transparent 60%), linear-gradient(180deg, #0A0A0A 0%, #050505 100%)`, color:C.white, fontFamily:F.body, position:"relative" }}>
+    <div style={{ minHeight:"100vh", background:`radial-gradient(1200px 600px at 50% -10%, rgba(190,158,89,0.10) 0%, transparent 60%), linear-gradient(180deg, #1A1A1D 0%, #141417 100%)`, color:C.white, fontFamily:F.body, position:"relative" }}>
       <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
       <style>{`::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:${C.navy}}::-webkit-scrollbar-thumb{background:${C.goldDark};border-radius:3px}@keyframes livePulse{0%,100%{opacity:1}50%{opacity:0.45}}`}</style>
 
@@ -1567,7 +1629,7 @@ export default function App() {
       <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"55%",left:"5%",width:400,height:2,background:"linear-gradient(90deg,transparent,rgba(190,158,89,0.45),transparent)",transform:"rotate(-20deg)",filter:"blur(6px)" }} />
 
       {/* HEADER */}
-      <div style={{ position:"sticky",top:0,zIndex:100,background:"rgba(10,10,10,0.96)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",borderBottom:`1px solid rgba(190,158,89,0.35)`,padding:"16px 20px" }}>
+      <div style={{ position:"sticky",top:0,zIndex:100,background:"rgba(20,20,23,0.94)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",borderBottom:`1px solid rgba(190,158,89,0.35)`,padding:"16px 20px" }}>
         <div style={{ maxWidth:1440,margin:"0 auto" }}>
           <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexWrap:"wrap",gap:10 }}>
             <div>
@@ -1582,7 +1644,7 @@ export default function App() {
                 <span style={{ fontSize:9,color:C.dim }}>{pillOpen?"▲":"▼"}</span>
               </div>
               {pillOpen&&(
-                <div style={{ position:"absolute",top:"calc(100% + 6px)",right:0,background:"rgba(21,21,21,0.98)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:8,minWidth:200,boxShadow:"0 8px 30px rgba(0,0,0,0.6)",zIndex:999 }}>
+                <div style={{ position:"absolute",top:"calc(100% + 6px)",right:0,background:C.surface,border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:8,minWidth:200,boxShadow:"0 8px 30px rgba(0,0,0,0.6)",zIndex:999 }}>
                   {/* User info */}
                   <div style={{ padding:"10px 12px",borderBottom:"1px solid rgba(255,255,255,0.06)",marginBottom:6 }}>
                     <div style={{ display:"flex",alignItems:"center",gap:10 }}>
@@ -1650,7 +1712,7 @@ export default function App() {
               </div>
 
               {/* Invite link share box */}
-              <div style={{ background:"rgba(21,21,21,0.92)",border:"1px solid rgba(190,158,89,0.25)",borderRadius:12,padding:"14px 18px",marginBottom:20 }}>
+              <div style={{ background:C.surface,border:"1px solid rgba(190,158,89,0.25)",borderRadius:12,padding:"14px 18px",marginBottom:20 }}>
                 <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:1,textTransform:"uppercase",marginBottom:10 }}>🔗 Invite Link</div>
                 <div style={{ display:"flex",alignItems:"center",gap:8,flexWrap:"wrap" }}>
                   <div style={{ flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:7,padding:"7px 12px",fontSize:11,color:C.dim,fontFamily:"monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",minWidth:0 }}>
@@ -1674,7 +1736,7 @@ export default function App() {
               {/* Group leaderboard */}
               <div style={{ fontSize:10,color:C.muted,marginBottom:10,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase" }}>🏆 Group Standings</div>
               {grpLb.map((p,i)=>{
-                const bg=i===0?"linear-gradient(135deg, rgba(190,158,89,0.15), rgba(21,21,21,0.95))":i===1?"linear-gradient(135deg, rgba(15,88,244,0.1), rgba(21,21,21,0.95))":i===2?"linear-gradient(135deg, rgba(190,158,89,0.1), rgba(21,21,21,0.95))":"rgba(21,21,21,0.92)";
+                const bg=i===0?"linear-gradient(135deg, rgba(190,158,89,0.15), #232327)":i===1?"linear-gradient(135deg, rgba(15,88,244,0.1), #232327)":i===2?"linear-gradient(135deg, rgba(190,158,89,0.1), #232327)":C.surface;
                 const borderCol=p.id===authId?"rgba(15,88,244,0.3)":i===0?"rgba(190,158,89,0.3)":i===1?"rgba(15,88,244,0.2)":i===2?"rgba(190,158,89,0.2)":"rgba(255,255,255,0.06)";
                 return (
                   <div key={p.id} style={{ background:bg,border:`1px solid ${borderCol}`,borderRadius:12,padding:"14px 18px",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"space-between" }}>
@@ -1712,7 +1774,7 @@ export default function App() {
                       <tbody>
                         {ALL_MATCHES.filter(m=>results[m.id]).map(m=>(
                           <tr key={m.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
-                            <td style={{ padding:"5px 8px",color:C.dim,maxWidth:130,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{m.team1?.split(" ").pop()} vs {m.team2?.split(" ").pop()}</td>
+                            <td style={{ padding:"5px 8px",color:C.dim,whiteSpace:"nowrap" }}>{m.team1} vs {m.team2}</td>
                             <td style={{ textAlign:"center",padding:"5px 8px",color:C.muted }}>{results[m.id].score1}–{results[m.id].score2}</td>
                             {grpMembers.map(p=>{const s=calcScore(predictions[p.id]?.[m.id],results[m.id]);const has=!!predictions[p.id]?.[m.id];return<td key={p.id} style={{ textAlign:"center",padding:"5px 8px",fontWeight:700,color:!has?"rgba(255,255,255,0.1)":s===3?C.green:s===1?C.red:"rgba(255,255,255,0.25)" }}>{has?`+${s}`:"—"}</td>;})}
                           </tr>
@@ -1772,10 +1834,10 @@ export default function App() {
               style={{ ...inputStyle({ width:"100%", padding:"9px 14px", fontSize:13, marginBottom:12, boxSizing:"border-box" }) }} />
             {leaderboard.map((p,i)=>{
               if(lbSearch&&!p.nickname.toLowerCase().includes(lbSearch.toLowerCase()))return null;
-              const bg = i===0 ? "linear-gradient(135deg, rgba(190,158,89,0.15), rgba(21,21,21,0.95))"
-                       : i===1 ? "linear-gradient(135deg, rgba(15,88,244,0.1), rgba(21,21,21,0.95))"
-                       : i===2 ? "linear-gradient(135deg, rgba(190,158,89,0.1), rgba(21,21,21,0.95))"
-                       : "rgba(21,21,21,0.92)";
+              const bg = i===0 ? "linear-gradient(135deg, rgba(190,158,89,0.15), #232327)"
+                       : i===1 ? "linear-gradient(135deg, rgba(15,88,244,0.1), #232327)"
+                       : i===2 ? "linear-gradient(135deg, rgba(190,158,89,0.1), #232327)"
+                       : C.surface;
               const borderCol = p.id===authId ? "rgba(15,88,244,0.3)" : i===0 ? "rgba(190,158,89,0.3)" : i===1 ? "rgba(15,88,244,0.2)" : i===2 ? "rgba(190,158,89,0.2)" : "rgba(255,255,255,0.06)";
               const pGrp = p.group_id&&p.group_id!=="public" ? groups.find(g=>g.id===p.group_id) : null;
               const grpLabel = pGrp ? (isAdmin||p.group_id===myGroup?.id ? pGrp.name : "Private") : null;
@@ -1815,7 +1877,7 @@ export default function App() {
                     <tbody>
                       {ALL_MATCHES.filter(m=>results[m.id]).map(m=>(
                         <tr key={m.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
-                          <td style={{ padding:"5px 8px",color:C.dim,maxWidth:130,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{m.team1?.split(" ").pop()} vs {m.team2?.split(" ").pop()}</td>
+                          <td style={{ padding:"5px 8px",color:C.dim,whiteSpace:"nowrap" }}>{m.team1} vs {m.team2}</td>
                           <td style={{ textAlign:"center",padding:"5px 8px",color:C.muted }}>{results[m.id].score1}–{results[m.id].score2}</td>
                           {players.map(p=>{const s=calcScore(predictions[p.id]?.[m.id],results[m.id]);const has=!!predictions[p.id]?.[m.id];return<td key={p.id} style={{ textAlign:"center",padding:"5px 8px",fontWeight:700,color:!has?"rgba(255,255,255,0.1)":s===3?C.green:s===1?C.red:"rgba(255,255,255,0.25)" }}>{has?`+${s}`:"—"}</td>;})}
                         </tr>
@@ -1888,7 +1950,7 @@ export default function App() {
                 {icon:"🎯",label:"Total Predictions",val:Object.values(predictions).reduce((t,pm)=>t+Object.keys(pm).length,0)},
                 {icon:"✅",label:"Results Set",    val:Object.keys(results).length},
               ].map(({icon,label,val})=>(
-                <div key={label} style={{ background:"rgba(21,21,21,0.9)",border:"1px solid rgba(190,158,89,0.2)",borderRadius:8,padding:16,flex:1,minWidth:110 }}>
+                <div key={label} style={{ background:C.surface,border:"1px solid rgba(190,158,89,0.2)",borderRadius:8,padding:16,flex:1,minWidth:110 }}>
                   <div style={{ fontSize:28,fontWeight:700,fontFamily:F.main,color:C.white }}>{val}</div>
                   <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:1,textTransform:"uppercase",marginTop:4 }}>{icon} {label}</div>
                 </div>
@@ -1896,7 +1958,7 @@ export default function App() {
             </div>
 
             {/* Sub-tabs */}
-            <div style={{ display:"flex",gap:4,marginBottom:24,background:"rgba(21,21,21,0.92)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:4,flexWrap:"wrap" }}>
+            <div style={{ display:"flex",gap:4,marginBottom:24,background:C.surface,border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:4,flexWrap:"wrap" }}>
               {[{id:"players",label:"👥 Players"},{id:"groups",label:"🏠 Groups"},{id:"bracket",label:"🏆 Bracket"},{id:"results",label:"🎯 Results"},{id:"bonus",label:"⭐ Bonus"},{id:"activity",label:"📊 Activity"}].map(t=>(
                 <button key={t.id} onClick={()=>setAdminTab(t.id)} style={{ flex:1,padding:"9px 0",borderRadius:7,border:"none",cursor:"pointer",background:adminTab===t.id?"rgba(190,158,89,0.12)":"transparent",color:adminTab===t.id?C.gold:C.muted,fontFamily:F.main,fontWeight:700,fontSize:11,transition:"all 0.15s",minWidth:80,letterSpacing:0.5,textTransform:"uppercase" }}>{t.label}</button>
               ))}
@@ -1929,7 +1991,7 @@ export default function App() {
                     const pGrpObj=p.group_id&&p.group_id!=="public"?groups.find(g=>g.id===p.group_id):null;
                     const predCount=Object.keys(predictions[p.id]||{}).length;
                     return (
-                      <div key={p.id} style={{ background:"rgba(21,21,21,0.92)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,padding:"10px 14px",marginBottom:8 }}>
+                      <div key={p.id} style={{ background:C.surface,border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,padding:"10px 14px",marginBottom:8 }}>
                         <div style={{ display:"flex",alignItems:"center",gap:10,flexWrap:"wrap" }}>
                           <div style={{ width:32,height:32,borderRadius:8,background:"rgba(190,158,89,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:14,color:C.red,fontFamily:F.main,flexShrink:0 }}>{p.nickname[0].toUpperCase()}</div>
                           <div style={{ flex:1,minWidth:120 }}>
@@ -1974,7 +2036,7 @@ export default function App() {
                   <div style={{ display:"flex",gap:8,marginTop:10 }}>
                     <input value={newNick} onChange={e=>setNewNick(e.target.value)} placeholder="New player nickname…" onKeyDown={e=>{if(e.key==="Enter")handleAddPlayer();}}
                       style={{ ...inputStyle({ flex:1, border:"1px dashed rgba(255,255,255,0.15)", padding:"10px 14px", fontSize:13 }) }} />
-                    <button onClick={handleAddPlayer} style={{ padding:"10px 20px",background:GOLD_GRAD,border:"none",borderRadius:10,cursor:"pointer",color:"#151515",fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:1 }}>+ ADD</button>
+                    <button onClick={handleAddPlayer} style={{ padding:"10px 20px",background:GOLD_GRAD,border:"none",borderRadius:10,cursor:"pointer",color:"#232327",fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:1 }}>+ ADD</button>
                   </div>
                 </div>
               );
@@ -1989,7 +2051,7 @@ export default function App() {
                     {label:"Total Groups", val:groups.filter(g=>g.id!=="public").length},
                     {label:"Private Members", val:players.filter(p=>p.group_id&&p.group_id!=="public").length},
                   ].map(({label,val})=>(
-                    <div key={label} style={{ background:"rgba(21,21,21,0.92)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,padding:"12px 20px",flex:1,minWidth:120 }}>
+                    <div key={label} style={{ background:C.surface,border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,padding:"12px 20px",flex:1,minWidth:120 }}>
                       <div style={{ fontSize:24,fontWeight:700,fontFamily:F.main,color:C.red }}>{val}</div>
                       <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:1,textTransform:"uppercase",marginTop:2 }}>{label}</div>
                     </div>
@@ -2004,7 +2066,7 @@ export default function App() {
                   const members=players.filter(p=>p.group_id===g.id);
                   const isExpanded=expandedGrp===g.id;
                   return (
-                    <div key={g.id} style={{ background:"rgba(21,21,21,0.92)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"14px 16px",marginBottom:10 }}>
+                    <div key={g.id} style={{ background:C.surface,border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"14px 16px",marginBottom:10 }}>
                       <div style={{ display:"flex",alignItems:"center",gap:10,flexWrap:"wrap" }}>
                         <div onClick={()=>setExpandedGrp(isExpanded?null:g.id)} style={{ flex:1,cursor:"pointer" }}>
                           <div style={{ fontSize:14,fontWeight:700,fontFamily:F.main,color:C.white,letterSpacing:0.5 }}>{g.name}</div>
@@ -2056,7 +2118,7 @@ export default function App() {
                 {/* Create new group */}
                 <div style={{ marginTop:24,paddingTop:20,borderTop:"1px solid rgba(255,255,255,0.06)" }}>
                   <div style={{ fontSize:13,fontWeight:700,fontFamily:F.main,color:C.muted,letterSpacing:2,marginBottom:14,textTransform:"uppercase" }}>+ Create New Group</div>
-                  <div style={{ background:"rgba(21,21,21,0.92)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"16px 18px",display:"flex",flexDirection:"column",gap:12 }}>
+                  <div style={{ background:C.surface,border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"16px 18px",display:"flex",flexDirection:"column",gap:12 }}>
                     <div>
                       <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:1,marginBottom:4,textTransform:"uppercase" }}>Group Name</div>
                       <input value={newGrpName} onChange={e=>{ setNewGrpName(e.target.value); setNewGrpCode(e.target.value.toLowerCase().replace(/\s+/g,"-").replace(/[^a-z0-9-]/g,"")); setNewGrpMsg(null); }}
@@ -2076,7 +2138,7 @@ export default function App() {
                         style={{ ...inputStyle({ width:"100%", padding:"9px 12px", fontSize:13, boxSizing:"border-box" }) }} />
                     </div>
                     {newGrpMsg&&<div style={{ fontSize:12,fontFamily:F.main,letterSpacing:0.5,color:newGrpMsg.ok?C.green:C.red }}>{newGrpMsg.ok?"✓":"⚠"} {newGrpMsg.text}</div>}
-                    <button onClick={handleCreateGroup} style={{ padding:"10px 0",background:GOLD_GRAD,border:"none",borderRadius:8,cursor:"pointer",color:"#151515",fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:1,textTransform:"uppercase" }}>
+                    <button onClick={handleCreateGroup} style={{ padding:"10px 0",background:GOLD_GRAD,border:"none",borderRadius:8,cursor:"pointer",color:"#232327",fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:1,textTransform:"uppercase" }}>
                       Create Group ✓
                     </button>
                   </div>
@@ -2131,12 +2193,12 @@ export default function App() {
                       const match=ALL_MATCHES.find(m=>m.id===pred.match_id);
                       const nick=pred.players?.nickname||"Unknown";
                       return (
-                        <div key={i} style={{ display:"flex",gap:10,alignItems:"flex-start",padding:"9px 12px",marginBottom:6,borderRadius:8,background:"rgba(21,21,21,0.85)",borderLeft:`3px solid ${C.blue}` }}>
+                        <div key={i} style={{ display:"flex",gap:10,alignItems:"flex-start",padding:"9px 12px",marginBottom:6,borderRadius:8,background:C.surface,borderLeft:`3px solid ${C.blue}` }}>
                           <div style={{ width:28,height:28,borderRadius:6,background:"rgba(15,88,244,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:12,color:C.blue,fontFamily:F.main,flexShrink:0 }}>{nick[0].toUpperCase()}</div>
                           <div style={{ flex:1,minWidth:0 }}>
                             <div style={{ fontSize:12,fontWeight:700,fontFamily:F.main,color:C.white }}>{nick}</div>
                             <div style={{ fontSize:11,color:C.muted,fontFamily:F.body,marginTop:1 }}>
-                              predicted <span style={{ color:C.white }}>{pred.winner?.split(" ").slice(-1)[0]}</span>{match?` in ${match.label}`:""}
+                              predicted <span style={{ color:C.white }}>{pred.winner}</span>{match?` in ${match.label}`:""}
                             </div>
                           </div>
                           <div style={{ fontSize:10,color:C.dim,fontFamily:F.main,flexShrink:0,marginTop:2 }}>{timeAgo(pred.updated_at)}</div>
@@ -2151,7 +2213,7 @@ export default function App() {
                     {recentRegs.map((p,i)=>{
                       const grpObj=p.group_id&&p.group_id!=="public"?groups.find(g=>g.id===p.group_id):null;
                       return (
-                        <div key={i} style={{ display:"flex",gap:10,alignItems:"flex-start",padding:"9px 12px",marginBottom:6,borderRadius:8,background:"rgba(21,21,21,0.85)",borderLeft:`3px solid ${C.green}` }}>
+                        <div key={i} style={{ display:"flex",gap:10,alignItems:"flex-start",padding:"9px 12px",marginBottom:6,borderRadius:8,background:C.surface,borderLeft:`3px solid ${C.green}` }}>
                           <div style={{ width:28,height:28,borderRadius:6,background:"rgba(19,196,111,0.1)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:12,color:C.green,fontFamily:F.main,flexShrink:0 }}>{p.nickname[0].toUpperCase()}</div>
                           <div style={{ flex:1,minWidth:0 }}>
                             <div style={{ fontSize:12,fontWeight:700,fontFamily:F.main,color:C.white }}>{p.nickname}</div>
@@ -2172,7 +2234,7 @@ export default function App() {
             {/* Change Admin Password */}
             <div style={{ marginTop:32,paddingTop:24,borderTop:"1px solid rgba(255,255,255,0.06)" }}>
               <div style={{ fontSize:14,fontWeight:700,fontFamily:F.main,color:C.muted,letterSpacing:2,marginBottom:16,textTransform:"uppercase" }}>🔑 Change Admin Password</div>
-              <div style={{ background:"rgba(21,21,21,0.92)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"16px 18px",display:"flex",flexDirection:"column",gap:10 }}>
+              <div style={{ background:C.surface,border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"16px 18px",display:"flex",flexDirection:"column",gap:10 }}>
                 {[
                   {label:"CURRENT PASSWORD",     val:pwCurrent, set:setPwCurrent, show:pwShowCurrent, setShow:setPwShowCurrent},
                   {label:"NEW PASSWORD (min 8)", val:pwNew,     set:setPwNew,     show:pwShowNew,     setShow:setPwShowNew},
@@ -2188,7 +2250,7 @@ export default function App() {
                   </div>
                 ))}
                 {pwMsg&&<div style={{ fontSize:12,fontFamily:F.main,letterSpacing:0.5,color:pwMsg.ok?C.green:C.red }}>{pwMsg.ok?"✓":"⚠"} {pwMsg.text}</div>}
-                <button onClick={handleChangeAdminPassword} style={{ padding:"10px 0",background:GOLD_GRAD,border:"none",borderRadius:8,cursor:"pointer",color:"#151515",fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:1,textTransform:"uppercase",marginTop:4 }}>
+                <button onClick={handleChangeAdminPassword} style={{ padding:"10px 0",background:GOLD_GRAD,border:"none",borderRadius:8,cursor:"pointer",color:"#232327",fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:1,textTransform:"uppercase",marginTop:4 }}>
                   Update Password ✓
                 </button>
               </div>
@@ -2200,7 +2262,7 @@ export default function App() {
       {/* JOIN GROUP MODAL — triggered by invite link */}
       {joinGroup&&authId&&(
         <div onClick={()=>{ if(!joinLoading){ setJoinGroup(null); setPendingJoinToken(null); sessionStorage.removeItem("rlcs_pending_join"); }}} style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:210,display:"flex",alignItems:"center",justifyContent:"center",padding:20 }}>
-          <div onClick={e=>e.stopPropagation()} style={{ background:"rgba(21,21,21,0.98)",border:"1px solid rgba(190,158,89,0.35)",borderRadius:16,padding:32,width:"100%",maxWidth:360,boxShadow:"0 0 60px rgba(190,158,89,0.15)",textAlign:"center" }}>
+          <div onClick={e=>e.stopPropagation()} style={{ background:C.surface,border:"1px solid rgba(190,158,89,0.35)",borderRadius:16,padding:32,width:"100%",maxWidth:360,boxShadow:"0 0 60px rgba(190,158,89,0.15)",textAlign:"center" }}>
             <div style={{ fontSize:36,marginBottom:12 }}>🏠</div>
             <div style={{ fontSize:18,fontWeight:700,fontFamily:F.main,color:C.white,letterSpacing:2,textTransform:"uppercase",marginBottom:8 }}>Join Group?</div>
             <div style={{ fontSize:15,color:C.muted,fontFamily:F.body,marginBottom:6 }}>
@@ -2222,7 +2284,7 @@ export default function App() {
               </button>
               {(!myGroup||myGroup.id!==joinGroup.id)&&(
                 <button onClick={handleJoinByToken} disabled={joinLoading}
-                  style={{ flex:2,padding:"11px 0",background:joinLoading?"rgba(190,158,89,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#151515",fontFamily:F.main,fontWeight:700,fontSize:13,cursor:joinLoading?"default":"pointer",letterSpacing:1,textTransform:"uppercase" }}>
+                  style={{ flex:2,padding:"11px 0",background:joinLoading?"rgba(190,158,89,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#232327",fontFamily:F.main,fontWeight:700,fontSize:13,cursor:joinLoading?"default":"pointer",letterSpacing:1,textTransform:"uppercase" }}>
                   {joinLoading?"Joining…":"Join Group →"}
                 </button>
               )}
@@ -2234,7 +2296,7 @@ export default function App() {
       {/* CHANGE GROUP MODAL */}
       {changeGroupModal&&(
         <div onClick={()=>setChangeGroupModal(false)} style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20 }}>
-          <div onClick={e=>e.stopPropagation()} style={{ background:"rgba(21,21,21,0.98)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:16,padding:32,width:"100%",maxWidth:380,boxShadow:"0 0 60px rgba(0,0,0,0.8)" }}>
+          <div onClick={e=>e.stopPropagation()} style={{ background:C.surface,border:"1px solid rgba(255,255,255,0.1)",borderRadius:16,padding:32,width:"100%",maxWidth:380,boxShadow:"0 0 60px rgba(0,0,0,0.8)" }}>
             <div style={{ fontSize:16,fontWeight:700,fontFamily:F.main,color:C.white,letterSpacing:2,textTransform:"uppercase",marginBottom:6 }}>🏠 Change Group</div>
             <div style={{ fontSize:11,color:C.muted,fontFamily:F.body,marginBottom:20 }}>
               {myGroup ? `Currently in: ${myGroup.name}` : "Currently in: Public"}<br/>Enter the code and password for your new group.
@@ -2261,7 +2323,7 @@ export default function App() {
                 <button onClick={()=>setChangeGroupModal(false)} style={{ flex:1,padding:"10px 0",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,color:C.muted,fontFamily:F.main,fontWeight:700,fontSize:13,cursor:"pointer",letterSpacing:1 }}>
                   Cancel
                 </button>
-                <button onClick={handleChangeGroup} disabled={cgLoading} style={{ flex:2,padding:"10px 0",background:cgLoading?"rgba(190,158,89,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#151515",fontFamily:F.main,fontWeight:700,fontSize:13,cursor:cgLoading?"default":"pointer",letterSpacing:1,textTransform:"uppercase" }}>
+                <button onClick={handleChangeGroup} disabled={cgLoading} style={{ flex:2,padding:"10px 0",background:cgLoading?"rgba(190,158,89,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#232327",fontFamily:F.main,fontWeight:700,fontSize:13,cursor:cgLoading?"default":"pointer",letterSpacing:1,textTransform:"uppercase" }}>
                   {cgLoading?"Joining…":"Join Group →"}
                 </button>
               </div>
@@ -2274,7 +2336,7 @@ export default function App() {
       <style>{`@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}`}</style>
       <div style={{ position:"fixed",bottom:20,right:20,zIndex:9999,display:"flex",flexDirection:"column",gap:8,pointerEvents:"none" }}>
         {toasts.map(t=>(
-          <div key={t.id} style={{ minWidth:280,maxWidth:360,background:"rgba(21,21,21,0.97)",borderLeft:`3px solid ${t.type==="error"?C.red:t.type==="success"?C.green:C.blue}`,padding:"12px 16px",borderRadius:6,color:C.white,fontFamily:F.main,fontSize:13,fontWeight:600,boxShadow:"0 4px 20px rgba(0,0,0,0.5)",animation:"toastIn 0.2s ease",letterSpacing:0.5 }}>
+          <div key={t.id} style={{ minWidth:280,maxWidth:360,background:C.surface,borderLeft:`3px solid ${t.type==="error"?C.red:t.type==="success"?C.green:C.blue}`,padding:"12px 16px",borderRadius:6,color:C.white,fontFamily:F.main,fontSize:13,fontWeight:600,boxShadow:"0 4px 20px rgba(0,0,0,0.25)",animation:"toastIn 0.2s ease",letterSpacing:0.5 }}>
             {t.type==="error"?"⚠ ":t.type==="success"?"✓ ":"ℹ "}{t.msg}
           </div>
         ))}
