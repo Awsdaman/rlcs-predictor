@@ -99,14 +99,14 @@ const DEFAULT_GROUP_MATCHES = [
   { id:"a_ubqf3",  group:"A", round:"UBQF", label:"UB QUARTER FINAL 3", team1:"Vitality",          team2:"FURIA Esports",     startTime:"2026-08-12T16:00:00Z", bo:5 },
   { id:"a_ubqf4",  group:"A", round:"UBQF", label:"UB QUARTER FINAL 4", team1:"NRG Esports",       team2:"TSM",               startTime:"2026-08-12T14:20:00Z", bo:5 },
   // GROUP A — LB Round 1 · Thu Aug 13 (UB QF losers)
-  { id:"a_lbr1m1", group:"A", round:"LBR1", label:"LB ROUND 1 M1",      team1:"TBD", team2:"TBD",  startTime:"2026-08-13T11:00:00Z", bo:5 },
-  { id:"a_lbr1m2", group:"A", round:"LBR1", label:"LB ROUND 1 M2",      team1:"TBD", team2:"TBD",  startTime:"2026-08-13T11:50:00Z", bo:5 },
+  { id:"a_lbr1m1", group:"A", round:"LBR1", label:"LB ROUND 1 M1",      team1:"TBD", team2:"TBD",  startTime:"2026-08-13T11:00:00Z", bo:7 },
+  { id:"a_lbr1m2", group:"A", round:"LBR1", label:"LB ROUND 1 M2",      team1:"TBD", team2:"TBD",  startTime:"2026-08-13T11:50:00Z", bo:7 },
   // GROUP A — UB Semi Finals · Thu Aug 13 (winners qualify for playoffs)
   { id:"a_ubsf1",  group:"A", round:"UBSF", label:"UB SEMI FINAL 1",    team1:"TBD", team2:"TBD",  startTime:"2026-08-13T12:40:00Z", bo:5 },
   { id:"a_ubsf2",  group:"A", round:"UBSF", label:"UB SEMI FINAL 2",    team1:"TBD", team2:"TBD",  startTime:"2026-08-13T13:30:00Z", bo:5 },
   // GROUP A — LB Round 2 · Fri Aug 14 (winners qualify for playoffs)
-  { id:"a_lbr2m1", group:"A", round:"LBR2", label:"LB ROUND 2 M1",      team1:"TBD", team2:"TBD",  startTime:"2026-08-14T12:40:00Z", bo:5 },
-  { id:"a_lbr2m2", group:"A", round:"LBR2", label:"LB ROUND 2 M2",      team1:"TBD", team2:"TBD",  startTime:"2026-08-14T13:30:00Z", bo:5 },
+  { id:"a_lbr2m1", group:"A", round:"LBR2", label:"LB ROUND 2 M1",      team1:"TBD", team2:"TBD",  startTime:"2026-08-14T12:40:00Z", bo:7 },
+  { id:"a_lbr2m2", group:"A", round:"LBR2", label:"LB ROUND 2 M2",      team1:"TBD", team2:"TBD",  startTime:"2026-08-14T13:30:00Z", bo:7 },
 
   // GROUP B — UB Quarter Finals · Wed Aug 12
   { id:"b_ubqf1",  group:"B", round:"UBQF", label:"UB QUARTER FINAL 1", team1:"Karmine Corp",      team2:"Wildcard",            startTime:"2026-08-12T11:00:00Z", bo:5 },
@@ -117,11 +117,11 @@ const DEFAULT_GROUP_MATCHES = [
   { id:"b_ubsf1",  group:"B", round:"UBSF", label:"UB SEMI FINAL 1",    team1:"TBD", team2:"TBD",  startTime:"2026-08-13T14:20:00Z", bo:5 },
   { id:"b_ubsf2",  group:"B", round:"UBSF", label:"UB SEMI FINAL 2",    team1:"TBD", team2:"TBD",  startTime:"2026-08-13T15:10:00Z", bo:5 },
   // GROUP B — LB Round 1 · Fri Aug 14 (UB QF losers)
-  { id:"b_lbr1m1", group:"B", round:"LBR1", label:"LB ROUND 1 M1",      team1:"TBD", team2:"TBD",  startTime:"2026-08-14T11:00:00Z", bo:5 },
-  { id:"b_lbr1m2", group:"B", round:"LBR1", label:"LB ROUND 1 M2",      team1:"TBD", team2:"TBD",  startTime:"2026-08-14T11:50:00Z", bo:5 },
+  { id:"b_lbr1m1", group:"B", round:"LBR1", label:"LB ROUND 1 M1",      team1:"TBD", team2:"TBD",  startTime:"2026-08-14T11:00:00Z", bo:7 },
+  { id:"b_lbr1m2", group:"B", round:"LBR1", label:"LB ROUND 1 M2",      team1:"TBD", team2:"TBD",  startTime:"2026-08-14T11:50:00Z", bo:7 },
   // GROUP B — LB Round 2 · Fri Aug 14 (winners qualify for playoffs)
-  { id:"b_lbr2m1", group:"B", round:"LBR2", label:"LB ROUND 2 M1",      team1:"TBD", team2:"TBD",  startTime:"2026-08-14T14:20:00Z", bo:5 },
-  { id:"b_lbr2m2", group:"B", round:"LBR2", label:"LB ROUND 2 M2",      team1:"TBD", team2:"TBD",  startTime:"2026-08-14T15:10:00Z", bo:5 },
+  { id:"b_lbr2m1", group:"B", round:"LBR2", label:"LB ROUND 2 M1",      team1:"TBD", team2:"TBD",  startTime:"2026-08-14T14:20:00Z", bo:7 },
+  { id:"b_lbr2m2", group:"B", round:"LBR2", label:"LB ROUND 2 M2",      team1:"TBD", team2:"TBD",  startTime:"2026-08-14T15:10:00Z", bo:7 },
 ];
 
 // ─── PLAYOFFS — single elimination, top 4 per group qualify, all Bo7 ─────────
@@ -132,7 +132,7 @@ const DEFAULT_PLAYOFF = [
   { id:"p_qf4", round:"QF",  label:"QUARTER FINAL 4", startTime:"2026-08-15T15:30:00Z", team1:"TBD", team2:"TBD", bo:7 },
   { id:"p_sf1", round:"SF",  label:"SEMI FINAL 1",    startTime:"2026-08-16T11:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
   { id:"p_sf2", round:"SF",  label:"SEMI FINAL 2",    startTime:"2026-08-16T12:30:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_3rd", round:"3RD", label:"3RD PLACE MATCH", startTime:"2026-08-16T14:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
+  { id:"p_3rd", round:"3RD", label:"3RD PLACE MATCH", startTime:"2026-08-16T14:00:00Z", team1:"TBD", team2:"TBD", bo:5 },
   { id:"p_gf",  round:"GF",  label:"GRAND FINAL",     startTime:"2026-08-16T15:30:00Z", team1:"TBD", team2:"TBD", bo:7 },
 ];
 
@@ -801,7 +801,7 @@ function GroupStagePage({ groupMatches, predictions, results, playerId, onPredic
       {view==="bracket" && (
         <>
           <div style={{ fontSize:10, color:C.dim, marginBottom:20, fontFamily:F.main, letterSpacing:1.5, textTransform:"uppercase" }}>
-            Group {grp} · Aug 12–14 · All Bo5 · Top 4 advance · <span style={{color:C.gold}}>Click any match to predict</span>
+            Group {grp} · Aug 12–14 · Upper Bo5 · Lower Bo7 · Top 4 advance · <span style={{color:C.gold}}>Click any match to predict</span>
           </div>
 
           <BracketBanner text="Upper Bracket" color={C.gold} />
@@ -1026,7 +1026,7 @@ function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredic
   return (
     <div>
       <div style={{ fontSize:10, color:C.dim, marginBottom:20, fontFamily:F.main, letterSpacing:1.5, textTransform:"uppercase" }}>
-        Playoffs · Aug 15–16 · Single elimination · All Bo7 · <span style={{color:C.gold}}>Click any match to predict</span>
+        Playoffs · Aug 15–16 · Single elimination · Bo7 (3rd place Bo5) · <span style={{color:C.gold}}>Click any match to predict</span>
       </div>
 
       <div style={washStyle("radial-gradient(900px 400px at 100% 0%, rgba(200,168,106,0.08) 0%, transparent 60%)")}>
