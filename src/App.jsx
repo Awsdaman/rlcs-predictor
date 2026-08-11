@@ -39,14 +39,14 @@ const C = {
   green:     '#00FF88',
 };
 
-// ─── TEAMS ───────────────────────────────────────────────────────────────────
+// ─── TEAMS — EWC 2026 (16 teams) ─────────────────────────────────────────────
 const TEAMS = {
   "Vitality":            { abbr:"VIT",  color:"#FFD700", bg:"#1a1400", logo:"/logos/vitality.png" },
   "Karmine Corp":        { abbr:"KC",   color:"#00CFFF", bg:"#001a2e", logo:"/logos/karmine-corp.png" },
   "Wildcard":            { abbr:"WC",   color:"#1E90FF", bg:"#00091a", logo:"/logos/wildcard.png" },
   "FUT Esports":         { abbr:"FUT",  color:"#C8102E", bg:"#1a0000", logo:"/logos/fut.png" },
   "NRG Esports":         { abbr:"NRG",  color:"#FF6600", bg:"#1a0800", logo:"/logos/nrg.png" },
-  "Manchester City":     { abbr:"MCFC", color:"#6CABDD", bg:"#001828", logo:"/logos/manchester-city.png" },
+  "Team Falcons":        { abbr:"FLCN", color:"#00E693", bg:"#00170d", logo:"/logos/team-falcons.png" },
   "MIBR":                { abbr:"MIBR", color:"#00A651", bg:"#001a0d", logo:"/logos/mibr.png" },
   "Five Fears":          { abbr:"5F",   color:"#00BFFF", bg:"#001520", logo:"/logos/five-fears.png" },
   "Twisted Minds":       { abbr:"TM",   color:"#FF3D6E", bg:"#1a0010", logo:"/logos/twisted-minds.png" },
@@ -59,64 +59,55 @@ const TEAMS = {
   "FURIA Esports":       { abbr:"FUR",  color:"#FFFFFF", bg:"#0a0a0a", logo:"/logos/furia.png" },
 };
 
-// ─── GROUP MATCHES ───────────────────────────────────────────────────────────
-const GROUP_MATCHES = [
-  // Wednesday May 20 — Slot 1 (10:00 UTC = 13:00 KSA) — 12:00 CEST
-  { id:"gb1", group:"B", team1:"NRG Esports",         team2:"Five Fears",          startTime:"2026-05-20T10:00:00Z", phase:"Group Stage" },
-  { id:"gb2", group:"B", team1:"Manchester City",     team2:"MIBR",                startTime:"2026-05-20T10:00:00Z", phase:"Group Stage" },
-  // Wednesday May 20 — Slot 2 (11:00 UTC = 14:00 KSA) — 13:00 CEST
-  { id:"ga1", group:"A", team1:"Vitality",            team2:"Wildcard",            startTime:"2026-05-20T11:00:00Z", phase:"Group Stage" },
-  { id:"ga2", group:"A", team1:"Karmine Corp",        team2:"FUT Esports",         startTime:"2026-05-20T11:00:00Z", phase:"Group Stage" },
-  // Wednesday May 20 — Slot 3 (12:00 UTC = 15:00 KSA) — 14:00 CEST
-  { id:"gd1", group:"D", team1:"Gentle Mates",        team2:"FURIA Esports",       startTime:"2026-05-20T12:00:00Z", phase:"Group Stage" },
-  { id:"gd2", group:"D", team1:"Spacestation Gaming", team2:"R8 Esports",          startTime:"2026-05-20T12:00:00Z", phase:"Group Stage" },
-  // Wednesday May 20 — Slot 4 (13:00 UTC = 16:00 KSA) — 15:00 CEST
-  { id:"gc1", group:"C", team1:"Twisted Minds",       team2:"Shopify Rebellion",   startTime:"2026-05-20T13:00:00Z", phase:"Group Stage" },
-  { id:"gc2", group:"C", team1:"Ninjas in Pyjamas",   team2:"TSM",                 startTime:"2026-05-20T13:00:00Z", phase:"Group Stage" },
-  // Wednesday May 20 — Slot 5 (14:00 UTC = 17:00 KSA) — 16:00 CEST
-  { id:"gb3", group:"B", team1:"NRG Esports",         team2:"MIBR",                startTime:"2026-05-20T14:00:00Z", phase:"Group Stage" },
-  { id:"gb4", group:"B", team1:"Manchester City",     team2:"Five Fears",          startTime:"2026-05-20T14:00:00Z", phase:"Group Stage" },
-  // Wednesday May 20 — Slot 6 (15:00 UTC = 18:00 KSA) — 17:00 CEST
-  { id:"ga3", group:"A", team1:"Vitality",            team2:"Karmine Corp",        startTime:"2026-05-20T15:00:00Z", phase:"Group Stage" },
-  { id:"ga4", group:"A", team1:"Wildcard",            team2:"FUT Esports",         startTime:"2026-05-20T15:00:00Z", phase:"Group Stage" },
-  // Thursday May 21 — Slot 1 (09:00 UTC = 12:00 KSA) — 11:00 CEST
-  { id:"gd3", group:"D", team1:"Gentle Mates",        team2:"Spacestation Gaming", startTime:"2026-05-21T09:00:00Z", phase:"Group Stage" },
-  { id:"gc3", group:"C", team1:"Twisted Minds",       team2:"Ninjas in Pyjamas",   startTime:"2026-05-21T09:00:00Z", phase:"Group Stage" },
-  // Thursday May 21 — Slot 2 (10:00 UTC = 13:00 KSA) — 12:00 CEST
-  { id:"gc4", group:"C", team1:"Twisted Minds",       team2:"TSM",                 startTime:"2026-05-21T10:00:00Z", phase:"Group Stage" },
-  { id:"gd4", group:"D", team1:"Gentle Mates",        team2:"R8 Esports",          startTime:"2026-05-21T10:00:00Z", phase:"Group Stage" },
-  // Thursday May 21 — Slot 3 (11:00 UTC = 14:00 KSA) — 13:00 CEST
-  { id:"gc5", group:"C", team1:"Ninjas in Pyjamas",   team2:"Shopify Rebellion",   startTime:"2026-05-21T11:00:00Z", phase:"Group Stage" },
-  { id:"gb5", group:"B", team1:"NRG Esports",         team2:"Manchester City",     startTime:"2026-05-21T11:00:00Z", phase:"Group Stage" },
-  // Thursday May 21 — Slot 4 (12:00 UTC = 15:00 KSA) — 14:00 CEST
-  { id:"gd5", group:"D", team1:"Spacestation Gaming", team2:"FURIA Esports",       startTime:"2026-05-21T12:00:00Z", phase:"Group Stage" },
-  { id:"ga5", group:"A", team1:"Vitality",            team2:"FUT Esports",         startTime:"2026-05-21T12:00:00Z", phase:"Group Stage" },
-  // Thursday May 21 — Slot 5 (13:00 UTC = 16:00 KSA) — 15:00 CEST
-  { id:"ga6", group:"A", team1:"Karmine Corp",        team2:"Wildcard",            startTime:"2026-05-21T13:00:00Z", phase:"Group Stage" },
-  { id:"gb6", group:"B", team1:"MIBR",                team2:"Five Fears",          startTime:"2026-05-21T13:00:00Z", phase:"Group Stage" },
-  // Thursday May 21 — Slot 6 (14:00 UTC = 17:00 KSA) — 16:00 CEST
-  { id:"gc6", group:"C", team1:"Shopify Rebellion",   team2:"TSM",                 startTime:"2026-05-21T14:00:00Z", phase:"Group Stage" },
-  { id:"gd6", group:"D", team1:"R8 Esports",          team2:"FURIA Esports",       startTime:"2026-05-21T14:00:00Z", phase:"Group Stage" },
+// ─── GROUP STAGE — two double-elimination groups of 8, all Bo5 ───────────────
+// Day 1 (Aug 12) times are confirmed from blast.tv / @ZEEZ0_rl.
+// Day 2–3 times are estimates — matches are on the correct day, exact hour may shift.
+// TBD slots fill in from the bracket_teams Supabase table (admin Bracket editor).
+const DEFAULT_GROUP_MATCHES = [
+  // GROUP A — UB Quarter Finals · Wed Aug 12
+  { id:"a_ubqf1",  group:"A", round:"UBQF", label:"UB QUARTER FINAL 1", team1:"Twisted Minds",     team2:"FUT Esports",       startTime:"2026-08-12T15:10:00Z", bo:5 },
+  { id:"a_ubqf2",  group:"A", round:"UBQF", label:"UB QUARTER FINAL 2", team1:"Shopify Rebellion", team2:"Ninjas in Pyjamas", startTime:"2026-08-12T16:50:00Z", bo:5 },
+  { id:"a_ubqf3",  group:"A", round:"UBQF", label:"UB QUARTER FINAL 3", team1:"Vitality",          team2:"FURIA Esports",     startTime:"2026-08-12T16:00:00Z", bo:5 },
+  { id:"a_ubqf4",  group:"A", round:"UBQF", label:"UB QUARTER FINAL 4", team1:"NRG Esports",       team2:"TSM",               startTime:"2026-08-12T14:20:00Z", bo:5 },
+  // GROUP A — LB Round 1 · Thu Aug 13 (UB QF losers)
+  { id:"a_lbr1m1", group:"A", round:"LBR1", label:"LB ROUND 1 M1",      team1:"TBD", team2:"TBD",  startTime:"2026-08-13T11:00:00Z", bo:5 },
+  { id:"a_lbr1m2", group:"A", round:"LBR1", label:"LB ROUND 1 M2",      team1:"TBD", team2:"TBD",  startTime:"2026-08-13T11:50:00Z", bo:5 },
+  // GROUP A — UB Semi Finals · Thu Aug 13 (winners qualify for playoffs)
+  { id:"a_ubsf1",  group:"A", round:"UBSF", label:"UB SEMI FINAL 1",    team1:"TBD", team2:"TBD",  startTime:"2026-08-13T12:40:00Z", bo:5 },
+  { id:"a_ubsf2",  group:"A", round:"UBSF", label:"UB SEMI FINAL 2",    team1:"TBD", team2:"TBD",  startTime:"2026-08-13T13:30:00Z", bo:5 },
+  // GROUP A — LB Round 2 · Fri Aug 14 (winners qualify for playoffs)
+  { id:"a_lbr2m1", group:"A", round:"LBR2", label:"LB ROUND 2 M1",      team1:"TBD", team2:"TBD",  startTime:"2026-08-14T12:40:00Z", bo:5 },
+  { id:"a_lbr2m2", group:"A", round:"LBR2", label:"LB ROUND 2 M2",      team1:"TBD", team2:"TBD",  startTime:"2026-08-14T13:30:00Z", bo:5 },
+
+  // GROUP B — UB Quarter Finals · Wed Aug 12
+  { id:"b_ubqf1",  group:"B", round:"UBQF", label:"UB QUARTER FINAL 1", team1:"Karmine Corp",      team2:"Wildcard",            startTime:"2026-08-12T11:00:00Z", bo:5 },
+  { id:"b_ubqf2",  group:"B", round:"UBQF", label:"UB QUARTER FINAL 2", team1:"MIBR",              team2:"Spacestation Gaming", startTime:"2026-08-12T13:30:00Z", bo:5 },
+  { id:"b_ubqf3",  group:"B", round:"UBQF", label:"UB QUARTER FINAL 3", team1:"R8 Esports",        team2:"Team Falcons",        startTime:"2026-08-12T11:50:00Z", bo:5 },
+  { id:"b_ubqf4",  group:"B", round:"UBQF", label:"UB QUARTER FINAL 4", team1:"Gentle Mates",      team2:"Five Fears",          startTime:"2026-08-12T12:40:00Z", bo:5 },
+  // GROUP B — UB Semi Finals · Thu Aug 13 (winners qualify for playoffs)
+  { id:"b_ubsf1",  group:"B", round:"UBSF", label:"UB SEMI FINAL 1",    team1:"TBD", team2:"TBD",  startTime:"2026-08-13T14:20:00Z", bo:5 },
+  { id:"b_ubsf2",  group:"B", round:"UBSF", label:"UB SEMI FINAL 2",    team1:"TBD", team2:"TBD",  startTime:"2026-08-13T15:10:00Z", bo:5 },
+  // GROUP B — LB Round 1 · Fri Aug 14 (UB QF losers)
+  { id:"b_lbr1m1", group:"B", round:"LBR1", label:"LB ROUND 1 M1",      team1:"TBD", team2:"TBD",  startTime:"2026-08-14T11:00:00Z", bo:5 },
+  { id:"b_lbr1m2", group:"B", round:"LBR1", label:"LB ROUND 1 M2",      team1:"TBD", team2:"TBD",  startTime:"2026-08-14T11:50:00Z", bo:5 },
+  // GROUP B — LB Round 2 · Fri Aug 14 (winners qualify for playoffs)
+  { id:"b_lbr2m1", group:"B", round:"LBR2", label:"LB ROUND 2 M1",      team1:"TBD", team2:"TBD",  startTime:"2026-08-14T14:20:00Z", bo:5 },
+  { id:"b_lbr2m2", group:"B", round:"LBR2", label:"LB ROUND 2 M2",      team1:"TBD", team2:"TBD",  startTime:"2026-08-14T15:10:00Z", bo:5 },
 ];
 
-// ─── PLAYOFF MATCHES — teams set from bracket state in Supabase ──────────────
+// ─── PLAYOFFS — single elimination, top 4 per group qualify, all Bo7 ─────────
 const DEFAULT_PLAYOFF = [
-  { id:"p_lb1",   label:"LB ROUND 1 M1",      round:"LBR1", startTime:"2026-05-22T09:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_lb2",   label:"LB ROUND 1 M2",      round:"LBR1", startTime:"2026-05-22T09:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_lb3",   label:"LB ROUND 1 M3",      round:"LBR1", startTime:"2026-05-22T09:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_lb4",   label:"LB ROUND 1 M4",      round:"LBR1", startTime:"2026-05-22T09:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_lb5",   label:"LB ROUND 2 M1",      round:"LBR2", startTime:"2026-05-23T15:30:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_lb6",   label:"LB ROUND 2 M2",      round:"LBR2", startTime:"2026-05-23T16:45:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_ubqf1", label:"UB QUARTER FINAL 1",  round:"UBQF", startTime:"2026-05-23T12:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_ubqf2", label:"UB QUARTER FINAL 2",  round:"UBQF", startTime:"2026-05-23T13:15:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_lbqf1", label:"LB QUARTER FINAL 1",  round:"LBQF", startTime:"2026-05-24T12:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_lbqf2", label:"LB QUARTER FINAL 2",  round:"LBQF", startTime:"2026-05-23T09:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_sf1",   label:"SEMI FINAL 1",         round:"SF",   startTime:"2026-05-24T09:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_sf2",   label:"SEMI FINAL 2",         round:"SF",   startTime:"2026-05-24T11:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_gf",    label:"GRAND FINAL",           round:"GF",   startTime:"2026-05-24T14:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
+  { id:"p_qf1", round:"QF",  label:"QUARTER FINAL 1", startTime:"2026-08-15T11:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
+  { id:"p_qf2", round:"QF",  label:"QUARTER FINAL 2", startTime:"2026-08-15T12:30:00Z", team1:"TBD", team2:"TBD", bo:7 },
+  { id:"p_qf3", round:"QF",  label:"QUARTER FINAL 3", startTime:"2026-08-15T14:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
+  { id:"p_qf4", round:"QF",  label:"QUARTER FINAL 4", startTime:"2026-08-15T15:30:00Z", team1:"TBD", team2:"TBD", bo:7 },
+  { id:"p_sf1", round:"SF",  label:"SEMI FINAL 1",    startTime:"2026-08-16T11:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
+  { id:"p_sf2", round:"SF",  label:"SEMI FINAL 2",    startTime:"2026-08-16T12:30:00Z", team1:"TBD", team2:"TBD", bo:7 },
+  { id:"p_3rd", round:"3RD", label:"3RD PLACE MATCH", startTime:"2026-08-16T14:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
+  { id:"p_gf",  round:"GF",  label:"GRAND FINAL",     startTime:"2026-08-16T15:30:00Z", team1:"TBD", team2:"TBD", bo:7 },
 ];
 
-const ALL_MATCHES = [...GROUP_MATCHES, ...DEFAULT_PLAYOFF];
+const ALL_MATCHES = [...DEFAULT_GROUP_MATCHES, ...DEFAULT_PLAYOFF];
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 const calcScore = (pred, result) => {
@@ -132,6 +123,8 @@ const fmtTime     = (iso) => new Date(iso).toLocaleString("en-US", { timeZone:"A
 const timeAgo   = (iso) => { if(!iso)return"–"; const s=Math.floor((Date.now()-new Date(iso))/1000); if(s<60)return`${s}s ago`; const m=Math.floor(s/60); if(m<60)return`${m} min ago`; const h=Math.floor(m/60); if(h<24)return`${h} hr ago`; return`${Math.floor(h/24)}d ago`; };
 const teamStyle = (n)   => TEAMS[n] || { abbr:(n||"?").slice(0,3).toUpperCase(), color:"#888", bg:"#111", logo:null };
 const isTBDTeam = (n)   => !n || n === "TBD";
+const maxWins   = (m)   => ((m.bo || 5) === 7 ? 4 : 3);   // Bo5 → first to 3, Bo7 → first to 4
+const hasTBD    = (m)   => isTBDTeam(m.team1) || isTBDTeam(m.team2);
 const F = { main:"'Rajdhani', sans-serif", body:"'Inter', sans-serif" };
 
 // ─── SHARED INPUT STYLE ───────────────────────────────────────────────────────
@@ -145,9 +138,16 @@ const inputStyle = (extra={}) => ({
 });
 
 // ─── COUNTDOWN PILL ──────────────────────────────────────────────────────────
-function CountdownPill({ lockTime, now }) {
+function CountdownPill({ lockTime, now, startTime }) {
   const ms = new Date(lockTime) - now;
   if (ms <= 0) {
+    if (startTime && now >= new Date(startTime).getTime()) {
+      return (
+        <div style={{ background:"rgba(232,0,29,0.15)", border:"1px solid rgba(232,0,29,0.5)", borderRadius:20, padding:"2px 8px", fontSize:9, fontWeight:700, fontFamily:F.main, letterSpacing:0.5, color:C.red, whiteSpace:"nowrap", animation:"livePulse 1.4s ease-in-out infinite" }}>
+          ● LIVE
+        </div>
+      );
+    }
     return (
       <div style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.12)", borderRadius:20, padding:"2px 8px", fontSize:9, fontWeight:700, fontFamily:F.main, letterSpacing:0.5, color:"rgba(255,255,255,0.3)", whiteSpace:"nowrap" }}>
         🔒 LOCKED
@@ -174,7 +174,6 @@ function TeamBadge({ name, size="sm" }) {
   const t = teamStyle(name);
   const isTBD = isTBDTeam(name);
   const sz = size === "lg" ? 52 : 36;
-  if (name === "Twisted Minds" || name === "Vitality") console.log(`[TeamBadge] ${name} logo path:`, t.logo);
   return (
     <div style={{ display:"flex", alignItems:"center", gap:8 }}>
       <div style={{
@@ -227,7 +226,7 @@ function BracketCard({ match, result, pred, onClick, isSelected, now, isAdmin })
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
           <span style={{ fontSize:9, color:C.muted, fontFamily:F.main, letterSpacing:2, textTransform:"uppercase" }}>{match.label}</span>
           {score !== null && <span style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:score===3?C.green:score===1?C.red:"rgba(255,255,255,0.3)" }}>+{score}pts</span>}
-          {score === null && !res && <CountdownPill lockTime={getLockTime(match).toISOString()} now={now} />}
+          {score === null && !res && !hasTBD(match) && <CountdownPill lockTime={getLockTime(match).toISOString()} now={now} startTime={match.startTime} />}
         </div>
         {isAdmin && <div style={{ fontSize:8, color:"rgba(255,100,0,0.6)", fontFamily:"monospace", marginTop:1 }}>⚙ UTC: {match.startTime} · Locks {fmtTime(getLockTime(match).toISOString())} KSA</div>}
       </div>
@@ -280,7 +279,7 @@ function PredictPanel({ match, result, pred, onPredict, onClose }) {
   return (
     <div style={{ background:"rgba(8,8,28,0.97)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"16px 18px", marginTop:12, boxShadow:"0 0 30px rgba(0,0,0,0.5)" }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-        <div style={{ fontSize:13, fontWeight:700, fontFamily:F.main, color:C.red, letterSpacing:2, textTransform:"uppercase" }}>{match.label} — Bo{match.bo}</div>
+        <div style={{ fontSize:13, fontWeight:700, fontFamily:F.main, color:C.red, letterSpacing:2, textTransform:"uppercase" }}>{match.group?`Group ${match.group} · `:""}{match.label} — Bo{match.bo}</div>
         <button onClick={onClose} style={{ background:"none", border:"none", color:C.muted, cursor:"pointer", fontSize:16 }}>✕</button>
       </div>
       <div style={{ fontSize:10, color:C.dim, fontFamily:F.main, letterSpacing:1, marginBottom:12 }}>
@@ -304,10 +303,10 @@ function PredictPanel({ match, result, pred, onPredict, onClose }) {
       ) : (
         <div>
           <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12, justifyContent:"center" }}>
-            <input type="number" min={0} max={4} value={s1} onChange={e=>setS1(e.target.value)} placeholder="–"
+            <input type="number" min={0} max={maxWins(match)} value={s1} onChange={e=>setS1(e.target.value)} placeholder="–"
               style={{ ...inputStyle({ width:48, textAlign:"center", fontSize:20, fontWeight:700, padding:"6px 0" }) }} />
             <span style={{ color:"rgba(255,255,255,0.15)", fontSize:18 }}>:</span>
-            <input type="number" min={0} max={4} value={s2} onChange={e=>setS2(e.target.value)} placeholder="–"
+            <input type="number" min={0} max={maxWins(match)} value={s2} onChange={e=>setS2(e.target.value)} placeholder="–"
               style={{ ...inputStyle({ width:48, textAlign:"center", fontSize:20, fontWeight:700, padding:"6px 0" }) }} />
           </div>
           <div style={{ display:"flex", gap:8 }}>
@@ -331,7 +330,188 @@ function PredictPanel({ match, result, pred, onPredict, onClose }) {
   );
 }
 
-// ─── PLAYOFFS BRACKET PAGE ────────────────────────────────────────────────────
+// ─── GROUP STAGE PAGE — two double-elim groups, bracket + schedule views ─────
+function GroupStagePage({ groupMatches, predictions, results, playerId, onPredict, now, isAdmin }) {
+  const [grp,      setGrp]      = useState("A");
+  const [view,     setView]     = useState("bracket");
+  const [selected, setSelected] = useState(null);
+
+  const matches = groupMatches.filter(m => m.group === grp);
+  const byRound = (r) => matches.filter(m => m.round === r);
+  const selectedMatch = groupMatches.find(m => m.id === selected);
+
+  const cp = (m) => ({
+    match: m, result: results[m.id], pred: predictions[playerId]?.[m.id],
+    onClick: () => setSelected(selected === m.id ? null : m.id),
+    isSelected: selected === m.id, now, isAdmin,
+  });
+
+  const ubqf = byRound("UBQF"), ubsf = byRound("UBSF"), lbr1 = byRound("LBR1"), lbr2 = byRound("LBR2");
+
+  // Layout math — same card metrics as PlayoffsPage
+  const COL = 192, GAP = 28, CARD_H = 78, CARD_GAP = 10, LABEL_H = 24;
+  const mt0     = (CARD_H + CARD_GAP) / 2;                       // top offset of a 2-card column merging a 4-card column
+  const pairGap = 2 * (CARD_H + CARD_GAP) - CARD_H;              // gap between those 2 cards
+  const c0 = LABEL_H + mt0 + CARD_H / 2;                         // centers of the merged pair
+  const c1 = LABEL_H + mt0 + CARD_H + pairGap + CARD_H / 2;
+  const r0 = LABEL_H + CARD_H / 2;                               // centers of a plain 2-card stack
+  const r1 = LABEL_H + CARD_H + CARD_GAP + CARD_H / 2;
+
+  const roundLbl = (text, color) => (
+    <div style={{ height: LABEL_H, display:"flex", alignItems:"center", fontSize:9, fontWeight:700, color: color||C.muted, fontFamily:F.main, letterSpacing:2, textTransform:"uppercase" }}>
+      {text}
+    </div>
+  );
+  const vConn = (y0, y1) => (
+    <div style={{ width:GAP, flexShrink:0, position:"relative", alignSelf:"stretch" }}>
+      <div style={{ position:"absolute", left:0, right:0, top: y0, height:1, background:"rgba(255,255,255,0.15)" }} />
+      {y1 !== undefined && <div style={{ position:"absolute", left:0, right:0, top: y1, height:1, background:"rgba(255,255,255,0.15)" }} />}
+    </div>
+  );
+  const qualifiedTag = (
+    <div style={{ background:"rgba(0,255,136,0.08)", border:"1px solid rgba(0,255,136,0.3)", borderRadius:6, padding:"5px 10px", fontSize:9, fontWeight:700, fontFamily:F.main, color:C.green, letterSpacing:1, textTransform:"uppercase", whiteSpace:"nowrap" }}>
+      ✓ Winner qualifies
+    </div>
+  );
+
+  // Schedule view — every group match (both groups), grouped by KSA day
+  const fmtDay = (iso) => new Date(iso).toLocaleDateString("en-US", { timeZone:"Asia/Riyadh", weekday:"long", month:"short", day:"numeric" });
+  const sorted = [...groupMatches].sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
+  const days = [];
+  sorted.forEach(m => {
+    const d = fmtDay(m.startTime);
+    const last = days[days.length-1];
+    if (!last || last.day !== d) days.push({ day:d, matches:[m] }); else last.matches.push(m);
+  });
+
+  return (
+    <div>
+      {/* Group + view toggles */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14, flexWrap:"wrap", gap:10 }}>
+        <div style={{ display:"flex", gap:6 }}>
+          {view==="bracket" && ["A","B"].map(g => (
+            <button key={g} onClick={()=>{ setGrp(g); setSelected(null); }} style={{
+              padding:"6px 18px", borderRadius:6, border:`1px solid ${grp===g?"transparent":"rgba(255,255,255,0.1)"}`, cursor:"pointer", fontFamily:F.main, fontWeight:700, fontSize:12, letterSpacing:1, textTransform:"uppercase", transition:"all 0.15s",
+              background: grp===g ? C.red : "rgba(255,255,255,0.04)",
+              color: grp===g ? C.white : "#667799",
+              boxShadow: grp===g ? "0 0 15px rgba(232,0,29,0.5)" : "none",
+            }}>Group {g}</button>
+          ))}
+        </div>
+        <div style={{ display:"flex", gap:2, background:"rgba(8,8,28,0.9)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:8, padding:3 }}>
+          {[{id:"bracket",label:"🗂 Bracket"},{id:"schedule",label:"📅 Schedule"}].map(v => (
+            <button key={v.id} onClick={()=>{ setView(v.id); setSelected(null); }} style={{ padding:"5px 14px", borderRadius:6, border:"none", cursor:"pointer", background:view===v.id?"rgba(232,0,29,0.15)":"transparent", color:view===v.id?C.red:C.muted, fontFamily:F.main, fontWeight:700, fontSize:11, letterSpacing:1, textTransform:"uppercase", transition:"all 0.15s" }}>{v.label}</button>
+          ))}
+        </div>
+      </div>
+
+      {view==="bracket" && (
+        <>
+          <div style={{ fontSize:10, color:C.muted, marginBottom:16, fontFamily:F.main, letterSpacing:2, textTransform:"uppercase" }}>
+            Group {grp} · Aug 12–14 · All Bo5 · Top 4 advance to playoffs · Click any match to predict
+          </div>
+          <div style={{ overflowX:"auto", paddingBottom:8 }}>
+            <div style={{ minWidth: 700 }}>
+
+              {/* ── UPPER BRACKET ─────────────────────────────────── */}
+              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+                <div style={{ height:1, flex:1, background:"rgba(0,102,255,0.25)" }} />
+                <span style={{ fontSize:9, fontWeight:700, color:C.blue, fontFamily:F.main, letterSpacing:3, textTransform:"uppercase", flexShrink:0 }}>UPPER BRACKET</span>
+                <div style={{ height:1, flex:1, background:"rgba(0,102,255,0.25)" }} />
+              </div>
+
+              <div style={{ display:"flex", alignItems:"flex-start", marginBottom:26 }}>
+                {/* UB QF */}
+                <div style={{ width:COL, flexShrink:0 }}>
+                  {roundLbl("UB Quarter Finals · Aug 12", C.blue)}
+                  <div style={{ display:"flex", flexDirection:"column", gap:CARD_GAP }}>
+                    {ubqf.map(m => <BracketCard key={m.id} {...cp(m)} />)}
+                  </div>
+                </div>
+                {vConn(c0, c1)}
+                {/* UB SF */}
+                <div style={{ width:COL, flexShrink:0 }}>
+                  {roundLbl("UB Semi Finals · Aug 13", C.blue)}
+                  <div style={{ marginTop: mt0 }}><BracketCard {...cp(ubsf[0])} /></div>
+                  <div style={{ marginTop: pairGap }}><BracketCard {...cp(ubsf[1])} /></div>
+                </div>
+                {/* Qualified tags */}
+                <div style={{ width:COL+GAP, flexShrink:0, position:"relative", alignSelf:"stretch" }}>
+                  <div style={{ position:"absolute", top:c0-14, left:GAP }}>{qualifiedTag}</div>
+                  <div style={{ position:"absolute", top:c1-14, left:GAP }}>{qualifiedTag}</div>
+                </div>
+              </div>
+
+              {/* ── LOWER BRACKET ─────────────────────────────────── */}
+              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+                <div style={{ height:1, flex:1, background:"rgba(232,0,29,0.25)" }} />
+                <span style={{ fontSize:9, fontWeight:700, color:C.red, fontFamily:F.main, letterSpacing:3, textTransform:"uppercase", flexShrink:0 }}>LOWER BRACKET · ELIMINATION</span>
+                <div style={{ height:1, flex:1, background:"rgba(232,0,29,0.25)" }} />
+              </div>
+
+              <div style={{ display:"flex", alignItems:"flex-start" }}>
+                {/* LB R1 */}
+                <div style={{ width:COL, flexShrink:0 }}>
+                  {roundLbl(`LB Round 1 · Aug ${grp==="A"?13:14}`, C.red)}
+                  <div style={{ display:"flex", flexDirection:"column", gap:CARD_GAP }}>
+                    {lbr1.map(m => <BracketCard key={m.id} {...cp(m)} />)}
+                  </div>
+                </div>
+                {vConn(r0, r1)}
+                {/* LB R2 */}
+                <div style={{ width:COL, flexShrink:0 }}>
+                  {roundLbl("LB Round 2 · Aug 14", C.red)}
+                  <div style={{ display:"flex", flexDirection:"column", gap:CARD_GAP }}>
+                    {lbr2.map(m => <BracketCard key={m.id} {...cp(m)} />)}
+                  </div>
+                </div>
+                {/* Qualified tags */}
+                <div style={{ width:COL+GAP, flexShrink:0, position:"relative", alignSelf:"stretch" }}>
+                  <div style={{ position:"absolute", top:r0-14, left:GAP }}>{qualifiedTag}</div>
+                  <div style={{ position:"absolute", top:r1-14, left:GAP }}>{qualifiedTag}</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+          <div style={{ fontSize:10, color:C.dim, fontFamily:F.main, letterSpacing:1, marginTop:12, lineHeight:1.7 }}>
+            UB QF losers drop to LB Round 1 · UB SF losers drop to LB Round 2 · LB Round 1 losers are eliminated
+          </div>
+        </>
+      )}
+
+      {view==="schedule" && (
+        <div>
+          {days.map(d => (
+            <div key={d.day} style={{ marginBottom:20 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
+                <span style={{ fontSize:11, fontWeight:700, color:C.white, fontFamily:F.main, letterSpacing:2, textTransform:"uppercase", flexShrink:0 }}>📅 {d.day}</span>
+                <div style={{ height:1, flex:1, background:"rgba(255,255,255,0.07)" }} />
+                <span style={{ fontSize:9, color:C.dim, fontFamily:F.main, letterSpacing:1, flexShrink:0 }}>{d.matches.length} matches · KSA time</span>
+              </div>
+              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                {d.matches.map(m => (
+                  <MatchCard key={m.id} match={m} playerId={playerId} predictions={predictions}
+                    results={results} onPredict={onPredict} onSetResult={()=>{}} isAdmin={false} readOnly={!playerId} now={now} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {view==="bracket" && selected && selectedMatch && playerId && (
+        <PredictPanel match={selectedMatch} result={results[selected]} pred={predictions[playerId]?.[selected]}
+          onPredict={onPredict} onClose={() => setSelected(null)} />
+      )}
+      {view==="bracket" && selected && !playerId && (
+        <div style={{ textAlign:"center", color:C.muted, fontFamily:F.main, fontSize:12, marginTop:12, letterSpacing:1 }}>Log in as a player to predict</div>
+      )}
+    </div>
+  );
+}
+
+// ─── PLAYOFFS BRACKET PAGE — single elimination + 3rd place match ────────────
 function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredict, now, isAdmin }) {
   const [selected, setSelected] = useState(null);
   const byRound = (r) => playoffMatches.filter(m => m.round === r);
@@ -343,45 +523,22 @@ function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredic
     isSelected: selected === m.id, now, isAdmin,
   });
 
-  const ubqf = byRound("UBQF"); // 2 matches
-  const sf   = byRound("SF");   // 2 matches
-  const gf   = byRound("GF");   // 1 match
-  const lb1  = byRound("LBR1"); // 4 matches
-  const lb2  = byRound("LBR2"); // 2 matches
-  const lbqf = byRound("LBQF"); // 2 matches
+  const qf = byRound("QF"), sf = byRound("SF"), gf = byRound("GF"), third = byRound("3RD");
 
-  // Layout constants
-  const COL = 192;        // card column width
-  const GAP = 28;         // connector gap between columns
-  const CARD_H = 78;      // approximate BracketCard height in px
-  const CARD_GAP = 10;    // gap between stacked cards
-  const LABEL_H = 24;     // round label height
-
-  // LBR2 vertical alignment: each card centers between a pair in LBR1
-  // LBR2[0] top = (CARD_H + CARD_GAP) / 2 from column top (after label)
-  const lb2_mt0 = (CARD_H + CARD_GAP) / 2;  // = 44
-  // Gap between LBR2[0] bottom and LBR2[1] top = 2*(CARD_H+CARD_GAP) - CARD_H
-  const lb2_gap = 2 * (CARD_H + CARD_GAP) - CARD_H; // = 98
-
-  // Pixel positions of LBR2 card centers (from top of that column, after label)
-  const lb2_c0 = LABEL_H + lb2_mt0 + CARD_H / 2;                       // ≈ 107
-  const lb2_c1 = LABEL_H + lb2_mt0 + CARD_H + lb2_gap + CARD_H / 2;   // ≈ 283
-
-  // UB SF cards should align visually with LB LBQF cards —
-  // both are in col 2, so UB SF starts at same y offset as LBQF.
-  // UBQF (col 1 of UB) uses same spacing as lb2 logic:
-  const ubqf_mt0 = lb2_mt0;
-  const ubqf_gap = lb2_gap;
-  const ubqf_c0 = lb2_c0;
-  const ubqf_c1 = lb2_c1;
+  // Layout math
+  const COL = 192, GAP = 28, CARD_H = 78, CARD_GAP = 10, LABEL_H = 24;
+  const mt0     = (CARD_H + CARD_GAP) / 2;
+  const pairGap = 2 * (CARD_H + CARD_GAP) - CARD_H;
+  const c0 = LABEL_H + mt0 + CARD_H / 2;
+  const c1 = LABEL_H + mt0 + CARD_H + pairGap + CARD_H / 2;
+  const gfCenter = (c0 + c1) / 2;
+  const gfMt = gfCenter - LABEL_H - CARD_H / 2;
 
   const roundLbl = (text, color) => (
     <div style={{ height: LABEL_H, display:"flex", alignItems:"center", fontSize:9, fontWeight:700, color: color||C.muted, fontFamily:F.main, letterSpacing:2, textTransform:"uppercase" }}>
       {text}
     </div>
   );
-
-  // Vertical connector lines between two columns (absolute-positioned lines at given y-positions)
   const vConn = (y0, y1) => (
     <div style={{ width:GAP, flexShrink:0, position:"relative", alignSelf:"stretch" }}>
       <div style={{ position:"absolute", left:0, right:0, top: y0, height:1, background:"rgba(255,255,255,0.15)" }} />
@@ -389,106 +546,59 @@ function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredic
     </div>
   );
 
-  // Single horizontal connector
-  const hConn = () => (
-    <div style={{ width:GAP, flexShrink:0, position:"relative", alignSelf:"stretch" }}>
-      <div style={{ position:"absolute", left:0, right:0, top:"50%", height:1, background:"rgba(255,255,255,0.18)" }} />
-    </div>
-  );
-
   return (
     <div>
       <div style={{ fontSize:10, color:C.muted, marginBottom:20, fontFamily:F.main, letterSpacing:2, textTransform:"uppercase" }}>
-        Playoffs · May 22–24 · All Bo7 · Click any match to predict
+        Playoffs · Aug 15–16 · Single elimination · All Bo7 · Click any match to predict
       </div>
 
       <div style={{ overflowX:"auto", paddingBottom:8 }}>
-        <div style={{ minWidth: 960 }}>
+        <div style={{ minWidth: 700 }}>
 
-          {/* ── UPPER BRACKET ─────────────────────────────────── */}
-          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
-            <div style={{ width: COL + GAP, flexShrink:0 }} />{/* align with LBR2 col */}
-            <div style={{ height:1, flex:1, background:"rgba(0,102,255,0.25)" }} />
-            <span style={{ fontSize:9, fontWeight:700, color:C.blue, fontFamily:F.main, letterSpacing:3, textTransform:"uppercase", flexShrink:0 }}>UPPER BRACKET</span>
-            <div style={{ height:1, flex:1, background:"rgba(0,102,255,0.25)" }} />
-          </div>
-
-          <div style={{ display:"flex", alignItems:"flex-start", marginBottom:28 }}>
-            {/* Spacer — UB starts at col 1, LBR1 is col 0 */}
-            <div style={{ width: COL + GAP, flexShrink:0 }} />
-
-            {/* UBQF */}
+          <div style={{ display:"flex", alignItems:"flex-start" }}>
+            {/* QF */}
             <div style={{ width:COL, flexShrink:0 }}>
-              {roundLbl("UB Quarter Finals", C.blue)}
-              <div style={{ marginTop: ubqf_mt0 }}><BracketCard {...cp(ubqf[0])} /></div>
-              <div style={{ marginTop: ubqf_gap }}><BracketCard {...cp(ubqf[1])} /></div>
+              {roundLbl("Quarter Finals · Aug 15", C.blue)}
+              <div style={{ display:"flex", flexDirection:"column", gap:CARD_GAP }}>
+                {qf.map(m => <BracketCard key={m.id} {...cp(m)} />)}
+              </div>
             </div>
 
-            {vConn(ubqf_c0, ubqf_c1)}
+            {vConn(c0, c1)}
 
             {/* SF */}
             <div style={{ width:COL, flexShrink:0 }}>
-              {roundLbl("Semi Finals", C.blue)}
-              <div style={{ marginTop: ubqf_mt0 }}><BracketCard {...cp(sf[0])} /></div>
-              <div style={{ marginTop: ubqf_gap }}><BracketCard {...cp(sf[1])} /></div>
+              {roundLbl("Semi Finals · Aug 16", C.blue)}
+              <div style={{ marginTop: mt0 }}><BracketCard {...cp(sf[0])} /></div>
+              <div style={{ marginTop: pairGap }}><BracketCard {...cp(sf[1])} /></div>
             </div>
 
-            {hConn()}
+            {vConn(gfCenter)}
 
             {/* GF */}
-            <div style={{ width:COL, flexShrink:0, display:"flex", flexDirection:"column", justifyContent:"center", alignSelf:"stretch" }}>
-              {roundLbl("Grand Final 🏆", C.green)}
-              {gf.map(m => <BracketCard key={m.id} {...cp(m)} />)}
-            </div>
-          </div>
-
-          {/* ── LOWER BRACKET ─────────────────────────────────── */}
-          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
-            <div style={{ height:1, flex:1, background:"rgba(232,0,29,0.25)" }} />
-            <span style={{ fontSize:9, fontWeight:700, color:C.red, fontFamily:F.main, letterSpacing:3, textTransform:"uppercase", flexShrink:0 }}>LOWER BRACKET</span>
-            <div style={{ height:1, flex:1, background:"rgba(232,0,29,0.25)" }} />
-          </div>
-
-          <div style={{ display:"flex", alignItems:"flex-start" }}>
-
-            {/* LBR1 */}
             <div style={{ width:COL, flexShrink:0 }}>
-              {roundLbl("LB Round 1", C.red)}
-              <div style={{ display:"flex", flexDirection:"column", gap:CARD_GAP }}>
-                {lb1.map(m => <BracketCard key={m.id} {...cp(m)} />)}
-              </div>
-            </div>
-
-            {vConn(lb2_c0, lb2_c1)}
-
-            {/* LBR2 */}
-            <div style={{ width:COL, flexShrink:0 }}>
-              {roundLbl("LB Round 2", C.red)}
-              <div style={{ marginTop: lb2_mt0 }}><BracketCard {...cp(lb2[0])} /></div>
-              <div style={{ marginTop: lb2_gap }}><BracketCard {...cp(lb2[1])} /></div>
-            </div>
-
-            {vConn(lb2_c0, lb2_c1)}
-
-            {/* LBQF */}
-            <div style={{ width:COL, flexShrink:0 }}>
-              {roundLbl("LB Quarter Finals", C.red)}
-              <div style={{ marginTop: lb2_mt0 }}><BracketCard {...cp(lbqf[0])} /></div>
-              <div style={{ marginTop: lb2_gap }}><BracketCard {...cp(lbqf[1])} /></div>
-            </div>
-
-            {/* Arrow to GF */}
-            <div style={{ width:GAP, flexShrink:0, position:"relative", alignSelf:"stretch" }}>
-              <div style={{ position:"absolute", left:0, right:0, top: lb2_c0, height:1, background:"rgba(255,255,255,0.1)", borderTop:"1px dashed rgba(255,255,255,0.12)" }} />
-              <div style={{ position:"absolute", left:0, right:0, top: lb2_c1, height:1, background:"rgba(255,255,255,0.1)", borderTop:"1px dashed rgba(255,255,255,0.12)" }} />
-            </div>
-
-            <div style={{ width:COL, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", alignSelf:"stretch" }}>
-              <div style={{ textAlign:"center", fontSize:9, color:C.dim, fontFamily:F.main, letterSpacing:1, textTransform:"uppercase", lineHeight:1.8 }}>
-                ↑ Winners advance<br/>to Grand Final
+              {roundLbl("Grand Final 🏆 · Aug 16", C.green)}
+              <div style={{ marginTop: gfMt }}>
+                {gf.map(m => <BracketCard key={m.id} {...cp(m)} />)}
               </div>
             </div>
           </div>
+
+          {/* 3rd place match */}
+          {third.length > 0 && (
+            <div style={{ display:"flex", marginTop:26 }}>
+              <div style={{ width:COL+GAP, flexShrink:0 }} />
+              <div style={{ width:COL, flexShrink:0 }}>
+                {roundLbl("3rd Place Match 🥉 · Aug 16", "#F5A623")}
+                {third.map(m => <BracketCard key={m.id} {...cp(m)} />)}
+              </div>
+              <div style={{ flex:1, display:"flex", alignItems:"center", paddingLeft:16 }}>
+                <div style={{ fontSize:9, color:C.dim, fontFamily:F.main, letterSpacing:1, textTransform:"uppercase", lineHeight:1.8 }}>
+                  Semi final losers<br/>play for bronze
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
       </div>
@@ -509,6 +619,7 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
   const pred   = predictions[playerId]?.[match.id];
   const result = results[match.id];
   const locked = isLocked(match, now);
+  const tbd    = hasTBD(match);
   const score  = (pred && result) ? calcScore(pred, result) : null;
   const t1 = teamStyle(match.team1), t2 = teamStyle(match.team2);
   const [s1,  setS1]  = useState(pred?.score1??"");
@@ -534,11 +645,11 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
     >
       {/* Score badge / countdown pill */}
       {score!==null&&<div style={{ position:"absolute",top:10,right:10,borderRadius:5,padding:"2px 9px",background:score===3?C.green:score===1?C.red:"rgba(100,100,150,0.4)",color:score===1?C.white:"#000",fontWeight:700,fontSize:11,fontFamily:F.main,letterSpacing:1 }}>+{score} PTS</div>}
-      {score===null&&!result&&!isAdmin&&!readOnly&&<div style={{ position:"absolute",top:10,right:10 }}><CountdownPill lockTime={getLockTime(match).toISOString()} now={now} /></div>}
+      {score===null&&!result&&!isAdmin&&!readOnly&&!tbd&&<div style={{ position:"absolute",top:10,right:10 }}><CountdownPill lockTime={getLockTime(match).toISOString()} now={now} startTime={match.startTime} /></div>}
 
       {/* Match info */}
       <div style={{ fontSize:10,color:C.muted,marginBottom:2,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase" }}>
-        Group {match.group} · Bo5 · Starts {fmtTime(match.startTime)} KSA · Locks {fmtTime(getLockTime(match).toISOString())} KSA
+        {match.group?`Group ${match.group} · `:""}{match.label?`${match.label} · `:""}Bo{match.bo||5} · Starts {fmtTime(match.startTime)} KSA · Locks {fmtTime(getLockTime(match).toISOString())} KSA
       </div>
       {isAdmin&&<div style={{ fontSize:9,color:"rgba(255,100,0,0.6)",fontFamily:"monospace",letterSpacing:0,marginBottom:8 }}>⚙ UTC: {match.startTime}</div>}
 
@@ -553,12 +664,12 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
           </div>
         ):(
           <div style={{ display:"flex",alignItems:"center",gap:4,flexShrink:0 }}>
-            {!locked&&playerId&&!readOnly?(
+            {!locked&&playerId&&!readOnly&&!tbd?(
               <>
-                <input type="number" min={0} max={3} value={s1} onChange={e=>setS1(e.target.value)} placeholder="–"
+                <input type="number" min={0} max={maxWins(match)} value={s1} onChange={e=>setS1(e.target.value)} placeholder="–"
                   style={{ ...inputStyle({ width:36, textAlign:"center", fontSize:16, fontWeight:700, padding:"4px 0" }) }} />
                 <span style={{ color:"rgba(255,255,255,0.08)" }}>:</span>
-                <input type="number" min={0} max={3} value={s2} onChange={e=>setS2(e.target.value)} placeholder="–"
+                <input type="number" min={0} max={maxWins(match)} value={s2} onChange={e=>setS2(e.target.value)} placeholder="–"
                   style={{ ...inputStyle({ width:36, textAlign:"center", fontSize:16, fontWeight:700, padding:"4px 0" }) }} />
               </>
             ):(
@@ -569,8 +680,15 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
         <div style={{ flex:1,display:"flex",justifyContent:"flex-end" }}><TeamBadge name={match.team2} /></div>
       </div>
 
+      {/* TBD note */}
+      {tbd&&!result&&(
+        <div style={{ marginTop:8,fontSize:10,color:C.dim,fontFamily:F.main,letterSpacing:1 }}>
+          TEAMS TBD — PREDICTIONS OPEN ONCE THE BRACKET FILLS IN
+        </div>
+      )}
+
       {/* Win buttons */}
-      {!locked&&!result&&playerId&&!readOnly&&(
+      {!locked&&!result&&playerId&&!readOnly&&!tbd&&(
         <div style={{ display:"flex",gap:6,marginTop:10 }}>
           {[{team:match.team1,t:t1},{team:match.team2,t:t2}].map(({team,t})=>(
             <button key={team} onClick={()=>submitPred(team)} style={{
@@ -602,13 +720,13 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
       )}
 
       {/* Admin result setter */}
-      {isAdmin&&(
+      {isAdmin&&!tbd&&(
         <div style={{ marginTop:10,paddingTop:10,borderTop:"1px solid rgba(255,255,255,0.06)",display:"flex",alignItems:"center",gap:6,flexWrap:"wrap" }}>
           <span style={{ fontSize:10,color:result?C.red:C.muted,fontFamily:F.main,letterSpacing:1 }}>{result?"✎ EDIT:":"SET:"}</span>
-          <input type="number" min={0} max={3} value={as1} onChange={e=>setAs1(e.target.value)} placeholder="T1"
+          <input type="number" min={0} max={maxWins(match)} value={as1} onChange={e=>setAs1(e.target.value)} placeholder="T1"
             style={{ ...inputStyle({ width:42, fontSize:13, padding:"4px 6px", border:`1px solid ${result?"rgba(232,0,29,0.4)":"rgba(255,255,255,0.1)"}` }) }} />
           <span style={{ color:"rgba(255,255,255,0.1)" }}>–</span>
-          <input type="number" min={0} max={3} value={as2} onChange={e=>setAs2(e.target.value)} placeholder="T2"
+          <input type="number" min={0} max={maxWins(match)} value={as2} onChange={e=>setAs2(e.target.value)} placeholder="T2"
             style={{ ...inputStyle({ width:42, fontSize:13, padding:"4px 6px", border:`1px solid ${result?"rgba(232,0,29,0.4)":"rgba(255,255,255,0.1)"}` }) }} />
           <button onClick={submitResult} style={{ padding:"5px 12px",borderRadius:5,border:"none",cursor:"pointer",background:C.red,color:C.white,fontFamily:F.main,fontWeight:700,fontSize:11,letterSpacing:1 }}>{result?"UPDATE ✓":"SET ✓"}</button>
           {result&&<button onClick={()=>onSetResult(match.id,null)} style={{ padding:"5px 10px",borderRadius:5,border:`1px solid rgba(232,0,29,0.3)`,cursor:"pointer",background:"rgba(232,0,29,0.1)",color:C.red,fontFamily:F.main,fontWeight:700,fontSize:11 }}>CLEAR ✕</button>}
@@ -683,21 +801,21 @@ function BonusPointsPanel({ players, bonusPoints, onAdd, onDelete }) {
   );
 }
 
-// ─── BRACKET TEAM EDITOR (Admin) ──────────────────────────────────────────────
-function BracketEditor({ playoffMatches, onUpdateTeams, onSaved }) {
+// ─── BRACKET TEAM EDITOR (Admin) — group-stage progression + playoffs ────────
+function BracketEditor({ matches, onUpdateTeams, onSaved }) {
   const [teams, setTeams] = useState(() => {
     const map = {};
-    playoffMatches.forEach(m => { map[m.id] = { team1: m.team1, team2: m.team2 }; });
+    matches.forEach(m => { map[m.id] = { team1: m.team1, team2: m.team2 }; });
     return map;
   });
   useEffect(() => {
     const map = {};
-    playoffMatches.forEach(m => { map[m.id] = { team1: m.team1, team2: m.team2 }; });
+    matches.forEach(m => { map[m.id] = { team1: m.team1, team2: m.team2 }; });
     setTeams(map);
-  }, [playoffMatches.map(m=>m.team1+m.team2).join()]);
+  }, [matches.map(m=>m.team1+m.team2).join()]);
 
   const save = async () => {
-    for (const m of playoffMatches) {
+    for (const m of matches) {
       const t = teams[m.id];
       if (t.team1 !== m.team1 || t.team2 !== m.team2) {
         await onUpdateTeams(m.id, t.team1||"TBD", t.team2||"TBD");
@@ -706,26 +824,43 @@ function BracketEditor({ playoffMatches, onUpdateTeams, onSaved }) {
     onSaved?.();
   };
 
+  const sectionOf = (m) => m.group ? `Group ${m.group}` : "Playoffs";
+  const rows = matches.map((m, i) => ({ m, header: i === 0 || sectionOf(m) !== sectionOf(matches[i-1]) ? sectionOf(m) : null }));
+
   return (
     <div>
-      <div style={{ fontSize:14,fontWeight:700,fontFamily:F.main,color:C.red,letterSpacing:2,marginBottom:6,textTransform:"uppercase" }}>🏆 Set Playoff Team Names</div>
+      <div style={{ fontSize:14,fontWeight:700,fontFamily:F.main,color:C.red,letterSpacing:2,marginBottom:6,textTransform:"uppercase" }}>🏆 Set Bracket Team Names</div>
       <div style={{ fontSize:11,color:C.muted,fontFamily:F.body,marginBottom:16 }}>
-        Fill in team names as they qualify. Leave as TBD if not yet decided. Hit SAVE ALL when done.
+        Fill in team names as the brackets progress (start typing for suggestions). Leave as TBD if not yet decided. Hit SAVE ALL when done.
       </div>
-      {playoffMatches.map(m=>(
-        <div key={m.id} style={{ background:"rgba(8,8,28,0.9)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,padding:"12px 16px",marginBottom:10 }}>
-          <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase",marginBottom:8 }}>{m.label}</div>
-          <div style={{ display:"flex",gap:8,alignItems:"center",flexWrap:"wrap" }}>
-            <input value={teams[m.id]?.team1||""} onChange={e=>setTeams(t=>({...t,[m.id]:{...t[m.id],team1:e.target.value}}))}
-              placeholder="Team 1 (or TBD)"
-              style={{ ...inputStyle({ flex:1, minWidth:140, padding:"8px 12px", fontSize:13 }) }} />
-            <span style={{ color:C.dim,fontFamily:F.main,fontWeight:700 }}>vs</span>
-            <input value={teams[m.id]?.team2||""} onChange={e=>setTeams(t=>({...t,[m.id]:{...t[m.id],team2:e.target.value}}))}
-              placeholder="Team 2 (or TBD)"
-              style={{ ...inputStyle({ flex:1, minWidth:140, padding:"8px 12px", fontSize:13 }) }} />
+      <datalist id="ewc-teams">
+        {Object.keys(TEAMS).map(t=><option key={t} value={t} />)}
+        <option value="TBD" />
+      </datalist>
+      {rows.map(({m, header})=>{
+        return (
+        <div key={m.id}>
+          {header&&(
+            <div style={{ display:"flex",alignItems:"center",gap:10,margin:"18px 0 10px" }}>
+              <span style={{ fontSize:11,fontWeight:700,color:C.blue,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase",flexShrink:0 }}>{header}</span>
+              <div style={{ height:1,flex:1,background:"rgba(0,102,255,0.2)" }} />
+            </div>
+          )}
+          <div style={{ background:"rgba(8,8,28,0.9)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,padding:"12px 16px",marginBottom:10 }}>
+            <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase",marginBottom:8 }}>{m.label} · {fmtTime(m.startTime)} KSA</div>
+            <div style={{ display:"flex",gap:8,alignItems:"center",flexWrap:"wrap" }}>
+              <input value={teams[m.id]?.team1||""} onChange={e=>setTeams(t=>({...t,[m.id]:{...t[m.id],team1:e.target.value}}))}
+                placeholder="Team 1 (or TBD)" list="ewc-teams"
+                style={{ ...inputStyle({ flex:1, minWidth:140, padding:"8px 12px", fontSize:13 }) }} />
+              <span style={{ color:C.dim,fontFamily:F.main,fontWeight:700 }}>vs</span>
+              <input value={teams[m.id]?.team2||""} onChange={e=>setTeams(t=>({...t,[m.id]:{...t[m.id],team2:e.target.value}}))}
+                placeholder="Team 2 (or TBD)" list="ewc-teams"
+                style={{ ...inputStyle({ flex:1, minWidth:140, padding:"8px 12px", fontSize:13 }) }} />
+            </div>
           </div>
         </div>
-      ))}
+        );
+      })}
       <button onClick={save} style={{ width:"100%",padding:12,background:C.red,border:"none",borderRadius:10,cursor:"pointer",color:C.white,fontFamily:F.main,fontWeight:700,fontSize:14,marginTop:8,letterSpacing:2,textTransform:"uppercase" }}>
         Save All Team Names ✓
       </button>
@@ -927,16 +1062,16 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
   return (
     <div style={{ minHeight:"100vh", background:`linear-gradient(135deg, rgba(232,0,29,0.06) 0%, transparent 40%), linear-gradient(225deg, rgba(0,102,255,0.08) 0%, transparent 40%), linear-gradient(180deg, ${C.navy} 0%, #0a0820 100%)`, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:20, position:"relative" }}>
       <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
-      <style>{`::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:${C.navy}}::-webkit-scrollbar-thumb{background:${C.red};border-radius:3px}`}</style>
+      <style>{`::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:${C.navy}}::-webkit-scrollbar-thumb{background:${C.red};border-radius:3px}@keyframes livePulse{0%,100%{opacity:1}50%{opacity:0.45}}`}</style>
       {/* Streaks */}
       <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"15%",left:"-10%",width:600,height:3,background:"linear-gradient(90deg,transparent,rgba(232,0,29,0.6),transparent)",transform:"rotate(-35deg)",filter:"blur(8px)" }} />
       <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"10%",right:"-5%",width:500,height:2,background:"linear-gradient(90deg,transparent,rgba(0,102,255,0.8),transparent)",transform:"rotate(35deg)",filter:"blur(6px)" }} />
       <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"55%",left:"5%",width:400,height:2,background:"linear-gradient(90deg,transparent,rgba(107,53,255,0.6),transparent)",transform:"rotate(-20deg)",filter:"blur(6px)" }} />
 
       <div style={{ position:"relative",zIndex:1,textAlign:"center",marginBottom:32 }}>
-        <div style={{ fontSize:36,fontWeight:700,fontFamily:F.main,background:`linear-gradient(90deg, ${C.white}, ${C.red})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:4,textTransform:"uppercase" }}>RLCS 2026</div>
-        <div style={{ fontSize:16,fontWeight:700,fontFamily:F.main,color:"rgba(255,255,255,0.4)",letterSpacing:4,marginTop:4,textTransform:"uppercase" }}>Paris Major Predictor</div>
-        <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:3,marginTop:8,textTransform:"uppercase" }}>May 20–24 · Paris La Défense Arena · $354,000</div>
+        <div style={{ fontSize:36,fontWeight:700,fontFamily:F.main,background:`linear-gradient(90deg, ${C.white}, ${C.red})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:4,textTransform:"uppercase" }}>EWC 2026</div>
+        <div style={{ fontSize:16,fontWeight:700,fontFamily:F.main,color:"rgba(255,255,255,0.4)",letterSpacing:4,marginTop:4,textTransform:"uppercase" }}>Rocket League Predictor</div>
+        <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:3,marginTop:8,textTransform:"uppercase" }}>Aug 12–16 · Riyadh · $1,000,000 · 16 Teams</div>
       </div>
 
       <div style={{ position:"relative",zIndex:1,background:"rgba(8,8,28,0.95)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:16,padding:32,width:"100%",maxWidth:400,boxShadow:"0 0 60px rgba(0,0,0,0.5)" }}>
@@ -1095,7 +1230,7 @@ function LoadingScreen() {
   return (
     <div style={{ minHeight:"100vh", background:`linear-gradient(180deg, ${C.navy} 0%, #0a0820 100%)`, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:20 }}>
       <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap" rel="stylesheet" />
-      <div style={{ fontSize:22,fontWeight:700,fontFamily:F.main,background:`linear-gradient(90deg, ${C.white}, ${C.red})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:4,textTransform:"uppercase" }}>RLCS 2026 · Paris Major</div>
+      <div style={{ fontSize:22,fontWeight:700,fontFamily:F.main,background:`linear-gradient(90deg, ${C.white}, ${C.red})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:4,textTransform:"uppercase" }}>EWC 2026 · Rocket League</div>
       <div style={{ width:36,height:36,border:`3px solid rgba(255,255,255,0.08)`,borderTop:`3px solid ${C.red}`,borderRadius:"50%",animation:"spin 0.8s linear infinite" }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <div style={{ color:C.muted,fontSize:11,fontFamily:F.main,letterSpacing:3,textTransform:"uppercase" }}>Loading…</div>
@@ -1110,6 +1245,7 @@ export default function App() {
   const [predictions,    setPredictions]    = useState({});
   const [results,        setResults]        = useState({});
   const [bonusPoints,    setBonusPoints]    = useState([]);
+  const [groupMatches,   setGroupMatches]   = useState(DEFAULT_GROUP_MATCHES);
   const [playoffMatches, setPlayoffMatches] = useState(DEFAULT_PLAYOFF);
   const [adminHash,      setAdminHash]      = useState(ADMIN_PASSWORD_HASH);
   const [authId,         setAuthId]         = useState(()=>localStorage.getItem("rlcs_auth")||null);
@@ -1256,6 +1392,7 @@ export default function App() {
       const overrides = {};
       data.forEach(row => { overrides[row.match_id] = { team1: row.team1, team2: row.team2 }; });
       setPlayoffMatches(prev => prev.map(m => overrides[m.id] ? { ...m, ...overrides[m.id] } : m));
+      setGroupMatches(prev => prev.map(m => overrides[m.id] ? { ...m, ...overrides[m.id] } : m));
     }
   };
 
@@ -1281,6 +1418,7 @@ export default function App() {
       .on("postgres_changes",{event:"*",schema:"public",table:"bracket_teams"},({eventType:et,new:r})=>{
         if(et==="INSERT"||et==="UPDATE"){
           setPlayoffMatches(prev=>prev.map(m=>m.id===r.match_id?{...m,team1:r.team1,team2:r.team2}:m));
+          setGroupMatches(prev=>prev.map(m=>m.id===r.match_id?{...m,team1:r.team1,team2:r.team2}:m));
         }
       })
       .on("postgres_changes",{event:"*",schema:"public",table:"groups"},({eventType:et,new:g,old:o})=>{
@@ -1323,6 +1461,7 @@ export default function App() {
 
   const handleUpdateBracketTeams=async(matchId,team1,team2)=>{
     setPlayoffMatches(prev=>prev.map(m=>m.id===matchId?{...m,team1,team2}:m));
+    setGroupMatches(prev=>prev.map(m=>m.id===matchId?{...m,team1,team2}:m));
     await supabase.from("bracket_teams").upsert({match_id:matchId,team1,team2},{onConflict:"match_id"});
   };
 
@@ -1408,7 +1547,6 @@ export default function App() {
   const leaderboard=[...players].map(p=>({...p,score:getTotalScore(p.id),predScore:getPredScore(p.id),bonus:getBonusTotal(p.id)})).sort((a,b)=>b.score-a.score);
   const myPlayer=players.find(p=>p.id===authId);
   const myGroup=myPlayer?.group_id&&myPlayer.group_id!=="public"?groups.find(g=>g.id===myPlayer.group_id)||null:null;
-  const filteredGroupMatches=GROUP_MATCHES.filter(m=>filterGroup==="all"||m.group===filterGroup);
 
   if(loading)return <LoadingScreen />;
   if(!authId&&!isAdmin)return <LoginScreen players={players} onLogin={id=>{setAuthId(id);setIsAdmin(false);}} onAdminLogin={()=>{setIsAdmin(true);setAuthId(null);}} adminHash={adminHash} />;
@@ -1425,7 +1563,7 @@ export default function App() {
   return (
     <div style={{ minHeight:"100vh", background:`linear-gradient(135deg, rgba(232,0,29,0.06) 0%, transparent 40%), linear-gradient(225deg, rgba(0,102,255,0.08) 0%, transparent 40%), linear-gradient(180deg, ${C.navy} 0%, #0a0820 100%)`, color:C.white, fontFamily:F.body, position:"relative" }}>
       <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
-      <style>{`::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:${C.navy}}::-webkit-scrollbar-thumb{background:${C.red};border-radius:3px}`}</style>
+      <style>{`::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:${C.navy}}::-webkit-scrollbar-thumb{background:${C.red};border-radius:3px}@keyframes livePulse{0%,100%{opacity:1}50%{opacity:0.45}}`}</style>
 
       {/* Background streaks */}
       <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"15%",left:"-10%",width:600,height:3,background:"linear-gradient(90deg,transparent,rgba(232,0,29,0.6),transparent)",transform:"rotate(-35deg)",filter:"blur(8px)" }} />
@@ -1437,8 +1575,8 @@ export default function App() {
         <div style={{ maxWidth:900,margin:"0 auto" }}>
           <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexWrap:"wrap",gap:10 }}>
             <div>
-              <div style={{ fontSize:20,fontWeight:700,fontFamily:F.main,background:`linear-gradient(90deg, ${C.white}, ${C.red})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:3,textTransform:"uppercase" }}>RLCS 2026 · Paris Major</div>
-              <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:3,textTransform:"uppercase",marginTop:2 }}>May 20–24 · Paris La Défense Arena · $354,000</div>
+              <div style={{ fontSize:20,fontWeight:700,fontFamily:F.main,background:`linear-gradient(90deg, ${C.white}, ${C.red})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:3,textTransform:"uppercase" }}>EWC 2026 · Rocket League</div>
+              <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:3,textTransform:"uppercase",marginTop:2 }}>Aug 12–16 · Riyadh · $1,000,000 · 16 Teams</div>
             </div>
             {/* Profile Pill Dropdown */}
             <div ref={pillRef} style={{ position:"relative" }}>
@@ -1493,24 +1631,8 @@ export default function App() {
 
         {/* GROUP STAGE */}
         {page==="predict"&&(
-          <div>
-            <div style={{ display:"flex",gap:6,marginBottom:14,flexWrap:"wrap" }}>
-              {["all","A","B","C","D"].map(g=>(
-                <button key={g} onClick={()=>setFilterGroup(g)} style={{
-                  padding:"6px 14px",borderRadius:6,border:`1px solid ${filterGroup===g?"transparent":"rgba(255,255,255,0.1)"}`,cursor:"pointer",fontFamily:F.main,fontWeight:700,fontSize:12,letterSpacing:1,textTransform:"uppercase",transition:"all 0.15s",
-                  background:filterGroup===g?(g==="all"?C.blue:C.red):"rgba(255,255,255,0.04)",
-                  color:filterGroup===g?C.white:"#667799",
-                  boxShadow:filterGroup===g?(g==="all"?"0 0 15px rgba(0,102,255,0.5)":"0 0 15px rgba(232,0,29,0.5)"):"none",
-                }}>{g==="all"?"All Groups":`Group ${g}`}</button>
-              ))}
-            </div>
-            <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
-              {filteredGroupMatches.map(m=>(
-                <MatchCard key={m.id} match={m} playerId={isAdmin?null:authId} predictions={predictions}
-                  results={results} onPredict={handlePredict} onSetResult={handleSetResult} isAdmin={false} readOnly={isAdmin} now={now} />
-              ))}
-            </div>
-          </div>
+          <GroupStagePage groupMatches={groupMatches} predictions={predictions} results={results}
+            playerId={isAdmin?null:authId} onPredict={handlePredict} now={now} isAdmin={isAdmin} />
         )}
 
         {/* PLAYOFFS */}
@@ -1627,7 +1749,7 @@ export default function App() {
               </div>
               {grpViewingPlayer&&(()=>{
                 const vp=players.find(p=>p.id===grpViewingPlayer);
-                const lockedMatches=[...GROUP_MATCHES,...playoffMatches].filter(m=>isLocked(m)&&!isTBDTeam(m.team1));
+                const lockedMatches=[...groupMatches,...playoffMatches].filter(m=>isLocked(m)&&!hasTBD(m));
                 return (
                   <div>
                     <div style={{ fontSize:14,fontWeight:700,fontFamily:F.main,color:C.white,marginBottom:4,letterSpacing:1,textTransform:"uppercase" }}>{vp?.nickname}'s predictions</div>
@@ -1738,7 +1860,7 @@ export default function App() {
             </div>
             {viewingPlayer&&(()=>{
               const vp=players.find(p=>p.id===viewingPlayer);
-              const lockedMatches=[...GROUP_MATCHES,...playoffMatches].filter(m=>isLocked(m)&&!isTBDTeam(m.team1));
+              const lockedMatches=[...groupMatches,...playoffMatches].filter(m=>isLocked(m)&&!hasTBD(m));
               return (
                 <div>
                   <div style={{ fontSize:14,fontWeight:700,fontFamily:F.main,color:C.white,marginBottom:4,letterSpacing:1,textTransform:"uppercase" }}>{vp?.nickname}'s predictions</div>
@@ -1968,7 +2090,7 @@ export default function App() {
 
             {/* Bracket Teams */}
             {adminTab==="bracket"&&(
-              <BracketEditor playoffMatches={playoffMatches} onUpdateTeams={handleUpdateBracketTeams} onSaved={()=>toast("Bracket teams saved","success")} />
+              <BracketEditor matches={[...groupMatches,...playoffMatches]} onUpdateTeams={handleUpdateBracketTeams} onSaved={()=>toast("Bracket teams saved","success")} />
             )}
 
             {/* Results */}
@@ -1976,7 +2098,7 @@ export default function App() {
               <div>
                 <div style={{ fontSize:11,color:C.muted,fontFamily:F.body,marginBottom:14 }}>Update any result even after it's set.</div>
                 <div style={{ display:"flex",gap:6,marginBottom:14,flexWrap:"wrap" }}>
-                  {["all","A","B","C","D","Playoffs"].map(g=>(
+                  {["all","A","B","Playoffs"].map(g=>(
                     <button key={g} onClick={()=>setFilterGroup(g)} style={{
                       padding:"6px 14px",borderRadius:6,border:`1px solid ${filterGroup===g?"transparent":"rgba(255,255,255,0.1)"}`,cursor:"pointer",fontFamily:F.main,fontWeight:700,fontSize:12,letterSpacing:1,textTransform:"uppercase",transition:"all 0.15s",
                       background:filterGroup===g?C.red:"rgba(255,255,255,0.04)",
@@ -1988,7 +2110,7 @@ export default function App() {
                   ))}
                 </div>
                 <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
-                  {(filterGroup==="Playoffs"?playoffMatches.filter(m=>!isTBDTeam(m.team1)):GROUP_MATCHES.filter(m=>filterGroup==="all"||m.group===filterGroup)).map(m=>(
+                  {(filterGroup==="Playoffs"?playoffMatches:groupMatches.filter(m=>filterGroup==="all"||m.group===filterGroup)).map(m=>(
                     <MatchCard key={m.id} match={m} playerId={null} predictions={predictions}
                       results={results} onPredict={()=>{}} onSetResult={handleSetResult} isAdmin={true} readOnly={false} />
                   ))}
@@ -2164,7 +2286,7 @@ export default function App() {
 
       {/* FOOTER */}
       <div style={{ position:"relative",zIndex:1,borderTop:`1px solid rgba(232,0,29,0.15)`,padding:16,textAlign:"center",fontSize:10,color:"rgba(255,255,255,0.15)",fontFamily:F.main,letterSpacing:2,textTransform:"uppercase" }}>
-        RLCS 2026 Paris Major Predictor · Live Sync by Supabase
+        EWC 2026 Rocket League Predictor · Live Sync by Supabase
       </div>
     </div>
   );
