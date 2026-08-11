@@ -279,7 +279,7 @@ function TeamBadge({ name, size="sm" }) {
         width: sz,
         height: sz,
         borderRadius: 7,
-        background: isTBD ? "#2C2C31" : (["TSM", "R8 Esports", "Shopify Rebellion", "Vitality"].includes(name) ? "#FFFFFF" : t.bg),
+        background: isTBD ? C.surfaceHi : (["TSM", "R8 Esports", "Shopify Rebellion", "Vitality"].includes(name) ? "#FFFFFF" : t.bg),
         border: `2px solid ${isTBD ? "#3d3d3d" : t.color}`,
         display: "flex",
         alignItems: "center",
@@ -1028,7 +1028,7 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
     <div
       onMouseEnter={()=>setHovered(true)}
       onMouseLeave={()=>setHovered(false)}
-      style={{ background:"linear-gradient(135deg, #232327, #232327)", border:`1px solid ${borderColor}`, borderRadius:8, padding:"14px 16px", position:"relative", transition:"all 0.2s", boxShadow:glowShadow }}
+      style={{ background:C.surface, border:`1px solid ${borderColor}`, borderRadius:8, padding:"14px 16px", position:"relative", transition:"all 0.2s", boxShadow:glowShadow }}
     >
       {/* Score badge / countdown pill */}
       {score!==null&&<div style={{ position:"absolute",top:10,right:10,borderRadius:5,padding:"2px 9px",background:score===3?C.green:score===1?C.red:"rgba(140,140,140,0.4)",color:score===1?C.white:"#000",fontWeight:700,fontSize:11,fontFamily:F.main,letterSpacing:1 }}>+{score} PTS</div>}
@@ -1116,7 +1116,7 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
           <span style={{ color:"rgba(255,255,255,0.1)" }}>–</span>
           <input type="number" min={0} max={cap} value={as2} onChange={e=>onAdminScore(2, e.target.value)} placeholder="T2"
             style={{ ...inputStyle({ width:42, fontSize:13, padding:"4px 6px", border:`1px solid ${result?"rgba(190,158,89,0.4)":"rgba(255,255,255,0.1)"}` }) }} />
-          <button onClick={submitResult} style={{ padding:"5px 12px",borderRadius:5,border:"none",cursor:"pointer",background:GOLD_GRAD,color:"#232327",fontFamily:F.main,fontWeight:700,fontSize:11,letterSpacing:1 }}>{result?"UPDATE ✓":"SET ✓"}</button>
+          <button onClick={submitResult} style={{ padding:"5px 12px",borderRadius:5,border:"none",cursor:"pointer",background:GOLD_GRAD,color:"#151515",fontFamily:F.main,fontWeight:700,fontSize:11,letterSpacing:1 }}>{result?"UPDATE ✓":"SET ✓"}</button>
           {result&&<button onClick={()=>onSetResult(match.id,null)} style={{ padding:"5px 10px",borderRadius:5,border:`1px solid rgba(244,15,48,0.35)`,cursor:"pointer",background:"rgba(244,15,48,0.1)",color:C.red,fontFamily:F.main,fontWeight:700,fontSize:11 }}>CLEAR ✕</button>}
         </div>
       )}
@@ -1161,7 +1161,7 @@ function BonusPointsPanel({ players, bonusPoints, onAdd, onDelete }) {
             <input value={reason} onChange={e=>setReason(e.target.value)} placeholder="e.g. Tiebreaker bonus" onKeyDown={e=>e.key==="Enter"&&handleAdd()}
               style={{ ...inputStyle({ width:"100%", padding:"9px 10px", fontSize:13, boxSizing:"border-box" }) }} />
           </div>
-          <button onClick={handleAdd} style={{ padding:"9px 18px",background:GOLD_GRAD,border:"none",borderRadius:7,cursor:"pointer",color:"#232327",fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:1 }}>ADD ✓</button>
+          <button onClick={handleAdd} style={{ padding:"9px 18px",background:GOLD_GRAD,border:"none",borderRadius:7,cursor:"pointer",color:"#151515",fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:1 }}>ADD ✓</button>
         </div>
         {error&&<div style={{ color:C.red,fontSize:11,fontFamily:F.main,marginTop:8,letterSpacing:1 }}>⚠ {error}</div>}
       </div>
@@ -1249,7 +1249,7 @@ function BracketEditor({ matches, onUpdateTeams, onSaved }) {
         </div>
         );
       })}
-      <button onClick={save} style={{ width:"100%",padding:12,background:GOLD_GRAD,border:"none",borderRadius:10,cursor:"pointer",color:"#232327",fontFamily:F.main,fontWeight:700,fontSize:14,marginTop:8,letterSpacing:2,textTransform:"uppercase" }}>
+      <button onClick={save} style={{ width:"100%",padding:12,background:GOLD_GRAD,border:"none",borderRadius:10,cursor:"pointer",color:"#151515",fontFamily:F.main,fontWeight:700,fontSize:14,marginTop:8,letterSpacing:2,textTransform:"uppercase" }}>
         Save All Team Names ✓
       </button>
     </div>
@@ -1555,7 +1555,7 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
             {regMsg&&<div style={{ fontSize:12,fontFamily:F.main,letterSpacing:0.5,color:regMsg.ok?C.green:C.red }}>{regMsg.ok?"✓":"⚠"} {regMsg.text}</div>}
 
             <button onClick={handleRegister} disabled={regLoading||rlCountdown>0}
-              style={{ padding:"13px 0",background:(regLoading||rlCountdown>0)?"rgba(190,158,89,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#232327",fontWeight:700,fontFamily:F.main,fontSize:14,cursor:(regLoading||rlCountdown>0)?"default":"pointer",letterSpacing:2,textTransform:"uppercase",marginTop:2 }}>
+              style={{ padding:"13px 0",background:(regLoading||rlCountdown>0)?"rgba(190,158,89,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#151515",fontWeight:700,fontFamily:F.main,fontSize:14,cursor:(regLoading||rlCountdown>0)?"default":"pointer",letterSpacing:2,textTransform:"uppercase",marginTop:2 }}>
               {regLoading?"Creating account…":rlCountdown>0?`Wait ${Math.ceil(rlCountdown/60)}m ${rlCountdown%60}s`:"Create Account →"}
             </button>
           </div>
@@ -1584,7 +1584,7 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
             {loginErr&&<div style={{ color:C.red,fontSize:12,fontFamily:F.main,letterSpacing:0.5 }}>⚠ {loginErr}</div>}
 
             <button onClick={handleLogin} disabled={loginLoading}
-              style={{ padding:"13px 0",background:loginLoading?"rgba(190,158,89,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#232327",fontWeight:700,fontFamily:F.main,fontSize:14,cursor:loginLoading?"default":"pointer",letterSpacing:2,textTransform:"uppercase" }}>
+              style={{ padding:"13px 0",background:loginLoading?"rgba(190,158,89,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#151515",fontWeight:700,fontFamily:F.main,fontSize:14,cursor:loginLoading?"default":"pointer",letterSpacing:2,textTransform:"uppercase" }}>
               {loginLoading?"Logging in…":"Let's Predict →"}
             </button>
           </div>
@@ -1604,7 +1604,7 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
             </div>
             {adminErr&&<div style={{ color:C.red,fontSize:12,fontFamily:F.main,letterSpacing:0.5 }}>⚠ {adminErr}</div>}
             <button onClick={handleAdminLogin}
-              style={{ padding:"13px 0",background:GOLD_GRAD,border:"none",borderRadius:8,color:"#232327",fontWeight:700,fontFamily:F.main,fontSize:14,cursor:"pointer",letterSpacing:2,textTransform:"uppercase" }}>
+              style={{ padding:"13px 0",background:GOLD_GRAD,border:"none",borderRadius:8,color:"#151515",fontWeight:700,fontFamily:F.main,fontSize:14,cursor:"pointer",letterSpacing:2,textTransform:"uppercase" }}>
               Login as Admin →
             </button>
           </div>
@@ -1616,7 +1616,7 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
 
 function LoadingScreen() {
   return (
-    <div style={{ minHeight:"100vh", background:`linear-gradient(180deg, #1A1A1D 0%, #141417 100%)`, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:20 }}>
+    <div style={{ minHeight:"100vh", background:PAGE_BG, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:20 }}>
       <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap" rel="stylesheet" />
       <div style={{ fontSize:22,fontWeight:700,fontFamily:F.main,background:`linear-gradient(90deg, ${C.white} 0%, ${C.goldLight} 55%, ${C.gold} 100%)`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:4,textTransform:"uppercase" }}>EWC 2026 · Rocket League</div>
       <div style={{ width:36,height:36,border:`3px solid rgba(255,255,255,0.08)`,borderTop:`3px solid ${C.red}`,borderRadius:"50%",animation:"spin 0.8s linear infinite" }} />
@@ -2586,7 +2586,7 @@ export default function App() {
                   <div style={{ display:"flex",gap:8,marginTop:10 }}>
                     <input value={newNick} onChange={e=>setNewNick(e.target.value)} placeholder="New player nickname…" onKeyDown={e=>{if(e.key==="Enter")handleAddPlayer();}}
                       style={{ ...inputStyle({ flex:1, border:"1px dashed rgba(255,255,255,0.15)", padding:"10px 14px", fontSize:13 }) }} />
-                    <button onClick={handleAddPlayer} style={{ padding:"10px 20px",background:GOLD_GRAD,border:"none",borderRadius:10,cursor:"pointer",color:"#232327",fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:1 }}>+ ADD</button>
+                    <button onClick={handleAddPlayer} style={{ padding:"10px 20px",background:GOLD_GRAD,border:"none",borderRadius:10,cursor:"pointer",color:"#151515",fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:1 }}>+ ADD</button>
                   </div>
                 </div>
               );
@@ -2688,7 +2688,7 @@ export default function App() {
                         style={{ ...inputStyle({ width:"100%", padding:"9px 12px", fontSize:13, boxSizing:"border-box" }) }} />
                     </div>
                     {newGrpMsg&&<div style={{ fontSize:12,fontFamily:F.main,letterSpacing:0.5,color:newGrpMsg.ok?C.green:C.red }}>{newGrpMsg.ok?"✓":"⚠"} {newGrpMsg.text}</div>}
-                    <button onClick={handleCreateGroup} style={{ padding:"10px 0",background:GOLD_GRAD,border:"none",borderRadius:8,cursor:"pointer",color:"#232327",fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:1,textTransform:"uppercase" }}>
+                    <button onClick={handleCreateGroup} style={{ padding:"10px 0",background:GOLD_GRAD,border:"none",borderRadius:8,cursor:"pointer",color:"#151515",fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:1,textTransform:"uppercase" }}>
                       Create Group ✓
                     </button>
                   </div>
@@ -2800,7 +2800,7 @@ export default function App() {
                   </div>
                 ))}
                 {pwMsg&&<div style={{ fontSize:12,fontFamily:F.main,letterSpacing:0.5,color:pwMsg.ok?C.green:C.red }}>{pwMsg.ok?"✓":"⚠"} {pwMsg.text}</div>}
-                <button onClick={handleChangeAdminPassword} style={{ padding:"10px 0",background:GOLD_GRAD,border:"none",borderRadius:8,cursor:"pointer",color:"#232327",fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:1,textTransform:"uppercase",marginTop:4 }}>
+                <button onClick={handleChangeAdminPassword} style={{ padding:"10px 0",background:GOLD_GRAD,border:"none",borderRadius:8,cursor:"pointer",color:"#151515",fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:1,textTransform:"uppercase",marginTop:4 }}>
                   Update Password ✓
                 </button>
               </div>
@@ -2834,7 +2834,7 @@ export default function App() {
               </button>
               {(!myGroup||myGroup.id!==joinGroup.id)&&(
                 <button onClick={handleJoinByToken} disabled={joinLoading}
-                  style={{ flex:2,padding:"11px 0",background:joinLoading?"rgba(190,158,89,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#232327",fontFamily:F.main,fontWeight:700,fontSize:13,cursor:joinLoading?"default":"pointer",letterSpacing:1,textTransform:"uppercase" }}>
+                  style={{ flex:2,padding:"11px 0",background:joinLoading?"rgba(190,158,89,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#151515",fontFamily:F.main,fontWeight:700,fontSize:13,cursor:joinLoading?"default":"pointer",letterSpacing:1,textTransform:"uppercase" }}>
                   {joinLoading?"Joining…":"Join Group →"}
                 </button>
               )}
@@ -2873,7 +2873,7 @@ export default function App() {
                 <button onClick={()=>setChangeGroupModal(false)} style={{ flex:1,padding:"10px 0",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,color:C.muted,fontFamily:F.main,fontWeight:700,fontSize:13,cursor:"pointer",letterSpacing:1 }}>
                   Cancel
                 </button>
-                <button onClick={handleChangeGroup} disabled={cgLoading} style={{ flex:2,padding:"10px 0",background:cgLoading?"rgba(190,158,89,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#232327",fontFamily:F.main,fontWeight:700,fontSize:13,cursor:cgLoading?"default":"pointer",letterSpacing:1,textTransform:"uppercase" }}>
+                <button onClick={handleChangeGroup} disabled={cgLoading} style={{ flex:2,padding:"10px 0",background:cgLoading?"rgba(190,158,89,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#151515",fontFamily:F.main,fontWeight:700,fontSize:13,cursor:cgLoading?"default":"pointer",letterSpacing:1,textTransform:"uppercase" }}>
                   {cgLoading?"Joining…":"Join Group →"}
                 </button>
               </div>
