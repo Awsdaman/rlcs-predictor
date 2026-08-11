@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Fragment } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL      || "YOUR_SUPABASE_URL";
@@ -154,6 +154,8 @@ const teamStyle = (n)   => TEAMS[n] || { abbr:(n||"?").slice(0,3).toUpperCase(),
 const isTBDTeam = (n)   => !n || n === "TBD";
 const maxWins   = (m)   => ((m.bo || 5) === 7 ? 4 : 3);   // Bo5 → first to 3, Bo7 → first to 4
 const hasTBD    = (m)   => isTBDTeam(m.team1) || isTBDTeam(m.team2);
+// Predictable = still open: teams known, not locked, no result yet.
+const isPredictable = (m, res, now) => !hasTBD(m) && !res && !isLocked(m, now);
 const F = { main:"'Rajdhani', sans-serif", body:"'Inter', sans-serif" };
 
 // ─── SCORELINE RULES ─────────────────────────────────────────────────────────
@@ -303,7 +305,7 @@ function TeamBadge({ name, size="sm" }) {
 // ─── BRACKET MATCH CARD ───────────────────────────────────────────────────────
 // A real component so the logo's error state is a legal hook rather than a
 // useState called inside a render callback.
-function BracketTeamRow({ name, score, isWinner, isPick, hasResult, tbdCard, last, chip = 24, nameSize = 14 }) {
+function BracketTeamRow({ name, score, isWinner, isPick, hasResult, tbdCard, last, chip = 24, nameSize = 14, pickLabel = "Your pick" }) {
   const [imgErr, setImgErr] = useState(false);
   const tbd = isTBDTeam(name);
   const t = teamStyle(name);
@@ -335,7 +337,7 @@ function BracketTeamRow({ name, score, isWinner, isPick, hasResult, tbdCard, las
       <div style={{ display:"flex", alignItems:"center", gap:9, flexShrink:0 }}>
         {!hasResult && isPick && (
           <span style={{ fontSize:9, fontWeight:700, fontFamily:F.main, letterSpacing:1, color:C.gold,
-                         border:"1px solid rgba(200,168,106,0.45)", borderRadius:3, padding:"3px 7px" }}>YOUR PICK</span>
+                         border:"1px solid rgba(200,168,106,0.45)", borderRadius:3, padding:"3px 7px", textTransform:"uppercase" }}>{pickLabel}</span>
         )}
         {hasResult && (
           <span style={{ ...NUM, fontSize:22, fontWeight:700, fontFamily:F.main, lineHeight:1,
@@ -352,7 +354,11 @@ function BracketCard({ match, result, pred, onClick, isSelected, now, isAdmin })
   const score = pred && res ? calcScore(pred, res) : null;
   const [hover, setHover] = useState(false);
   const tbd = hasTBD(match);
-  const live = !res && !tbd && isLocked(match, now) && now >= new Date(match.startTime).getTime();
+  const locked = isLocked(match, now);
+  const live = !res && !tbd && locked && now >= new Date(match.startTime).getTime();
+  // Only a card you can still predict on reacts to the cursor.
+  const predictable = !tbd && !res && !locked;
+  const hovering = hover && predictable;
 
   // Weight maps to stakes: a dead TBD slot sinks, a decided card carries its
   // outcome hue, a live one lifts. Depth is value + one hairline, never glow.
@@ -362,17 +368,19 @@ function BracketCard({ match, result, pred, onClick, isSelected, now, isAdmin })
     : score===3  ? "1px solid rgba(62,207,142,0.4)"
     : score===1  ? "1px solid rgba(200,168,106,0.4)"
     : live       ? "1px solid rgba(255,90,31,0.4)"
-    : hover      ? `1px solid ${C.lineStrong}`
+    : hovering   ? `1px solid ${C.lineStrong}`
     :              `1px solid ${C.line}`;
-  const fill = tbd ? C.bgDeep : (isSelected || live || hover) ? C.surfaceHi : C.surface;
+  const fill = tbd ? C.bgDeep : (isSelected || live || hovering) ? C.surfaceHi : C.surface;
 
   return (
     <div onClick={onClick} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)} style={{
       background: fill,
       border,
-      borderRadius:5, overflow:"hidden", width:"100%", cursor: tbd ? "default" : "pointer",
-      transition:"background-color 0.12s, border-color 0.12s",
-      boxShadow: tbd ? "none" : isSelected ? "0 5px 16px rgba(0,0,0,0.4)" : "0 1px 2px rgba(0,0,0,0.3)",
+      borderRadius:5, overflow:"hidden", width:"100%", cursor: predictable ? "pointer" : "default",
+      transition:"background-color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease",
+      boxShadow: tbd ? "none"
+        : isSelected ? (hover ? "0 7px 22px rgba(0,0,0,0.5)" : "0 5px 16px rgba(0,0,0,0.4)")
+        : "0 1px 2px rgba(0,0,0,0.3)",
     }}>
       <div style={{ padding:"6px 12px", background: tbd ? "transparent" : "rgba(0,0,0,0.22)",
                     borderBottom:`1px ${tbd ? "dashed" : "solid"} ${C.lineSoft}`,
@@ -668,7 +676,7 @@ function GroupStagePage({ groupMatches, predictions, results, playerId, onPredic
 
   const cp = (m) => ({
     match: m, result: results[m.id], pred: predictions[playerId]?.[m.id],
-    onClick: () => { if (!hasTBD(m)) setSelected(selected === m.id ? null : m.id); },
+    onClick: () => { if (isPredictable(m, results[m.id], now)) setSelected(selected === m.id ? null : m.id); },
     isSelected: selected === m.id, now, isAdmin,
   });
 
@@ -826,7 +834,6 @@ function ScheduleView({ matches, results, now, selected, onSelect }) {
             const msLeft = getLockTime(m).getTime() - now;
             const urgent = !locked && msLeft < 3600000;
             const isSel  = selected === m.id;
-            const tbd    = hasTBD(m);
 
             const statusWord  = res ? "Final" : live ? "Live" : locked ? "Locked" : urgent ? "Locking" : "Upcoming";
             const statusColor = res ? C.green : live ? C.orange : urgent ? C.red : C.muted;
@@ -834,8 +841,8 @@ function ScheduleView({ matches, results, now, selected, onSelect }) {
 
             return (
               <div key={m.id}
-                onClick={()=>{ if(!tbd) onSelect(isSel ? null : m.id); }}
-                style={{ display:"flex", gap:12, padding:"12px 0", cursor: tbd ? "default" : "pointer",
+                onClick={()=>{ if(isPredictable(m, res, now)) onSelect(isSel ? null : m.id); }}
+                style={{ display:"flex", gap:12, padding:"12px 0", cursor: isPredictable(m, res, now) ? "pointer" : "default",
                          borderBottom: i === d.matches.length-1 ? "none" : `1px solid ${C.lineSoft}` }}>
                 <div style={{ width:64, flexShrink:0, textAlign:"right" }}>
                   <div style={{ ...NUM, fontSize:16, fontWeight:700, fontFamily:F.main, color:timeColor, lineHeight:1.2 }}>
@@ -922,7 +929,7 @@ function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredic
 
   const cp = (m) => ({
     match: m, result: results[m.id], pred: predictions[playerId]?.[m.id],
-    onClick: () => { if (!hasTBD(m)) setSelected(selected === m.id ? null : m.id); },
+    onClick: () => { if (isPredictable(m, results[m.id], now)) setSelected(selected === m.id ? null : m.id); },
     isSelected: selected === m.id, now, isAdmin,
   });
 
@@ -1619,6 +1626,405 @@ function LoadingScreen() {
   );
 }
 
+// ─── STANDINGS ROW — shared by the global Standings screen and My Group ──────
+function StandingsRow({ p, i, isMe, groupLabel, predCount, totalMatches, tintMe }) {
+  return (
+    <div style={{
+      display:"flex", alignItems:"center", gap:18,
+      padding: i===0 ? "18px 20px" : "16px 20px",
+      borderTop: i===0 ? "none" : `1px solid ${C.lineSoft}`,
+      background: i===0 ? "linear-gradient(90deg, rgba(200,168,106,0.10), transparent)"
+                : (isMe && tintMe) ? "rgba(91,140,255,0.05)" : "transparent",
+      borderLeft: (isMe && tintMe) ? `2px solid ${C.blue}` : "2px solid transparent",
+    }}>
+      <span style={{ ...NUM, width:34, textAlign:"center", fontFamily:F.main, fontWeight:700,
+                     fontSize: i===0?26:22, color: i===0?C.gold : i<3?C.muted : C.dim }}>
+        {String(i+1).padStart(2,"0")}
+      </span>
+      <div style={{ flex:1, minWidth:0 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+          <span style={{ fontFamily:F.main, fontWeight:700, fontSize: i===0?16:15, color:C.white }}>{p.nickname}</span>
+          {isMe && <Badge text="You" color={C.blue} fill="rgba(91,140,255,0.15)" line="rgba(91,140,255,0.35)" />}
+          {groupLabel && <Badge text={groupLabel} color={C.gold} fill="rgba(200,168,106,0.15)" line="rgba(200,168,106,0.3)" />}
+        </div>
+        <div style={{ fontSize:11.5, fontFamily:F.body, color:C.muted, marginTop:3 }}>
+          {predCount}/{totalMatches} predicted
+          {p.bonus !== 0 && <span> · {p.bonus > 0 ? "+" : "−"}{Math.abs(p.bonus)} bonus</span>}
+        </div>
+      </div>
+      <div style={{ ...NUM, fontFamily:F.main, fontWeight:700, fontSize: i===0?28:24,
+                    color: i===0?C.gold:C.white, flexShrink:0 }}>
+        {p.score}<span style={{ fontSize:11, color:C.dim, marginLeft:4, letterSpacing:1 }}>PTS</span>
+      </div>
+    </div>
+  );
+}
+
+function Badge({ text, color, fill, line }) {
+  return (
+    <span style={{ fontSize:9, fontWeight:700, fontFamily:F.main, letterSpacing:1, padding:"2px 7px",
+                   borderRadius:3, color, background:fill, border:`1px solid ${line}`,
+                   textTransform:"uppercase", whiteSpace:"nowrap" }}>{text}</span>
+  );
+}
+
+function StandingsList({ rows, authId, groupLabelFor, predCountFor, totalMatches, tintMe }) {
+  return (
+    <div style={{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:8, overflow:"hidden" }}>
+      {rows.map((p,i) => (
+        <StandingsRow key={p.id} p={p} i={i} isMe={p.id===authId} tintMe={tintMe}
+          groupLabel={groupLabelFor ? groupLabelFor(p) : null}
+          predCount={predCountFor(p)} totalMatches={totalMatches} />
+      ))}
+      {rows.length===0 && (
+        <div style={{ padding:30, textAlign:"center", color:C.dim, fontFamily:F.main, fontSize:12 }}>No players yet</div>
+      )}
+    </div>
+  );
+}
+
+// ─── MY GROUP ────────────────────────────────────────────────────────────────
+function StatBlock({ n, label, color }) {
+  return (
+    <div>
+      <div style={{ ...NUM, fontSize:30, fontWeight:700, fontFamily:F.main, color, lineHeight:1 }}>{n}</div>
+      <div style={{ fontSize:9, color:C.dim, fontFamily:F.main, fontWeight:700, letterSpacing:1.3,
+                    textTransform:"uppercase", marginTop:6 }}>{label}</div>
+    </div>
+  );
+}
+
+function MyGroupPage({ myGroup, members, rows, authId, predictions, results, allMatches, now, inviteBase }) {
+  const [copied, setCopied] = useState(false);
+  const [hoverCopy, setHoverCopy] = useState(false);
+
+  const myIdx  = rows.findIndex(r => r.id === authId);
+  const me     = rows[myIdx];
+  const behind = myIdx > 0 && me ? rows[0].score - me.score : 0;
+  const ord    = (n) => { const s=["th","st","nd","rd"], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); };
+
+  // My run so far
+  const myPreds = predictions[authId] || {};
+  let exact=0, winner=0, missed=0;
+  allMatches.forEach(m => {
+    const pr = myPreds[m.id], rs = results[m.id];
+    if (!pr || !rs) return;
+    const sc = calcScore(pr, rs);
+    if (sc===3) exact++; else if (sc===1) winner++; else missed++;
+  });
+  const decided   = exact + winner + missed;
+  const predCount = Object.keys(myPreds).length;
+  const pct = (n) => decided ? (n / decided) * 100 : 0;
+
+  const link = myGroup.invite_token ? `${inviteBase}/${myGroup.invite_token}` : null;
+
+  // Breakdown: decided matches plus anything currently live
+  const liveOf = (m) => !results[m.id] && isLocked(m, now) && now >= new Date(m.startTime).getTime();
+  const gridRows = allMatches.filter(m => results[m.id] || liveOf(m));
+
+  return (
+    <div>
+      <div style={{ fontSize:10, color:C.dim, marginBottom:20, fontFamily:F.main, letterSpacing:1.5, textTransform:"uppercase" }}>
+        Private group · {members.length} member{members.length!==1?"s":""} · {gridRows.length} of {allMatches.length} matches played
+      </div>
+
+      {/* Top row */}
+      <div style={{ display:"flex", gap:18, flexWrap:"wrap", marginBottom:22 }}>
+        {/* Group identity */}
+        <div style={{ flex:"1 1 300px", minWidth:280, background:C.surface, borderRadius:8, padding:"18px 20px",
+                      border:`1px solid ${C.line}`, borderTop:`2px solid ${C.gold}`, boxShadow:"0 1px 2px rgba(0,0,0,0.3)" }}>
+          <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:C.gold, letterSpacing:1.8, textTransform:"uppercase" }}>Your Group</div>
+          <div style={{ fontSize:26, fontWeight:700, fontFamily:F.main, color:C.white, letterSpacing:1, textTransform:"uppercase", marginTop:6 }}>{myGroup.name}</div>
+          <div style={{ fontSize:12, fontFamily:F.body, color:C.muted, marginTop:6 }}>
+            {me
+              ? <>You're {ord(myIdx+1)} of {rows.length}{behind > 0 ? ` · ${behind} point${behind!==1?"s":""} behind the lead` : myIdx===0 ? " · leading" : ""}</>
+              : <>{rows.length} member{rows.length!==1?"s":""}</>}
+          </div>
+          <div style={{ height:1, background:C.lineSoft, margin:"16px 0" }} />
+          <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:C.dim, letterSpacing:1.3, textTransform:"uppercase", marginBottom:8 }}>Invite Link</div>
+          <div style={{ display:"flex", gap:8 }}>
+            <div style={{ flex:1, minWidth:0, background:"rgba(0,0,0,0.28)", border:`1px solid ${C.line}`, borderRadius:5,
+                          padding:"8px 11px", fontSize:11.5, fontFamily:F.body, color:C.muted,
+                          overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+              {link || "No token yet — run the invite-token migration"}
+            </div>
+            <button disabled={!link}
+              onMouseEnter={()=>setHoverCopy(true)} onMouseLeave={()=>setHoverCopy(false)}
+              onClick={()=>{ if(!link) return; navigator.clipboard.writeText(link); setCopied(true); setTimeout(()=>setCopied(false),2000); }}
+              style={{ flexShrink:0, padding:"8px 14px", borderRadius:5, cursor: link?"pointer":"default",
+                       border:`1px solid ${C.gold}`,
+                       background: hoverCopy && link ? C.gold : "rgba(200,168,106,0.14)",
+                       color: hoverCopy && link ? "#151515" : C.goldLight,
+                       fontFamily:F.main, fontWeight:700, fontSize:11, letterSpacing:1,
+                       textTransform:"uppercase", opacity: link?1:0.4,
+                       transition:"background-color 0.12s ease, color 0.12s ease" }}>
+              {copied ? "Copied" : "Copy"}
+            </button>
+          </div>
+        </div>
+
+        {/* Your run so far */}
+        <div style={{ flex:"1 1 300px", minWidth:280, background:C.surface, borderRadius:8, padding:"18px 20px",
+                      border:`1px solid ${C.line}`, boxShadow:"0 1px 2px rgba(0,0,0,0.3)" }}>
+          <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:C.dim, letterSpacing:1.8, textTransform:"uppercase" }}>Your run so far</div>
+          <div style={{ display:"flex", gap:26, marginTop:14, flexWrap:"wrap" }}>
+            <StatBlock n={exact}  label="Exact · +3"  color={C.green} />
+            <StatBlock n={winner} label="Winner · +1" color={C.gold} />
+            <StatBlock n={missed} label="Missed · 0"  color={C.muted} />
+          </div>
+          <div style={{ height:1, background:C.lineSoft, margin:"16px 0" }} />
+          <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:C.dim, letterSpacing:1.3, textTransform:"uppercase", marginBottom:8 }}>
+            Hit rate · {predCount} of {allMatches.length} predicted
+          </div>
+          <div style={{ height:7, borderRadius:4, overflow:"hidden", display:"flex", background:"rgba(255,255,255,0.05)" }}>
+            <div style={{ width:`${pct(exact)}%`,  background:C.green }} />
+            <div style={{ width:`${pct(winner)}%`, background:C.gold }} />
+            <div style={{ width:`${pct(missed)}%`, background:"rgba(255,255,255,0.10)" }} />
+          </div>
+        </div>
+      </div>
+
+      {/* Group standings */}
+      <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:C.dim, letterSpacing:1.8, textTransform:"uppercase", marginBottom:10 }}>Group Standings</div>
+      <div style={{ marginBottom:26 }}>
+        <StandingsList rows={rows} authId={authId} tintMe
+          predCountFor={(p)=>Object.keys(predictions[p.id]||{}).length} totalMatches={allMatches.length} />
+      </div>
+
+      {/* Per-match breakdown */}
+      <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:C.dim, letterSpacing:1.8, textTransform:"uppercase", marginBottom:8 }}>Per-match breakdown</div>
+      <div style={{ fontSize:11.5, fontFamily:F.body, color:C.dim, marginBottom:12 }}>
+        <span style={{ color:C.green, fontWeight:600 }}>+3</span> exact ·{" "}
+        <span style={{ color:C.gold, fontWeight:600 }}>+1</span> winner ·{" "}
+        <span style={{ color:C.muted, fontWeight:600 }}>0</span> missed ·{" "}
+        <span style={{ color:C.dimmer, fontWeight:600 }}>—</span> no pick
+      </div>
+
+      {gridRows.length === 0 ? (
+        <div style={{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:8, padding:30,
+                      textAlign:"center", color:C.dim, fontFamily:F.main, fontSize:12, letterSpacing:1 }}>
+          No matches played yet
+        </div>
+      ) : (
+        <div style={{ overflowX:"auto", border:`1px solid ${C.line}`, borderRadius:8, background:C.surface }}>
+          <div style={{ minWidth:660, display:"grid",
+                        gridTemplateColumns:`1fr repeat(${members.length}, 74px)`, alignItems:"center" }}>
+            {/* header */}
+            <div style={{ background:"rgba(0,0,0,0.28)", borderBottom:`1px solid ${C.line}`, padding:"10px 14px" }}>
+              <span style={{ fontSize:9.5, fontWeight:700, fontFamily:F.main, color:C.muted, letterSpacing:0.8, textTransform:"uppercase" }}>Match</span>
+            </div>
+            {members.map(mem => (
+              <div key={mem.id} style={{ background:"rgba(0,0,0,0.28)", borderBottom:`1px solid ${C.line}`, padding:"10px 0", textAlign:"center" }}>
+                <span style={{ fontSize:9.5, fontWeight:700, fontFamily:F.main, letterSpacing:0.8, textTransform:"uppercase",
+                               color: mem.id===authId ? C.blue : C.muted }}>
+                  {mem.id===authId ? "You" : mem.nickname}
+                </span>
+              </div>
+            ))}
+
+            {/* body */}
+            {gridRows.map((m, ri) => {
+              const rs   = results[m.id];
+              const live = !rs && liveOf(m);
+              const last = ri === gridRows.length-1;
+              return (
+                <Fragment key={m.id}>
+                  <div style={{ padding:"11px 14px", minWidth:0,
+                                borderBottom: last ? "none" : `1px solid ${C.lineSoft}`,
+                                background: live ? "rgba(255,90,31,0.04)" : "transparent" }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:8, minWidth:0 }}>
+                      <span style={{ fontSize:13, fontWeight:700, fontFamily:F.main, color:C.white,
+                                     whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+                        {m.team1} <span style={{ color:C.dim }}>{rs ? `${rs.score1}–${rs.score2}` : "vs"}</span> {m.team2}
+                      </span>
+                      {live && (
+                        <span style={{ display:"flex", alignItems:"center", gap:4, flexShrink:0, padding:"2px 6px",
+                                       borderRadius:3, background:"rgba(255,90,31,0.12)", border:`1px solid rgba(255,90,31,0.4)`,
+                                       fontSize:9, fontWeight:700, fontFamily:F.main, color:C.orange, letterSpacing:0.5 }}>
+                          <span style={{ width:4, height:4, borderRadius:"50%", background:C.orange,
+                                         animation:"ewcPulse 1.4s ease-in-out infinite" }} />
+                          LIVE
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize:9, fontFamily:F.main, fontWeight:700, color:C.dim, letterSpacing:1,
+                                  textTransform:"uppercase", marginTop:4 }}>
+                      {m.label}{m.group?` · Group ${m.group}`:""} · {new Date(m.startTime).toLocaleDateString("en-US",{ timeZone:"Asia/Riyadh", month:"short", day:"numeric" })}
+                    </div>
+                  </div>
+                  {members.map(mem => {
+                    const pr = predictions[mem.id]?.[m.id];
+                    const mine = mem.id===authId;
+                    if (live) {
+                      return (
+                        <div key={mem.id} style={{ padding:"11px 0", textAlign:"center",
+                                                   borderBottom: last ? "none" : `1px solid ${C.lineSoft}`,
+                                                   background:"rgba(255,90,31,0.04)" }}>
+                          <span style={{ fontSize:11, fontFamily:F.main, fontWeight:700,
+                                         color: mine ? C.goldLight : C.dim }}>
+                            {pr ? teamStyle(pr.winner).abbr : "—"}
+                          </span>
+                        </div>
+                      );
+                    }
+                    const sc = pr && rs ? calcScore(pr, rs) : null;
+                    const tint = mine ? (sc===3 ? "rgba(62,207,142,0.07)" : "rgba(91,140,255,0.05)") : "transparent";
+                    return (
+                      <div key={mem.id} style={{ padding:"11px 0", textAlign:"center", background:tint,
+                                                 borderBottom: last ? "none" : `1px solid ${C.lineSoft}` }}>
+                        {sc === null
+                          ? <span style={{ fontSize:15, fontFamily:F.main, fontWeight:700, color:C.dimmer }}>—</span>
+                          : <span style={{ ...NUM, fontSize:15, fontFamily:F.main, fontWeight:700,
+                                           color: sc===3?C.green : sc===1?C.gold : C.muted }}>{sc===0?"0":`+${sc}`}</span>}
+                      </div>
+                    );
+                  })}
+                </Fragment>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── OTHERS' PICKS ───────────────────────────────────────────────────────────
+function PlayerChip({ p, selected, points, onClick }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button onClick={onClick} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}
+      style={{ display:"flex", alignItems:"center", gap:9, padding:"8px 15px 8px 9px", borderRadius:6,
+               cursor:"pointer", transition:"background-color 0.12s ease, border-color 0.12s ease",
+               border:`1px solid ${selected ? C.gold : hover ? C.lineStrong : C.line}`,
+               background: selected ? "rgba(200,168,106,0.14)" : hover ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)" }}>
+      <span style={{ width:24, height:24, borderRadius:4, display:"flex", alignItems:"center", justifyContent:"center",
+                     background: selected ? "rgba(200,168,106,0.22)" : "rgba(255,255,255,0.06)",
+                     fontFamily:F.main, fontWeight:700, fontSize:11,
+                     color: selected ? C.goldLight : C.muted }}>
+        {p.nickname[0].toUpperCase()}
+      </span>
+      <span style={{ fontFamily:F.main, fontWeight:700, fontSize:13, color: selected ? C.goldLight : C.white }}>{p.nickname}</span>
+      <span style={{ ...NUM, fontFamily:F.main, fontWeight:700, fontSize:11, color: selected ? C.gold : C.dim }}>{points}</span>
+    </button>
+  );
+}
+
+// A locked match with someone else's pick on it.
+function PickCard({ match, result, pred, now }) {
+  const score = pred && result ? calcScore(pred, result) : null;
+  const predLine = pred
+    ? (pred.score1 != null ? `Predicted ${pred.score1}–${pred.score2}` : `Predicted ${pred.winner}`)
+    : "No prediction";
+  const border = score===3 ? "1px solid rgba(62,207,142,0.4)"
+               : score===1 ? "1px solid rgba(200,168,106,0.4)"
+               : `1px solid ${C.line}`;
+  return (
+    <div style={{ width:300, background:C.surface, border, borderRadius:5, overflow:"hidden",
+                  boxShadow:"0 1px 2px rgba(0,0,0,0.3)" }}>
+      <div style={{ padding:"6px 12px", background:"rgba(0,0,0,0.22)", borderBottom:`1px solid ${C.lineSoft}`,
+                    display:"flex", justifyContent:"space-between", alignItems:"center", gap:8, minHeight:26 }}>
+        <span style={{ fontSize:9, color:C.dim, fontFamily:F.main, fontWeight:700, letterSpacing:1,
+                       textTransform:"uppercase", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+          {match.group?`Group ${match.group} · `:""}{match.label} · {predLine}
+        </span>
+        {score !== null && <ScoreChip score={score} />}
+        {score === null && !result && (
+          <CountdownPill lockTime={getLockTime(match).toISOString()} now={now} startTime={match.startTime} />
+        )}
+      </div>
+      <BracketTeamRow name={match.team1} score={result?.score1} isWinner={result?.winner===match.team1}
+        isPick={pred?.winner===match.team1} hasResult={!!result} pickLabel="Their pick" />
+      <BracketTeamRow name={match.team2} score={result?.score2} isWinner={result?.winner===match.team2}
+        isPick={pred?.winner===match.team2} hasResult={!!result} pickLabel="Their pick" last />
+    </div>
+  );
+}
+
+function HiddenPickCard({ match, now }) {
+  const ms = getLockTime(match).getTime() - now;
+  const h = Math.floor(ms / 3600000), mi = Math.floor((ms % 3600000) / 60000);
+  const left = ms <= 0 ? "locking now" : h > 0 ? `locks in ${h}h ${String(mi).padStart(2,"0")}m` : `locks in ${mi}m`;
+  return (
+    <div style={{ width:300, minHeight:118, background:C.bgDeep, border:`1px dashed ${C.lineSoft}`,
+                  borderRadius:5, display:"flex", flexDirection:"column", alignItems:"center",
+                  justifyContent:"center", gap:6, padding:"14px 16px", textAlign:"center" }}>
+      <div style={{ fontSize:10, fontWeight:700, fontFamily:F.main, color:C.dim, letterSpacing:1.3, textTransform:"uppercase" }}>
+        Hidden until lock
+      </div>
+      <div style={{ fontSize:11.5, fontFamily:F.body, color:C.dimmer }}>
+        {match.group?`Group ${match.group} · `:""}{match.label} · {left}
+      </div>
+    </div>
+  );
+}
+
+function OthersPicksPage({ players, authId, predictions, results, allMatches, now, totalFor, search, setSearch, selectedId, setSelectedId }) {
+  const candidates = players.filter(p => p.id !== authId &&
+    (!search || p.nickname.toLowerCase().includes(search.toLowerCase())));
+  const viewing = players.find(p => p.id === selectedId);
+
+  const predictable = allMatches.filter(m => !hasTBD(m));
+  const visible = predictable.filter(m => isLocked(m, now));
+  const hidden  = predictable.filter(m => !isLocked(m, now));
+  const shown   = visible.filter(m => predictions[selectedId]?.[m.id]);
+
+  return (
+    <div>
+      <div style={{ fontSize:10, color:C.dim, marginBottom:16, fontFamily:F.main, letterSpacing:1.5, textTransform:"uppercase" }}>
+        Browse a player's predictions · <span style={{ color:C.gold }}>Locked matches only</span>
+      </div>
+
+      <input value={search} onChange={e=>{ setSearch(e.target.value); setSelectedId(null); }}
+        placeholder="Search player…"
+        style={{ ...inputStyle({ width:"100%", padding:"9px 14px", fontSize:13, marginBottom:14,
+                                 boxSizing:"border-box", borderRadius:6, background:"rgba(255,255,255,0.03)",
+                                 border:`1px solid ${C.line}` }) }} />
+
+      <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:22 }}>
+        {candidates.map(p => (
+          <PlayerChip key={p.id} p={p} selected={selectedId===p.id} points={totalFor(p.id)}
+            onClick={()=>setSelectedId(selectedId===p.id?null:p.id)} />
+        ))}
+        {candidates.length===0 && <div style={{ color:C.dim, fontSize:13, fontFamily:F.main }}>No other players yet</div>}
+      </div>
+
+      {viewing ? (
+        <>
+          <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:16 }}>
+            <span style={{ fontSize:12, fontWeight:700, fontFamily:F.main, color:C.gold, letterSpacing:1.5, textTransform:"uppercase", flexShrink:0 }}>
+              {viewing.nickname} · {shown.length} pick{shown.length!==1?"s":""} visible
+            </span>
+            <div style={{ height:1, flex:1, background:C.lineSoft }} />
+            <span style={{ fontSize:9, fontFamily:F.main, fontWeight:700, color:C.dim, letterSpacing:1.2, textTransform:"uppercase", flexShrink:0 }}>
+              {hidden.length} hidden until lock
+            </span>
+          </div>
+
+          <div style={{ display:"flex", flexWrap:"wrap", gap:14 }}>
+            {shown.map(m => (
+              <PickCard key={m.id} match={m} result={results[m.id]} pred={predictions[selectedId][m.id]} now={now} />
+            ))}
+            {/* Privacy shown, not just enforced — the absence is the rule made visible. */}
+            {hidden.map(m => <HiddenPickCard key={m.id} match={m} now={now} />)}
+          </div>
+
+          {shown.length===0 && hidden.length===0 && (
+            <div style={{ padding:30, textAlign:"center", color:C.dim, fontFamily:F.main, fontSize:12, letterSpacing:1 }}>
+              Nothing to show yet
+            </div>
+          )}
+        </>
+      ) : (
+        <div style={{ padding:40, textAlign:"center", color:C.dimmer, fontFamily:F.main, fontSize:12,
+                      letterSpacing:1.5, textTransform:"uppercase" }}>
+          Select a player above
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App() {
   const [loading,        setLoading]        = useState(true);
@@ -1651,15 +2057,12 @@ export default function App() {
   const [cgPass,           setCgPass]           = useState("");
   const [cgMsg,            setCgMsg]            = useState(null);
   const [cgLoading,        setCgLoading]        = useState(false);
-  const [grpCopied,        setGrpCopied]        = useState(false);
   // Admin groups
   const [newGrpName,       setNewGrpName]       = useState("");
   const [newGrpCode,       setNewGrpCode]       = useState("");
   const [newGrpPass,       setNewGrpPass]       = useState("");
   const [newGrpMsg,        setNewGrpMsg]        = useState(null);
   const [expandedGrp,      setExpandedGrp]      = useState(null);
-  const [grpViewingPlayer, setGrpViewingPlayer] = useState(null);
-  const [grpOthersSearch,  setGrpOthersSearch]  = useState("");
   // Toasts
   const [toasts,           setToasts]           = useState([]);
   // Admin players sub-tab
@@ -1676,7 +2079,6 @@ export default function App() {
   });
   const [joinGroup,        setJoinGroup]        = useState(null); // group row from Supabase
   const [joinLoading,      setJoinLoading]      = useState(false);
-  const [inviteCopied,     setInviteCopied]     = useState(false);
 
   const myIdRef = useRef(authId);
   useEffect(()=>{ myIdRef.current=authId; },[authId]);
@@ -2025,166 +2427,28 @@ export default function App() {
           const grpMembers=players.filter(p=>p.group_id===myGroup.id);
           const grpLb=[...grpMembers].map(p=>({...p,score:getTotalScore(p.id),predScore:getPredScore(p.id),bonus:getBonusTotal(p.id)})).sort((a,b)=>b.score-a.score);
           return (
-            <div>
-              {/* Header */}
-              <div style={{ marginBottom:20 }}>
-                <div style={{ fontSize:24,fontWeight:700,fontFamily:F.main,color:C.white,letterSpacing:2,textTransform:"uppercase" }}>🏠 {myGroup.name}</div>
-                <div style={{ fontSize:12,color:C.muted,fontFamily:F.main,marginTop:4,letterSpacing:1 }}>Members: {grpMembers.length}</div>
-              </div>
-
-              {/* Invite link share box */}
-              <div style={{ background:C.surface,border:"1px solid rgba(190,158,89,0.25)",borderRadius:12,padding:"14px 18px",marginBottom:20 }}>
-                <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:1,textTransform:"uppercase",marginBottom:10 }}>🔗 Invite Link</div>
-                <div style={{ display:"flex",alignItems:"center",gap:8,flexWrap:"wrap" }}>
-                  <div style={{ flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:7,padding:"7px 12px",fontSize:11,color:C.dim,fontFamily:"monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",minWidth:0 }}>
-                    {myGroup.invite_token ? `${INVITE_BASE}/${myGroup.invite_token}` : "Token not yet generated — run DB migration"}
-                  </div>
-                  <button onClick={()=>{ if(!myGroup.invite_token)return; navigator.clipboard.writeText(`${INVITE_BASE}/${myGroup.invite_token}`); setInviteCopied(true); setTimeout(()=>setInviteCopied(false),2000); }}
-                    disabled={!myGroup.invite_token}
-                    style={{ padding:"7px 16px",borderRadius:7,border:`1px solid ${inviteCopied?"rgba(19,196,111,0.4)":"rgba(190,158,89,0.4)"}`,background:inviteCopied?"rgba(19,196,111,0.1)":"rgba(190,158,89,0.1)",color:inviteCopied?C.green:C.purple,fontFamily:F.main,fontWeight:700,fontSize:11,cursor:myGroup.invite_token?"pointer":"default",letterSpacing:1,transition:"all 0.2s",flexShrink:0,opacity:myGroup.invite_token?1:0.4 }}>
-                    {inviteCopied?"✓ Copied!":"📋 Copy Link"}
-                  </button>
-                  {isAdmin&&myGroup.invite_token&&(
-                    <button onClick={()=>{ if(window.confirm("Regenerate the invite link? The old link will stop working immediately."))handleRegenerateInviteToken(myGroup.id); }}
-                      style={{ padding:"7px 12px",borderRadius:7,border:"1px solid rgba(190,158,89,0.3)",background:"rgba(190,158,89,0.08)",color:C.red,fontFamily:F.main,fontWeight:700,fontSize:11,cursor:"pointer",letterSpacing:0.5,flexShrink:0 }}>
-                      ↻ Regenerate
-                    </button>
-                  )}
-                </div>
-                <div style={{ fontSize:10,color:C.dim,fontFamily:F.main,letterSpacing:0.5,marginTop:8 }}>Anyone with this link joins with one click — no password needed</div>
-              </div>
-
-              {/* Group leaderboard */}
-              <div style={{ fontSize:10,color:C.muted,marginBottom:10,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase" }}>🏆 Group Standings</div>
-              {grpLb.map((p,i)=>{
-                const bg=i===0?"linear-gradient(135deg, rgba(190,158,89,0.15), #232327)":i===1?"linear-gradient(135deg, rgba(15,88,244,0.1), #232327)":i===2?"linear-gradient(135deg, rgba(190,158,89,0.1), #232327)":C.surface;
-                const borderCol=p.id===authId?"rgba(15,88,244,0.3)":i===0?"rgba(190,158,89,0.3)":i===1?"rgba(15,88,244,0.2)":i===2?"rgba(190,158,89,0.2)":"rgba(255,255,255,0.06)";
-                return (
-                  <div key={p.id} style={{ background:bg,border:`1px solid ${borderCol}`,borderRadius:12,padding:"14px 18px",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"space-between" }}>
-                    <div style={{ display:"flex",alignItems:"center",gap:14 }}>
-                      <span style={{ ...NUM, width:34,textAlign:"center",fontFamily:F.main,fontWeight:700, fontSize:i===0?26:22, color:i===0?C.gold:i<3?C.muted:C.dim }}>{String(i+1).padStart(2,"0")}</span>
-                      <div>
-                        <div style={{ fontSize:15,fontWeight:700,fontFamily:F.main,display:"flex",alignItems:"center",gap:6,textTransform:"uppercase",letterSpacing:1 }}>
-                          {p.nickname}{p.id===authId&&<span style={{ fontSize:9,color:C.blue,background:"rgba(15,88,244,0.2)",padding:"1px 7px",borderRadius:4,border:"1px solid rgba(15,88,244,0.4)",letterSpacing:1 }}>YOU</span>}
-                        </div>
-                        <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,marginTop:2,display:"flex",gap:8,letterSpacing:1 }}>
-                          <span>{Object.keys(predictions[p.id]||{}).length}/{ALL_MATCHES.length} predicted</span>
-                          {p.bonus!==0&&<span style={{ color:p.bonus>0?C.green:C.red }}>{p.bonus>0?"+":""}{p.bonus} bonus</span>}
-                        </div>
-                      </div>
-                    </div>
-                    <div style={{ textAlign:"right" }}>
-                      <div style={{ ...NUM, fontSize:i===0?28:24,fontWeight:700,fontFamily:F.main,color:i===0?C.gold:C.white }}>{p.score}<span style={{ fontSize:11,color:C.dim,marginLeft:4,letterSpacing:1 }}>PTS</span></div>
-                      {p.bonus!==0&&<div style={{ fontSize:10,color:C.dim,fontFamily:F.main,letterSpacing:0.5 }}>{p.predScore} pred {p.bonus>0?"+":""}{p.bonus} bonus</div>}
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Group breakdown table */}
-              {Object.keys(results).length>0&&(
-                <div style={{ marginTop:24,marginBottom:24 }}>
-                  <div style={{ fontSize:10,color:C.muted,letterSpacing:2,marginBottom:10,fontFamily:F.main,textTransform:"uppercase" }}>Match Breakdown</div>
-                  <div style={{ overflowX:"auto" }}>
-                    <table style={{ width:"100%",borderCollapse:"collapse",fontSize:11,fontFamily:F.main }}>
-                      <thead><tr style={{ borderBottom:"1px solid rgba(255,255,255,0.08)" }}>
-                        <th style={{ textAlign:"left",padding:"5px 8px",color:C.muted,letterSpacing:1 }}>Match</th>
-                        <th style={{ textAlign:"center",padding:"5px 8px",color:C.muted,letterSpacing:1 }}>Score</th>
-                        {grpMembers.map(p=><th key={p.id} style={{ textAlign:"center",padding:"5px 8px",color:p.id===authId?C.blue:C.muted,letterSpacing:0.5 }}>{p.nickname}</th>)}
-                      </tr></thead>
-                      <tbody>
-                        {ALL_MATCHES.filter(m=>results[m.id]).map(m=>(
-                          <tr key={m.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
-                            <td style={{ padding:"5px 8px",color:C.dim,whiteSpace:"nowrap" }}>{m.team1} vs {m.team2}</td>
-                            <td style={{ textAlign:"center",padding:"5px 8px",color:C.muted }}>{results[m.id].score1}–{results[m.id].score2}</td>
-                            {grpMembers.map(p=>{const s=calcScore(predictions[p.id]?.[m.id],results[m.id]);const has=!!predictions[p.id]?.[m.id];return<td key={p.id} style={{ textAlign:"center",padding:"5px 8px",fontWeight:700,color:!has?"rgba(255,255,255,0.1)":s===3?C.green:s===1?C.red:"rgba(255,255,255,0.25)" }}>{has?`+${s}`:"—"}</td>;})}
-                          </tr>
-                        ))}
-                        {grpMembers.some(p=>getBonusTotal(p.id)!==0)&&(
-                          <tr style={{ borderTop:"2px solid rgba(255,255,255,0.08)" }}>
-                            <td colSpan={2} style={{ padding:"5px 8px",color:C.red,fontFamily:F.main,fontSize:11,letterSpacing:1 }}>⭐ Bonus</td>
-                            {grpMembers.map(p=>{const b=getBonusTotal(p.id);return<td key={p.id} style={{ textAlign:"center",padding:"5px 8px",fontWeight:700,color:b>0?C.green:b<0?C.red:C.dim,fontFamily:F.main }}>{b!==0?(b>0?"+":"")+b:"—"}</td>;})}
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* Group others' picks */}
-              <div style={{ fontSize:10,color:C.muted,marginBottom:10,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase" }}>👁 Group Members' Picks</div>
-              <input value={grpOthersSearch} onChange={e=>{ setGrpOthersSearch(e.target.value); setGrpViewingPlayer(null); }} placeholder="Search member…"
-                style={{ ...inputStyle({ width:"100%", padding:"9px 14px", fontSize:13, marginBottom:10, boxSizing:"border-box" }) }} />
-              <div style={{ display:"flex",gap:8,marginBottom:16,flexWrap:"wrap" }}>
-                {grpMembers.filter(p=>p.id!==authId&&(!grpOthersSearch||p.nickname.toLowerCase().includes(grpOthersSearch.toLowerCase()))).map(p=>(
-                  <button key={p.id} onClick={()=>setGrpViewingPlayer(grpViewingPlayer===p.id?null:p.id)} style={{
-                    padding:"8px 16px",borderRadius:8,cursor:"pointer",fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:0.5,transition:"all 0.15s",
-                    border:`1px solid ${grpViewingPlayer===p.id?"rgba(15,88,244,0.5)":"rgba(255,255,255,0.1)"}`,
-                    background:grpViewingPlayer===p.id?"rgba(15,88,244,0.15)":"rgba(255,255,255,0.04)",
-                    color:grpViewingPlayer===p.id?"#5B8CFF":C.muted,
-                  }}>{p.nickname}</button>
-                ))}
-              </div>
-              {grpViewingPlayer&&(()=>{
-                const vp=players.find(p=>p.id===grpViewingPlayer);
-                const lockedMatches=[...groupMatches,...playoffMatches].filter(m=>isLocked(m)&&!hasTBD(m));
-                return (
-                  <div>
-                    <div style={{ fontSize:14,fontWeight:700,fontFamily:F.main,color:C.white,marginBottom:4,letterSpacing:1,textTransform:"uppercase" }}>{vp?.nickname}'s predictions</div>
-                    <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
-                      {lockedMatches.map(m=>(
-                        <MatchCard key={m.id} match={m} playerId={grpViewingPlayer} predictions={predictions}
-                          results={results} onPredict={()=>{}} onSetResult={()=>{}} isAdmin={false} readOnly={true} />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
-              {!grpViewingPlayer&&grpMembers.filter(p=>p.id!==authId).length>0&&<div style={{ textAlign:"center",color:"rgba(255,255,255,0.1)",padding:30,fontFamily:F.main,fontSize:13,letterSpacing:2,textTransform:"uppercase" }}>↑ Select a member above</div>}
-              {grpMembers.filter(p=>p.id!==authId).length===0&&<div style={{ textAlign:"center",color:C.dim,padding:30,fontFamily:F.main,fontSize:12 }}>You're the only member so far. Share the group code to invite friends!</div>}
-            </div>
+            <MyGroupPage myGroup={myGroup} members={grpMembers} rows={grpLb} authId={authId}
+              predictions={predictions} results={results}
+              allMatches={[...groupMatches,...playoffMatches]} now={now} inviteBase={INVITE_BASE} />
           );
         })()}
+
 
         {/* LEADERBOARD */}
         {page==="leaderboard"&&(
           <div>
-            <div style={{ fontSize:10,color:C.muted,marginBottom:12,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase" }}>🟢 3 pts = exact score · 🔴 1 pt = correct winner · ⭐ bonus points</div>
+            <div style={{ fontSize:10,color:C.dim,marginBottom:16,fontFamily:F.main,letterSpacing:1.5,textTransform:"uppercase" }}>
+              Global standings · {players.length} player{players.length!==1?"s":""} · Updated live
+            </div>
             <input value={lbSearch} onChange={e=>setLbSearch(e.target.value)} placeholder="Search player…"
-              style={{ ...inputStyle({ width:"100%", padding:"9px 14px", fontSize:13, marginBottom:12, boxSizing:"border-box" }) }} />
-            {leaderboard.map((p,i)=>{
-              if(lbSearch&&!p.nickname.toLowerCase().includes(lbSearch.toLowerCase()))return null;
-              const bg = i===0 ? "linear-gradient(135deg, rgba(190,158,89,0.15), #232327)"
-                       : i===1 ? "linear-gradient(135deg, rgba(15,88,244,0.1), #232327)"
-                       : i===2 ? "linear-gradient(135deg, rgba(190,158,89,0.1), #232327)"
-                       : C.surface;
-              const borderCol = p.id===authId ? "rgba(15,88,244,0.3)" : i===0 ? "rgba(190,158,89,0.3)" : i===1 ? "rgba(15,88,244,0.2)" : i===2 ? "rgba(190,158,89,0.2)" : "rgba(255,255,255,0.06)";
-              const pGrp = p.group_id&&p.group_id!=="public" ? groups.find(g=>g.id===p.group_id) : null;
-              const grpLabel = pGrp ? (isAdmin||p.group_id===myGroup?.id ? pGrp.name : "Private") : null;
-              return (
-              <div key={p.id} style={{ background:bg, border:`1px solid ${borderCol}`, borderRadius:12, padding:"14px 18px", marginBottom:8, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-                <div style={{ display:"flex",alignItems:"center",gap:14 }}>
-                  <span style={{ ...NUM, width:34,textAlign:"center",fontFamily:F.main,fontWeight:700, fontSize:i===0?26:22, color:i===0?C.gold:i<3?C.muted:C.dim }}>{String(i+1).padStart(2,"0")}</span>
-                  <div>
-                    <div style={{ fontSize:15,fontWeight:700,fontFamily:F.main,display:"flex",alignItems:"center",gap:6,textTransform:"uppercase",letterSpacing:1,flexWrap:"wrap" }}>
-                      {p.nickname}
-                      {p.id===authId&&<span style={{ fontSize:9,color:C.blue,background:"rgba(15,88,244,0.2)",padding:"1px 7px",borderRadius:4,border:"1px solid rgba(15,88,244,0.4)",letterSpacing:1 }}>YOU</span>}
-                      {grpLabel&&<span style={{ fontSize:9,color:C.purple,background:"rgba(190,158,89,0.15)",padding:"1px 7px",borderRadius:4,border:"1px solid rgba(190,158,89,0.3)",letterSpacing:1,fontWeight:600 }}>🏠 {grpLabel}</span>}
-                    </div>
-                    <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,marginTop:2,display:"flex",gap:8,letterSpacing:1 }}>
-                      <span>{Object.keys(predictions[p.id]||{}).length}/{ALL_MATCHES.length} predicted</span>
-                      {p.bonus!==0&&<span style={{ color:p.bonus>0?C.green:C.red }}>{p.bonus>0?"+":""}{p.bonus} bonus</span>}
-                    </div>
-                  </div>
-                </div>
-                <div style={{ textAlign:"right" }}>
-                  <div style={{ ...NUM, fontSize:i===0?28:24,fontWeight:700,fontFamily:F.main,color:i===0?C.gold:C.white }}>{p.score}<span style={{ fontSize:11,color:C.dim,marginLeft:4,letterSpacing:1 }}>PTS</span></div>
-                  {p.bonus!==0&&<div style={{ fontSize:10,color:C.dim,fontFamily:F.main,letterSpacing:0.5 }}>{p.predScore} pred {p.bonus>0?"+":""}{p.bonus} bonus</div>}
-                </div>
-              </div>
-              );
-            })}
+              style={{ ...inputStyle({ width:"100%", padding:"9px 14px", fontSize:13, marginBottom:14, boxSizing:"border-box", borderRadius:6, background:"rgba(255,255,255,0.03)", border:`1px solid ${C.line}` }) }} />
+            <StandingsList
+              rows={leaderboard.filter(p=>!lbSearch||p.nickname.toLowerCase().includes(lbSearch.toLowerCase()))}
+              authId={authId}
+              groupLabelFor={(p)=>{ const g=p.group_id&&p.group_id!=="public"?groups.find(x=>x.id===p.group_id):null;
+                                    return g ? (isAdmin||p.group_id===myGroup?.id ? g.name : "Private") : null; }}
+              predCountFor={(p)=>Object.keys(predictions[p.id]||{}).length}
+              totalMatches={ALL_MATCHES.length} />
             {isAdmin&&Object.keys(results).length>0&&(
               <div style={{ marginTop:28 }}>
                 <div style={{ fontSize:10,color:C.muted,letterSpacing:2,marginBottom:10,fontFamily:F.main,textTransform:"uppercase" }}>Match Breakdown</div>
@@ -2219,45 +2483,10 @@ export default function App() {
 
         {/* OTHERS' PICKS */}
         {page==="others"&&(
-          <div>
-            <div style={{ fontSize:10,color:C.muted,marginBottom:12,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase" }}>👁 Only visible for matches that have already started</div>
-            <input value={othersSearch} onChange={e=>{ setOthersSearch(e.target.value); setViewingPlayer(null); }}
-              placeholder="Search player name…"
-              style={{ ...inputStyle({ width:"100%", padding:"9px 14px", fontSize:13, marginBottom:12, boxSizing:"border-box" }) }} />
-            <div style={{ display:"flex",gap:8,marginBottom:20,flexWrap:"wrap" }}>
-              {players.filter(p=>p.id!==authId&&(!othersSearch||p.nickname.toLowerCase().includes(othersSearch.toLowerCase()))).map(p=>(
-                <button key={p.id} onClick={()=>setViewingPlayer(viewingPlayer===p.id?null:p.id)} style={{
-                  padding:"8px 16px",borderRadius:8,cursor:"pointer",fontFamily:F.main,fontWeight:700,fontSize:13,letterSpacing:0.5,transition:"all 0.15s",
-                  border:`1px solid ${viewingPlayer===p.id?"rgba(15,88,244,0.5)":"rgba(255,255,255,0.1)"}`,
-                  background:viewingPlayer===p.id?"rgba(15,88,244,0.15)":"rgba(255,255,255,0.04)",
-                  color:viewingPlayer===p.id?"#5B8CFF":C.muted,
-                }}>
-                  {p.nickname}<span style={{ fontSize:10,color:viewingPlayer===p.id?C.blue:C.dim,marginLeft:6 }}>{getTotalScore(p.id)} pts</span>
-                </button>
-              ))}
-              {players.filter(p=>p.id!==authId).length===0&&<div style={{ color:C.dim,fontSize:13,fontFamily:F.main }}>No other players yet</div>}
-            </div>
-            {viewingPlayer&&(()=>{
-              const vp=players.find(p=>p.id===viewingPlayer);
-              const lockedMatches=[...groupMatches,...playoffMatches].filter(m=>isLocked(m)&&!hasTBD(m));
-              return (
-                <div>
-                  <div style={{ fontSize:14,fontWeight:700,fontFamily:F.main,color:C.white,marginBottom:4,letterSpacing:1,textTransform:"uppercase" }}>{vp?.nickname}'s predictions</div>
-                  <div style={{ fontSize:11,color:C.muted,fontFamily:F.body,marginBottom:14 }}>
-                    {lockedMatches.filter(m=>predictions[viewingPlayer]?.[m.id]).length} predictions · {getTotalScore(viewingPlayer)} pts
-                    {getBonusTotal(viewingPlayer)!==0&&<span style={{ color:getBonusTotal(viewingPlayer)>0?C.green:C.red }}> (incl. {getBonusTotal(viewingPlayer)>0?"+":""}{getBonusTotal(viewingPlayer)} bonus)</span>}
-                  </div>
-                  <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
-                    {lockedMatches.map(m=>(
-                      <MatchCard key={m.id} match={m} playerId={viewingPlayer} predictions={predictions}
-                        results={results} onPredict={()=>{}} onSetResult={()=>{}} isAdmin={false} readOnly={true} />
-                    ))}
-                  </div>
-                </div>
-              );
-            })()}
-            {!viewingPlayer&&<div style={{ textAlign:"center",color:"rgba(255,255,255,0.1)",padding:40,fontFamily:F.main,fontSize:13,letterSpacing:2,textTransform:"uppercase" }}>↑ Select a player above</div>}
-          </div>
+          <OthersPicksPage players={players} authId={authId} predictions={predictions} results={results}
+            allMatches={[...groupMatches,...playoffMatches]} now={now} totalFor={getTotalScore}
+            search={othersSearch} setSearch={setOthersSearch}
+            selectedId={viewingPlayer} setSelectedId={setViewingPlayer} />
         )}
 
         {/* ADMIN */}
