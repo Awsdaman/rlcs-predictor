@@ -2445,6 +2445,7 @@ export default function App() {
     if(!error){ setGroups(prev=>prev.map(g=>g.id===groupId?{...g,invite_token:newToken}:g)); toast("Invite link regenerated","success"); }
   };
 
+  const resolvedMatches = useMemo(() => [...groupMatches, ...playoffMatches], [groupMatches, playoffMatches]);
   const getPredScore =(pid)=>ALL_MATCHES.reduce((t,m)=>t+calcScore(predictions[pid]?.[m.id],results[m.id]),0);
   const getBonusTotal=(pid)=>bonusPoints.filter(b=>b.player_id===pid).reduce((t,b)=>t+b.amount,0);
   const getTotalScore=(pid)=>getPredScore(pid)+getBonusTotal(pid);
@@ -2581,9 +2582,12 @@ export default function App() {
                       {players.map(p=><th key={p.id} style={{ textAlign:"center",padding:"5px 8px",color:p.id===authId?C.blue:C.muted,letterSpacing:0.5 }}>{p.nickname}</th>)}
                     </tr></thead>
                     <tbody>
-                      {ALL_MATCHES.filter(m=>results[m.id]).map(m=>(
+                      {resolvedMatches.filter(m=>results[m.id]).map(m=>(
                         <tr key={m.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
-                          <td style={{ padding:"5px 8px",color:C.dim,whiteSpace:"nowrap" }}>{m.team1} vs {m.team2}</td>
+                          <td style={{ padding:"5px 8px",color:C.dim,whiteSpace:"nowrap" }}>
+                            {m.team1} vs {m.team2}
+                            <span style={{ color:C.dimmer,marginLeft:8,fontSize:9,letterSpacing:1 }}>{m.group?`${m.group} · `:""}{m.label}</span>
+                          </td>
                           <td style={{ textAlign:"center",padding:"5px 8px",color:C.muted }}>{results[m.id].score1}–{results[m.id].score2}</td>
                           {players.map(p=>{const s=calcScore(predictions[p.id]?.[m.id],results[m.id]);const has=!!predictions[p.id]?.[m.id];return<td key={p.id} style={{ textAlign:"center",padding:"5px 8px",fontWeight:700,color:!has?"rgba(255,255,255,0.1)":s===3?C.green:s===1?C.red:"rgba(255,255,255,0.25)" }}>{has?`+${s}`:"—"}</td>;})}
                         </tr>
@@ -2861,7 +2865,7 @@ export default function App() {
                     <div style={{ fontSize:12,fontWeight:700,fontFamily:F.main,color:C.muted,letterSpacing:2,textTransform:"uppercase",marginBottom:10 }}>🎯 Recent Predictions</div>
                     {activityFeed.length===0&&<div style={{ color:C.dim,fontSize:12,fontFamily:F.main,padding:20,textAlign:"center" }}>No predictions yet</div>}
                     {activityFeed.map((pred,i)=>{
-                      const match=ALL_MATCHES.find(m=>m.id===pred.match_id);
+                      const match=resolvedMatches.find(m=>m.id===pred.match_id);
                       const nick=pred.players?.nickname||"Unknown";
                       return (
                         <div key={i} style={{ display:"flex",gap:10,alignItems:"flex-start",padding:"9px 12px",marginBottom:6,borderRadius:8,background:C.surface,borderLeft:`3px solid ${C.blue}` }}>
