@@ -136,15 +136,19 @@ const DEFAULT_GROUP_MATCHES = [
 ];
 
 // ─── PLAYOFFS — single elimination, top 4 per group qualify, all Bo7 ─────────
+// Quarter-final pairings come from the official draw (upper-bracket teams drawn
+// randomly against lower-bracket ones, never against their own group), so they
+// are seeded here rather than derived. Everything after them advances on
+// results. Times are the published schedule, converted from CEST to UTC.
 const DEFAULT_PLAYOFF = [
-  { id:"p_qf1", round:"QF",  label:"QUARTER FINAL 1", startTime:"2026-08-15T11:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_qf2", round:"QF",  label:"QUARTER FINAL 2", startTime:"2026-08-15T12:30:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_qf3", round:"QF",  label:"QUARTER FINAL 3", startTime:"2026-08-15T14:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_qf4", round:"QF",  label:"QUARTER FINAL 4", startTime:"2026-08-15T15:30:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_sf1", round:"SF",  label:"SEMI FINAL 1",    startTime:"2026-08-16T11:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_sf2", round:"SF",  label:"SEMI FINAL 2",    startTime:"2026-08-16T12:30:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_3rd", round:"3RD", label:"3RD PLACE MATCH", startTime:"2026-08-16T14:00:00Z", team1:"TBD", team2:"TBD", bo:5 },
-  { id:"p_gf",  round:"GF",  label:"GRAND FINAL",     startTime:"2026-08-16T15:30:00Z", team1:"TBD", team2:"TBD", bo:7 },
+  { id:"p_qf1", round:"QF",  label:"QUARTER FINAL 1", startTime:"2026-08-15T14:00:00Z", team1:"Vitality",            team2:"Karmine Corp",       bo:7 },
+  { id:"p_qf2", round:"QF",  label:"QUARTER FINAL 2", startTime:"2026-08-15T15:05:00Z", team1:"Team Falcons",        team2:"Twisted Minds",      bo:7 },
+  { id:"p_qf3", round:"QF",  label:"QUARTER FINAL 3", startTime:"2026-08-15T16:10:00Z", team1:"Spacestation Gaming", team2:"Shopify Rebellion",  bo:7 },
+  { id:"p_qf4", round:"QF",  label:"QUARTER FINAL 4", startTime:"2026-08-15T17:15:00Z", team1:"Ninjas in Pyjamas",   team2:"Gentle Mates",       bo:7 },
+  { id:"p_sf1", round:"SF",  label:"SEMI FINAL 1",    startTime:"2026-08-16T14:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
+  { id:"p_sf2", round:"SF",  label:"SEMI FINAL 2",    startTime:"2026-08-16T15:05:00Z", team1:"TBD", team2:"TBD", bo:7 },
+  { id:"p_3rd", round:"3RD", label:"3RD PLACE MATCH", startTime:"2026-08-16T16:10:00Z", team1:"TBD", team2:"TBD", bo:5 },
+  { id:"p_gf",  round:"GF",  label:"GRAND FINAL",     startTime:"2026-08-16T17:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
 ];
 
 const ALL_MATCHES = [...DEFAULT_GROUP_MATCHES, ...DEFAULT_PLAYOFF];
@@ -2293,9 +2297,15 @@ function MatchSlide({ match, result, pred, playerId, onPredict, now }) {
 }
 
 function UpNextPage({ matches, predictions, results, playerId, onPredict, now, onOpenSchedule }) {
-  const list = useMemo(() => [...matches]
-    .filter(m => !hasTBD(m) || !isLocked(m, now))          // hide dead TBD slots already past
-    .sort((a, b) => new Date(a.startTime) - new Date(b.startTime)), [matches, now]);
+  // Only what is still ahead. Finished matches are history and belong on the
+  // schedule and breakdown screens, not in the strip you swipe to place a bet.
+  // If the whole tournament is done, fall back to everything so the page still
+  // has something in it.
+  const list = useMemo(() => {
+    const sorted = [...matches].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+    const ahead = sorted.filter(m => !results[m.id]);
+    return ahead.length ? ahead : sorted;
+  }, [matches, results]);
 
   // The one to open on: soonest still-predictable match, else soonest unplayed,
   // else the most recent result.
@@ -2359,7 +2369,7 @@ function UpNextPage({ matches, predictions, results, playerId, onPredict, now, o
         <div>
           <div style={{ fontSize:13, fontWeight:700, fontFamily:F.main, color:C.white, letterSpacing:1.5, textTransform:"uppercase" }}>Up Next</div>
           <div style={{ fontSize:10, color:C.dim, fontFamily:F.main, letterSpacing:1.2, marginTop:3, textTransform:"uppercase" }}>
-            Match {idx + 1} of {list.length} · swipe or use the arrows
+            {idx + 1} of {list.length} still to play · swipe or use the arrows
           </div>
         </div>
         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
