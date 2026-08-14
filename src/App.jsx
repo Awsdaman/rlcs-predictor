@@ -244,8 +244,9 @@ const calcScore = (pred, result) => {
   if (pred.winner === result.winner) return 1;
   return 0;
 };
-// Lock time is always derived: startTime - 30 minutes. Never stored separately.
-const getLockTime = (m) => new Date(new Date(m.startTime).getTime() - 30 * 60 * 1000);
+// Lock time is always derived: startTime - 5 minutes. Never stored separately.
+const LOCK_LEAD_MIN = 5;
+const getLockTime = (m) => new Date(new Date(m.startTime).getTime() - LOCK_LEAD_MIN * 60 * 1000);
 const isLocked    = (m, now) => (now !== undefined ? now : Date.now()) >= getLockTime(m).getTime();
 const fmtTime     = (iso) => new Date(iso).toLocaleString("en-US", { timeZone:"Asia/Riyadh", month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" });
 const timeAgo   = (iso) => { if(!iso)return"–"; const s=Math.floor((Date.now()-new Date(iso))/1000); if(s<60)return`${s}s ago`; const m=Math.floor(s/60); if(m<60)return`${m} min ago`; const h=Math.floor(m/60); if(h<24)return`${h} hr ago`; return`${Math.floor(h/24)}d ago`; };

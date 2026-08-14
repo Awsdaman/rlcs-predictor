@@ -143,7 +143,7 @@ Scoring: exact score `3`, correct winner only `1`, wrong `0`. Total = prediction
 points + bonus adjustments.
 
 Match times are stored UTC and always displayed in **KSA (Asia/Riyadh, UTC+3)**.
-Lock time is derived as `startTime − 30min` and never stored.
+Lock time is derived as `startTime − 5min` and never stored.
 
 Series length: group stage is Bo5 (first to 3), playoffs Bo7 (first to 4).
 

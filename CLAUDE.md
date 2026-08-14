@@ -176,7 +176,7 @@ EWC 2026 · ROCKET LEAGUE
 AUG 12–16 · RIYADH · $1,000,000 · 16 TEAMS
 ```
 
-All match times stored as UTC, displayed in **KSA time (UTC+3, Asia/Riyadh)** via `fmtTime`. Lock time = startTime − 30 min (derived, never stored).
+All match times stored as UTC, displayed in **KSA time (UTC+3, Asia/Riyadh)** via `fmtTime`. Lock time = startTime − 5 min (derived from `LOCK_LEAD_MIN`, never stored).
 
 ### Format
 - **Group stage (Aug 12–14, all Bo5):** two groups of 8, each a **double-elimination bracket**:

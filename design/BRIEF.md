@@ -30,7 +30,7 @@
 
 ## What this app is
 
-A private prediction game. Before each match locks (30 min before start), players
+A private prediction game. Before each match locks (5 min before start), players
 predict the score. Exact score = 3 pts, correct winner only = 1 pt. A leaderboard
 ranks the group. One admin enters real results as they happen.
 
