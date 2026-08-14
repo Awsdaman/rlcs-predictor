@@ -61,6 +61,17 @@ const C = {
 };
 const GOLD_GRAD  = `linear-gradient(135deg, ${C.goldLight} 0%, ${C.gold} 55%, ${C.goldDark} 100%)`;
 const NUM        = { fontVariantNumeric: 'tabular-nums' };  // scores never jitter
+// Each card carries its two teams' colours in from the edges. Kept at ~10%
+// alpha with a clear neutral centre so team identity reads at a glance without
+// the text losing contrast or the grid turning into a rainbow.
+const teamWash = (t1, t2, strength = 0.10) => {
+  const a = teamStyle(t1), b = teamStyle(t2);
+  const hex = Math.round(strength * 255).toString(16).padStart(2, "0");
+  const l = isTBDTeam(t1) ? "transparent" : `${a.color}${hex}`;
+  const r = isTBDTeam(t2) ? "transparent" : `${b.color}${hex}`;
+  if (l === "transparent" && r === "transparent") return null;
+  return `linear-gradient(135deg, ${l} 0%, transparent 38%, transparent 62%, ${r} 100%)`;
+};
 // Directional light rather than a symmetric halo.
 const PAGE_BG = `
   radial-gradient(1000px 520px at 15% -8%,  rgba(200,168,106,0.12) 0%, transparent 55%),
@@ -458,7 +469,9 @@ function BracketCard({ match, result, pred, onClick, isSelected, now, isAdmin })
     : live       ? "1px solid rgba(255,90,31,0.4)"
     : hovering   ? `1px solid ${C.lineStrong}`
     :              `1px solid ${C.line}`;
-  const fill = tbd ? C.bgDeep : (isSelected || live || hovering) ? C.surfaceHi : C.surface;
+  const base = tbd ? C.bgDeep : (isSelected || live || hovering) ? C.surfaceHi : C.surface;
+  const wash = tbd ? null : teamWash(t1, t2, hovering || isSelected ? 0.16 : 0.10);
+  const fill = wash ? `${wash}, ${base}` : base;
 
   return (
     <div onClick={onClick} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)} style={{
@@ -753,9 +766,9 @@ const washStyle = (grad) => ({
 });
 
 // ─── GROUP STAGE PAGE ────────────────────────────────────────────────────────
-function GroupStagePage({ groupMatches, predictions, results, playerId, onPredict, now, isAdmin }) {
+function GroupStagePage({ groupMatches, startInSchedule, predictions, results, playerId, onPredict, now, isAdmin }) {
   const [grp,      setGrp]      = useState("A");
-  const [view,     setView]     = useState("bracket");
+  const [view,     setView]     = useState(startInSchedule ? "schedule" : "bracket");
   const [selected, setSelected] = useState(null);
 
   const matches = groupMatches.filter(m => m.group === grp);
@@ -977,7 +990,7 @@ function FinalCard({ match, result, pred, onClick, isSelected, now, headerLabel,
   const tbd = hasTBD(match);
   return (
     <div onClick={onClick} style={{
-      background: C.surfaceHi,
+      background: (() => { const w = teamWash(match.team1, match.team2, 0.14); return w ? `${w}, ${C.surfaceHi}` : C.surfaceHi; })(),
       borderTop: `2px solid ${accent}`,
       borderLeft:`1px solid ${isSelected ? C.gold : C.line}`,
       borderRight:`1px solid ${isSelected ? C.gold : C.line}`,
@@ -2146,6 +2159,250 @@ function OthersPicksPage({ players, authId, predictions, results, allMatches, no
   );
 }
 
+// ─── UP NEXT — the landing page ──────────────────────────────────────────────
+// One match at a time, opened on the soonest one you can still predict, so
+// there is nothing to find and nothing to navigate. Swiping moves between
+// matches; it's native scroll-snap rather than a gesture library, so touch,
+// trackpad and the arrow buttons all drive the same thing.
+
+function SlideTeam({ name, winner, hasResult, score, big }) {
+  const [imgErr, setImgErr] = useState(false);
+  const t = teamStyle(name);
+  const tbd = isTBDTeam(name);
+  const lost = hasResult && !winner;
+  const sz = big ? 56 : 44;
+  return (
+    <div style={{ flex:1, minWidth:0, display:"flex", flexDirection:"column", alignItems:"center", gap:9 }}>
+      <div style={{ width:sz, height:sz, borderRadius:9, background:t.bg, border:`1px solid ${t.color}55`,
+                    display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden",
+                    opacity: lost ? 0.55 : 1 }}>
+        {t.logo && !imgErr && !tbd
+          ? <img src={t.logo} style={{ width:"86%", height:"86%", objectFit:"contain" }} onError={()=>setImgErr(true)} alt="" />
+          : <span style={{ fontSize:13, fontWeight:700, color:t.color, fontFamily:F.main }}>{tbd ? "?" : t.abbr}</span>}
+      </div>
+      <div style={{ fontSize:13, fontWeight:700, fontFamily:F.main, letterSpacing:0.2, textAlign:"center",
+                    color: tbd ? C.dimmer : winner ? C.goldLight : lost ? C.muted : C.white,
+                    lineHeight:1.25, wordBreak:"break-word" }}>
+        {tbd ? "TBD" : name}
+      </div>
+      {hasResult && (
+        <div style={{ ...NUM, fontSize:30, fontWeight:700, fontFamily:F.main, lineHeight:1,
+                      color: winner ? C.goldLight : C.dim }}>{score}</div>
+      )}
+    </div>
+  );
+}
+
+function MatchSlide({ match, result, pred, playerId, onPredict, now }) {
+  const cap = maxWins(match);
+  const [s1, setS1] = useState(pred?.score1 ?? "");
+  const [s2, setS2] = useState(pred?.score2 ?? "");
+  useEffect(() => { setS1(pred?.score1 ?? ""); setS2(pred?.score2 ?? ""); }, [pred?.score1, pred?.score2]);
+
+  const open   = isPredictable(match, result, now) && !!playerId;
+  const locked = isLocked(match, now);
+  const live   = !result && locked && now >= new Date(match.startTime).getTime();
+  const score  = pred && result ? calcScore(pred, result) : null;
+
+  const save = (winner, a, b) => onPredict(match.id, { winner, score1:numOrNull(a), score2:numOrNull(b) });
+  const onScore = (side, raw) => {
+    const [a, b] = applyScore(match, side, raw, s1, s2);
+    setS1(a); setS2(b);
+    const w = impliedWinner(match, a, b);
+    if (w) save(w, a, b);
+  };
+  const pick = (team) => {
+    let a = s1, b = s2;
+    const w = impliedWinner(match, a, b);
+    if (w && w !== team) { [a, b] = [b, a]; setS1(a); setS2(b); }
+    save(team, a, b);
+  };
+  const liveWinner = impliedWinner(match, s1, s2) || pred?.winner || null;
+
+  const wash = teamWash(match.team1, match.team2, 0.13);
+
+  return (
+    <div style={{ background: wash ? `${wash}, ${C.surface}` : C.surface,
+                  border:`1px solid ${live ? "rgba(255,90,31,0.4)" : C.line}`,
+                  borderRadius:10, padding:"18px 20px 20px", display:"flex", flexDirection:"column", gap:14 }}>
+      {/* header */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:10, flexWrap:"wrap" }}>
+        <span style={{ fontSize:10, fontWeight:700, fontFamily:F.main, color:C.dim, letterSpacing:1.4, textTransform:"uppercase" }}>
+          {match.group ? `Group ${match.group} · ` : ""}{match.label} · Bo{match.bo || 5}
+        </span>
+        {score !== null ? <ScoreChip score={score} />
+          : !result ? <CountdownPill lockTime={getLockTime(match).toISOString()} now={now} startTime={match.startTime} />
+          : null}
+      </div>
+
+      <div style={{ fontSize:10, color:C.dimmer, fontFamily:F.main, letterSpacing:1 }}>
+        {fmtTime(match.startTime)} KSA
+        {!locked && ` · locks ${fmtTime(getLockTime(match).toISOString())}`}
+      </div>
+
+      {/* teams */}
+      <div style={{ display:"flex", alignItems:"flex-start", gap:12 }}>
+        <SlideTeam name={match.team1} winner={result?.winner===match.team1} hasResult={!!result} score={result?.score1} big />
+        <div style={{ paddingTop:18, fontSize:12, fontFamily:F.main, color:C.dimmer, letterSpacing:1 }}>VS</div>
+        <SlideTeam name={match.team2} winner={result?.winner===match.team2} hasResult={!!result} score={result?.score2} big />
+      </div>
+
+      {/* prediction */}
+      {open ? (
+        <>
+          <div style={{ display:"flex", alignItems:"center", gap:10, justifyContent:"center" }}>
+            <input type="number" min={0} max={cap} value={s1} onChange={e=>onScore(1, e.target.value)} placeholder="–"
+              style={{ ...inputStyle({ ...NUM, width:56, textAlign:"center", fontSize:24, fontWeight:700, padding:"8px 0",
+                borderRadius:6, background:"rgba(0,0,0,0.25)",
+                border:`1px solid ${liveWinner===match.team1?C.gold:C.line}` }) }} />
+            <span style={{ color:C.dimmer, fontSize:16 }}>:</span>
+            <input type="number" min={0} max={cap} value={s2} onChange={e=>onScore(2, e.target.value)} placeholder="–"
+              style={{ ...inputStyle({ ...NUM, width:56, textAlign:"center", fontSize:24, fontWeight:700, padding:"8px 0",
+                borderRadius:6, background:"rgba(0,0,0,0.25)",
+                border:`1px solid ${liveWinner===match.team2?C.gold:C.line}` }) }} />
+          </div>
+          <div style={{ textAlign:"center", fontSize:10, fontFamily:F.main, letterSpacing:1,
+                        color: impliedWinner(match, s1, s2) ? C.gold : C.dimmer }}>
+            {impliedWinner(match, s1, s2) ? `${impliedWinner(match, s1, s2)} wins — saved` : `First to ${cap} wins the series`}
+          </div>
+          <div style={{ display:"flex", gap:8 }}>
+            {[match.team1, match.team2].map(team => (
+              <button key={team} onClick={()=>pick(team)} style={{
+                flex:1, padding:"10px 0", borderRadius:6, cursor:"pointer", fontFamily:F.main, fontWeight:700,
+                fontSize:12, letterSpacing:0.5, minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
+                border:`1px solid ${liveWinner===team?C.gold:C.line}`,
+                background: liveWinner===team ? C.gold : "rgba(255,255,255,0.03)",
+                color: liveWinner===team ? "#151515" : C.muted,
+                transition:"background-color 0.12s ease, border-color 0.12s ease",
+              }}>{team}</button>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div style={{ textAlign:"center", fontSize:11, fontFamily:F.main, letterSpacing:1, color:C.dim, padding:"4px 0" }}>
+          {!playerId ? "Log in as a player to predict"
+            : hasTBD(match) ? "Teams decided by earlier matches"
+            : result ? (pred ? `Your pick: ${pred.winner}${pred.score1!=null?` (${pred.score1}–${pred.score2})`:""}` : "No prediction")
+            : pred ? `Locked in: ${pred.winner}${pred.score1!=null?` (${pred.score1}–${pred.score2})`:""}`
+            : "Locked — no prediction made"}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function UpNextPage({ matches, predictions, results, playerId, onPredict, now, onOpenSchedule }) {
+  const list = useMemo(() => [...matches]
+    .filter(m => !hasTBD(m) || !isLocked(m, now))          // hide dead TBD slots already past
+    .sort((a, b) => new Date(a.startTime) - new Date(b.startTime)), [matches, now]);
+
+  // The one to open on: soonest still-predictable match, else soonest unplayed,
+  // else the most recent result.
+  const initial = useMemo(() => {
+    const i = list.findIndex(m => isPredictable(m, results[m.id], now));
+    if (i >= 0) return i;
+    const j = list.findIndex(m => !results[m.id]);
+    if (j >= 0) return j;
+    return Math.max(0, list.length - 1);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [list.length]);
+
+  const scroller = useRef(null);
+  const [idx, setIdx] = useState(initial);
+
+  // Jump to the opening match once, without animating past everything before it.
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el || !el.children[initial]) return;
+    el.scrollTo({ left: el.children[initial].offsetLeft - el.offsetLeft, behavior:"auto" });
+    setIdx(initial);
+  }, [initial]);
+
+  const go = (delta) => {
+    const el = scroller.current;
+    if (!el) return;
+    const next = Math.min(list.length - 1, Math.max(0, idx + delta));
+    const child = el.children[next];
+    if (child) el.scrollTo({ left: child.offsetLeft - el.offsetLeft, behavior:"smooth" });
+    setIdx(next);
+  };
+
+  // Keep the counter honest when the user swipes rather than using the buttons.
+  const onScroll = () => {
+    const el = scroller.current;
+    if (!el) return;
+    let best = 0, bestDist = Infinity;
+    [...el.children].forEach((c, i) => {
+      const d = Math.abs((c.offsetLeft - el.offsetLeft) - el.scrollLeft);
+      if (d < bestDist) { bestDist = d; best = i; }
+    });
+    if (best !== idx) setIdx(best);
+  };
+
+  if (list.length === 0) {
+    return <div style={{ padding:40, textAlign:"center", color:C.dim, fontFamily:F.main, fontSize:12, letterSpacing:1 }}>No matches scheduled</div>;
+  }
+
+  const cur = list[idx];
+  const arrow = (dir, disabled) => (
+    <button onClick={()=>go(dir)} disabled={disabled} style={{
+      width:34, height:34, borderRadius:"50%", flexShrink:0, cursor: disabled ? "default" : "pointer",
+      border:`1px solid ${disabled ? C.lineSoft : C.line}`, background:"rgba(255,255,255,0.03)",
+      color: disabled ? C.dimmer : C.muted, fontFamily:F.main, fontSize:15, lineHeight:1,
+    }}>{dir < 0 ? "‹" : "›"}</button>
+  );
+
+  return (
+    <div>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, marginBottom:14, flexWrap:"wrap" }}>
+        <div>
+          <div style={{ fontSize:13, fontWeight:700, fontFamily:F.main, color:C.white, letterSpacing:1.5, textTransform:"uppercase" }}>Up Next</div>
+          <div style={{ fontSize:10, color:C.dim, fontFamily:F.main, letterSpacing:1.2, marginTop:3, textTransform:"uppercase" }}>
+            Match {idx + 1} of {list.length} · swipe or use the arrows
+          </div>
+        </div>
+        <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+          {arrow(-1, idx === 0)}
+          {arrow(1, idx === list.length - 1)}
+          <button onClick={onOpenSchedule} style={{
+            padding:"8px 14px", borderRadius:6, cursor:"pointer", border:`1px solid ${C.line}`,
+            background:"rgba(255,255,255,0.03)", color:C.muted, fontFamily:F.main, fontWeight:700,
+            fontSize:11, letterSpacing:1.2, textTransform:"uppercase" }}>Full schedule</button>
+        </div>
+      </div>
+
+      <div ref={scroller} onScroll={onScroll} style={{
+        display:"flex", gap:14, overflowX:"auto", scrollSnapType:"x mandatory",
+        paddingBottom:10, scrollbarWidth:"none",
+      }}>
+        {list.map(m => (
+          <div key={m.id} style={{ flex:"0 0 100%", maxWidth:520, scrollSnapAlign:"center", minWidth:0 }}>
+            <MatchSlide match={m} result={results[m.id]} pred={predictions[playerId]?.[m.id]}
+              playerId={playerId} onPredict={onPredict} now={now} />
+          </div>
+        ))}
+      </div>
+
+      {/* position dots — capped so a 28-match run doesn't become a smear */}
+      <div style={{ display:"flex", gap:5, justifyContent:"center", marginTop:4, flexWrap:"wrap" }}>
+        {list.map((m, i) => (
+          Math.abs(i - idx) > 6 ? null : (
+            <span key={m.id} style={{
+              width: i === idx ? 16 : 5, height:5, borderRadius:3,
+              background: i === idx ? C.gold : results[m.id] ? C.lineStrong : C.lineSoft,
+              transition:"width 0.15s ease",
+            }} />
+          )
+        ))}
+      </div>
+
+      <div style={{ textAlign:"center", marginTop:12, fontSize:10, color:C.dimmer, fontFamily:F.main, letterSpacing:1 }}>
+        {cur.group ? `Group ${cur.group}` : "Playoffs"} · {new Date(cur.startTime).toLocaleDateString("en-US", { timeZone:"Asia/Riyadh", weekday:"long", month:"short", day:"numeric" })}
+      </div>
+    </div>
+  );
+}
+
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App() {
   const [loading,        setLoading]        = useState(true);
@@ -2161,7 +2418,8 @@ export default function App() {
   const [adminHash,      setAdminHash]      = useState(ADMIN_PASSWORD_HASH);
   const [authId,         setAuthId]         = useState(()=>localStorage.getItem("rlcs_auth")||null);
   const [isAdmin,        setIsAdmin]        = useState(()=>localStorage.getItem("rlcs_admin")==="1");
-  const [page,           setPage]           = useState("predict");
+  const [page,           setPage]           = useState("next");
+  const [scheduleFirst,  setScheduleFirst]  = useState(false);
   const [filterGroup,    setFilterGroup]    = useState("all");
   const [viewingPlayer,  setViewingPlayer]  = useState(null);
   const [newNick,        setNewNick]        = useState("");
@@ -2457,6 +2715,7 @@ export default function App() {
   if(!authId&&!isAdmin)return <LoginScreen players={players} onLogin={id=>{setAuthId(id);setIsAdmin(false);}} onAdminLogin={()=>{setIsAdmin(true);setAuthId(null);}} adminHash={adminHash} />;
 
   const NAV=[
+    {id:"next",        label:"Up Next"},
     {id:"predict",     label:"Group Stage"},
     {id:"playoffs",    label:"Playoffs"},
     ...(myGroup&&!isAdmin?[{id:"mygroup",label:"My Group"}]:[]),
@@ -2532,9 +2791,16 @@ export default function App() {
       {/* PAGE CONTENT */}
       <div style={{ position:"relative",zIndex:1,maxWidth:1440,margin:"0 auto",padding:"24px 20px 40px" }}>
 
+        {/* UP NEXT */}
+        {page==="next"&&(
+          <UpNextPage matches={resolvedMatches} predictions={predictions} results={results}
+            playerId={isAdmin?null:authId} onPredict={handlePredict} now={now}
+            onOpenSchedule={()=>{ setScheduleFirst(true); setPage("predict"); }} />
+        )}
+
         {/* GROUP STAGE */}
         {page==="predict"&&(
-          <GroupStagePage groupMatches={groupMatches} predictions={predictions} results={results}
+          <GroupStagePage groupMatches={groupMatches} startInSchedule={scheduleFirst} predictions={predictions} results={results}
             playerId={isAdmin?null:authId} onPredict={handlePredict} now={now} isAdmin={isAdmin} />
         )}
 
