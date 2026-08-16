@@ -147,7 +147,7 @@ const DEFAULT_PLAYOFF = [
   { id:"p_qf4", round:"QF",  label:"QUARTER FINAL 4", startTime:"2026-08-15T15:05:00Z", team1:"Ninjas in Pyjamas",   team2:"Gentle Mates",       bo:7 },
   { id:"p_sf1", round:"SF",  label:"SEMI FINAL 1",    startTime:"2026-08-16T15:05:00Z", team1:"TBD", team2:"TBD", bo:7 },
   { id:"p_sf2", round:"SF",  label:"SEMI FINAL 2",    startTime:"2026-08-16T14:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_3rd", round:"3RD", label:"3RD PLACE MATCH", startTime:"2026-08-16T16:10:00Z", team1:"TBD", team2:"TBD", bo:5 },
+  { id:"p_3rd", round:"3RD", label:"3RD PLACE MATCH", startTime:"2026-08-16T16:10:00Z", team1:"TBD", team2:"TBD", bo:5, lockLeadMin:-15 },
   { id:"p_gf",  round:"GF",  label:"GRAND FINAL",     startTime:"2026-08-16T17:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
 ];
 
@@ -250,7 +250,9 @@ const calcScore = (pred, result) => {
 };
 // Lock time is always derived: startTime - 5 minutes. Never stored separately.
 const LOCK_LEAD_MIN = 5;
-const getLockTime = (m) => new Date(new Date(m.startTime).getTime() - LOCK_LEAD_MIN * 60 * 1000);
+// A match may override the lead with `lockLeadMin`. Negative values push the
+// lock past kickoff, which is how a match gets reopened after the fact.
+const getLockTime = (m) => new Date(new Date(m.startTime).getTime() - (m.lockLeadMin ?? LOCK_LEAD_MIN) * 60 * 1000);
 const isLocked    = (m, now) => (now !== undefined ? now : Date.now()) >= getLockTime(m).getTime();
 const fmtTime     = (iso) => new Date(iso).toLocaleString("en-US", { timeZone:"Asia/Riyadh", month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" });
 const timeAgo   = (iso) => { if(!iso)return"–"; const s=Math.floor((Date.now()-new Date(iso))/1000); if(s<60)return`${s}s ago`; const m=Math.floor(s/60); if(m<60)return`${m} min ago`; const h=Math.floor(m/60); if(h<24)return`${h} hr ago`; return`${Math.floor(h/24)}d ago`; };
