@@ -147,7 +147,7 @@ const DEFAULT_PLAYOFF = [
   { id:"p_qf4", round:"QF",  label:"QUARTER FINAL 4", startTime:"2026-08-15T15:05:00Z", team1:"Ninjas in Pyjamas",   team2:"Gentle Mates",       bo:7 },
   { id:"p_sf1", round:"SF",  label:"SEMI FINAL 1",    startTime:"2026-08-16T15:05:00Z", team1:"TBD", team2:"TBD", bo:7 },
   { id:"p_sf2", round:"SF",  label:"SEMI FINAL 2",    startTime:"2026-08-16T14:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
-  { id:"p_3rd", round:"3RD", label:"3RD PLACE MATCH", startTime:"2026-08-16T16:10:00Z", team1:"TBD", team2:"TBD", bo:5, lockLeadMin:-15 },
+  { id:"p_3rd", round:"3RD", label:"3RD PLACE MATCH", startTime:"2026-08-16T16:10:00Z", team1:"TBD", team2:"TBD", bo:5, lockLeadMin:-45 },
   { id:"p_gf",  round:"GF",  label:"GRAND FINAL",     startTime:"2026-08-16T17:00:00Z", team1:"TBD", team2:"TBD", bo:7 },
 ];
 
