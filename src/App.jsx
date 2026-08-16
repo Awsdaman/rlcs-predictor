@@ -1591,7 +1591,7 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
   return (
     <div style={{ minHeight:"100vh", background:PAGE_BG, backgroundAttachment:"fixed", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:20, position:"relative" }}>
       <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
-      <style>{`::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:#121214}::-webkit-scrollbar-thumb{background:#5c4d31;border-radius:4px}@keyframes ewcPulse{0%,100%{opacity:1}50%{opacity:0.35}}`}</style>
+      <style>{`::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:#121214}::-webkit-scrollbar-thumb{background:#5c4d31;border-radius:4px}@keyframes ewcPulse{0%,100%{opacity:1}50%{opacity:0.35}}@keyframes fwParticle{0%{transform:translate(0,0) scale(1);opacity:1}70%{opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(0.25);opacity:0}}@keyframes champIn{0%{transform:scale(0.86) translateY(14px);opacity:0}100%{transform:scale(1) translateY(0);opacity:1}}@keyframes champFade{from{opacity:0}to{opacity:1}}@media (prefers-reduced-motion: reduce){[style*="fwParticle"]{animation:none!important;opacity:0!important}[style*="champIn"]{animation:none!important}}`}</style>
       {/* Streaks */}
       <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"15%",left:"-10%",width:600,height:3,background:"linear-gradient(90deg,transparent,rgba(190,158,89,0.45),transparent)",transform:"rotate(-35deg)",filter:"blur(8px)" }} />
       <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"10%",right:"-5%",width:500,height:2,background:"linear-gradient(90deg,transparent,rgba(255,54,0,0.35),transparent)",transform:"rotate(35deg)",filter:"blur(6px)" }} />
@@ -2416,6 +2416,150 @@ function UpNextPage({ matches, predictions, results, playerId, onPredict, now, o
   );
 }
 
+// ─── CHAMPION CELEBRATION ────────────────────────────────────────────────────
+// Fires once the Grand Final result is in. Pure CSS keyframes with custom
+// properties for each particle's vector — no canvas, no dependency, and it
+// stops itself after a few seconds so it never becomes a battery drain.
+
+const FW_COLORS = ["#F2C575", "#C8A86A", "#FF5A1F", "#3ECF8E", "#5B8CFF", "#F4425C", "#FFFFFF"];
+
+function Burst({ left, top, delay, color, size }) {
+  const particles = 14;
+  return (
+    <div style={{ position:"absolute", left:`${left}%`, top:`${top}%`, width:0, height:0 }}>
+      {Array.from({ length: particles }).map((_, i) => {
+        const angle = (i / particles) * Math.PI * 2;
+        const dist  = size * (0.7 + (i % 3) * 0.15);
+        return (
+          <span key={i} style={{
+            position:"absolute", width:4, height:4, borderRadius:"50%", background:color,
+            boxShadow:`0 0 6px ${color}`,
+            "--dx": `${Math.cos(angle) * dist}px`,
+            "--dy": `${Math.sin(angle) * dist}px`,
+            animation:`fwParticle 1.5s ease-out ${delay}s infinite`,
+            opacity:0,
+          }} />
+        );
+      })}
+    </div>
+  );
+}
+
+function Fireworks({ dense }) {
+  // Positions are fixed rather than random so re-renders don't reshuffle them.
+  const bursts = [
+    { left:14, top:22, delay:0.0, size:70 }, { left:82, top:18, delay:0.5, size:85 },
+    { left:48, top:12, delay:1.0, size:60 }, { left:26, top:52, delay:1.6, size:75 },
+    { left:70, top:46, delay:2.1, size:65 }, { left:90, top:66, delay:0.9, size:55 },
+    { left:8,  top:70, delay:1.3, size:60 }, { left:56, top:74, delay:2.5, size:80 },
+  ].slice(0, dense ? 8 : 4);
+  return (
+    <div style={{ position:"absolute", inset:0, overflow:"hidden", pointerEvents:"none", zIndex:0 }}>
+      {bursts.map((b, i) => (
+        <Burst key={i} {...b} color={FW_COLORS[i % FW_COLORS.length]} />
+      ))}
+    </div>
+  );
+}
+
+function ChampionOverlay({ team, topPlayer, myId, onClose }) {
+  const [imgErr, setImgErr] = useState(false);
+  const t = teamStyle(team);
+  const iWon = topPlayer && topPlayer.id === myId;
+  return (
+    <div onClick={onClose} style={{
+      position:"fixed", inset:0, zIndex:400, display:"flex", alignItems:"center", justifyContent:"center",
+      padding:20, background:"rgba(0,0,0,0.82)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)",
+      animation:"champFade 0.4s ease",
+    }}>
+      <Fireworks dense />
+      <div onClick={e=>e.stopPropagation()} style={{
+        position:"relative", zIndex:1, width:"100%", maxWidth:420, textAlign:"center",
+        background:`linear-gradient(160deg, ${t.color}1F 0%, transparent 55%), ${C.surface}`,
+        border:`1px solid rgba(200,168,106,0.45)`, borderTop:`2px solid ${C.gold}`,
+        borderRadius:10, padding:"30px 26px 24px", boxShadow:"0 20px 60px rgba(0,0,0,0.6)",
+        animation:"champIn 0.5s cubic-bezier(0.2,0.9,0.3,1.2)",
+      }}>
+        <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:C.gold, letterSpacing:3, textTransform:"uppercase" }}>
+          Esports World Cup 2026
+        </div>
+
+        <div style={{ margin:"18px auto 14px", width:96, height:96, borderRadius:12,
+                      background:t.bg, border:`2px solid ${t.color}`, display:"flex",
+                      alignItems:"center", justifyContent:"center", overflow:"hidden",
+                      boxShadow:`0 0 30px ${t.color}55` }}>
+          {t.logo && !imgErr
+            ? <img src={t.logo} alt={team} style={{ width:"84%", height:"84%", objectFit:"contain" }} onError={()=>setImgErr(true)} />
+            : <span style={{ fontSize:26, fontWeight:700, color:t.color, fontFamily:F.main }}>{t.abbr}</span>}
+        </div>
+
+        <div style={{ fontSize:11, fontWeight:700, fontFamily:F.main, color:C.muted, letterSpacing:2.5, textTransform:"uppercase" }}>
+          Champions
+        </div>
+        <div style={{ fontSize:28, fontWeight:700, fontFamily:F.main, color:C.goldLight,
+                      letterSpacing:1, textTransform:"uppercase", marginTop:6, lineHeight:1.15 }}>
+          {team}
+        </div>
+
+        {topPlayer && (
+          <div style={{ marginTop:22, paddingTop:18, borderTop:`1px solid ${C.lineSoft}` }}>
+            <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:C.dim, letterSpacing:2, textTransform:"uppercase" }}>
+              {iWon ? "You won the predictor" : "Predictor winner"}
+            </div>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10, marginTop:8 }}>
+              <span style={{ fontSize:20, fontWeight:700, fontFamily:F.main, color: iWon ? C.blue : C.white, letterSpacing:0.5 }}>
+                {topPlayer.nickname}
+              </span>
+              <span style={{ ...NUM, fontSize:20, fontWeight:700, fontFamily:F.main, color:C.gold }}>
+                {topPlayer.score}<span style={{ fontSize:10, color:C.dim, marginLeft:3, letterSpacing:1 }}>PTS</span>
+              </span>
+            </div>
+          </div>
+        )}
+
+        <button onClick={onClose} style={{
+          marginTop:22, width:"100%", padding:"11px 0", borderRadius:6, border:"none", cursor:"pointer",
+          background:GOLD_GRAD, color:"#151515", fontFamily:F.main, fontWeight:700,
+          fontSize:12, letterSpacing:1.5, textTransform:"uppercase" }}>
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Persistent strip once the overlay has been dismissed, so the result stays
+// visible without the celebration replaying on every visit.
+function ChampionBanner({ team, onReplay }) {
+  const [imgErr, setImgErr] = useState(false);
+  const t = teamStyle(team);
+  return (
+    <div style={{ position:"relative", overflow:"hidden", borderBottom:`1px solid ${C.lineSoft}`,
+                  background:`linear-gradient(90deg, ${t.color}1A 0%, transparent 60%), rgba(0,0,0,0.2)`,
+                  padding:"12px 20px" }}>
+      <Fireworks />
+      <div style={{ position:"relative", zIndex:1, maxWidth:1440, margin:"0 auto",
+                    display:"flex", alignItems:"center", gap:12, flexWrap:"wrap" }}>
+        <div style={{ width:30, height:30, borderRadius:6, background:t.bg, border:`1px solid ${t.color}`,
+                      display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", flexShrink:0 }}>
+          {t.logo && !imgErr
+            ? <img src={t.logo} alt="" style={{ width:"84%", height:"84%", objectFit:"contain" }} onError={()=>setImgErr(true)} />
+            : <span style={{ fontSize:10, fontWeight:700, color:t.color, fontFamily:F.main }}>{t.abbr}</span>}
+        </div>
+        <div style={{ minWidth:0 }}>
+          <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:C.gold, letterSpacing:2, textTransform:"uppercase" }}>Champions</div>
+          <div style={{ fontSize:15, fontWeight:700, fontFamily:F.main, color:C.goldLight, letterSpacing:0.5, textTransform:"uppercase" }}>{team}</div>
+        </div>
+        <button onClick={onReplay} style={{ marginLeft:"auto", padding:"6px 12px", borderRadius:5,
+          border:`1px solid ${C.line}`, background:"rgba(255,255,255,0.03)", color:C.muted,
+          fontFamily:F.main, fontWeight:700, fontSize:10, letterSpacing:1.2, textTransform:"uppercase", cursor:"pointer" }}>
+          Celebrate
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App() {
   const [loading,        setLoading]        = useState(true);
@@ -2433,6 +2577,8 @@ export default function App() {
   const [isAdmin,        setIsAdmin]        = useState(()=>localStorage.getItem("rlcs_admin")==="1");
   const [page,           setPage]           = useState("next");
   const [scheduleFirst,  setScheduleFirst]  = useState(false);
+  // Celebration shows once per device, then collapses to a banner you can replay.
+  const [champSeen,      setChampSeen]      = useState(()=>localStorage.getItem("rlcs_champ_seen")==="1");
   const [filterGroup,    setFilterGroup]    = useState("all");
   const [viewingPlayer,  setViewingPlayer]  = useState(null);
   const [newNick,        setNewNick]        = useState("");
@@ -2740,7 +2886,7 @@ export default function App() {
   return (
     <div style={{ minHeight:"100vh", background:PAGE_BG, backgroundAttachment:"fixed", color:C.white, fontFamily:F.body, position:"relative" }}>
       <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
-      <style>{`::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:#121214}::-webkit-scrollbar-thumb{background:#5c4d31;border-radius:4px}@keyframes ewcPulse{0%,100%{opacity:1}50%{opacity:0.35}}`}</style>
+      <style>{`::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:#121214}::-webkit-scrollbar-thumb{background:#5c4d31;border-radius:4px}@keyframes ewcPulse{0%,100%{opacity:1}50%{opacity:0.35}}@keyframes fwParticle{0%{transform:translate(0,0) scale(1);opacity:1}70%{opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(0.25);opacity:0}}@keyframes champIn{0%{transform:scale(0.86) translateY(14px);opacity:0}100%{transform:scale(1) translateY(0);opacity:1}}@keyframes champFade{from{opacity:0}to{opacity:1}}@media (prefers-reduced-motion: reduce){[style*="fwParticle"]{animation:none!important;opacity:0!important}[style*="champIn"]{animation:none!important}}`}</style>
 
       {/* HEADER */}
       <div style={{ position:"sticky",top:0,zIndex:100,background:"rgba(18,18,20,0.94)",backdropFilter:"blur(18px)",WebkitBackdropFilter:"blur(18px)",borderBottom:`1px solid rgba(200,168,106,0.28)`,padding:"14px 20px" }}>
@@ -2798,8 +2944,20 @@ export default function App() {
         </div>
       </div>
 
+      {/* CHAMPION — appears the moment the Grand Final result is set */}
+      {results.p_gf?.winner && (
+        <>
+          <ChampionBanner team={results.p_gf.winner}
+            onReplay={()=>{ localStorage.removeItem("rlcs_champ_seen"); setChampSeen(false); }} />
+          {!champSeen && (
+            <ChampionOverlay team={results.p_gf.winner} topPlayer={leaderboard[0]} myId={authId}
+              onClose={()=>{ localStorage.setItem("rlcs_champ_seen","1"); setChampSeen(true); }} />
+          )}
+        </>
+      )}
+
       {/* MOMENTUM STRIP */}
-      <MomentumStrip now={now} results={results} totalMatches={ALL_MATCHES.length} />
+      {!results.p_gf?.winner && <MomentumStrip now={now} results={results} totalMatches={ALL_MATCHES.length} />}
 
       {/* PAGE CONTENT */}
       <div style={{ position:"relative",zIndex:1,maxWidth:1440,margin:"0 auto",padding:"24px 20px 40px" }}>
