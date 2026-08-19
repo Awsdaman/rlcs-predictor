@@ -153,6 +153,13 @@ const DEFAULT_PLAYOFF = [
 
 const ALL_MATCHES = [...DEFAULT_GROUP_MATCHES, ...DEFAULT_PLAYOFF];
 
+// ─── HALL OF FAME — champions & top predictors of past events ───────────────
+const HALL_OF_FAME = [
+  { event: "2026 Boston Major", team: "Gentle Mates",  predictor: "SuhaibDaman" },
+  { event: "2026 Paris Major",  team: "Karmine Corp",  predictor: "Sultan" },
+  { event: "2026 EWC",          team: "Team Falcons",  predictor: "Aboda7m" },
+];
+
 // ─── BRACKET ADVANCEMENT ─────────────────────────────────────────────────────
 // Where a finished match sends its winner and loser. Both groups share a shape,
 // so the group half is generated rather than written twice.
@@ -2880,6 +2887,7 @@ export default function App() {
     ...(myGroup&&!isAdmin?[{id:"mygroup",label:"My Group"}]:[]),
     {id:"leaderboard", label:"Standings"},
     {id:"others",      label:"Others' Picks"},
+    {id:"halloffame",  label:"Hall of Fame"},
     ...(isAdmin?[{id:"admin",label:"Admin"}]:[]),
   ];
 
@@ -3049,6 +3057,38 @@ export default function App() {
             allMatches={[...groupMatches,...playoffMatches]} now={now} totalFor={getTotalScore}
             search={othersSearch} setSearch={setOthersSearch}
             selectedId={viewingPlayer} setSelectedId={setViewingPlayer} />
+        )}
+
+        {/* HALL OF FAME */}
+        {page==="halloffame"&&(
+          <div>
+            <div style={{ fontSize:10, color:C.dim, marginBottom:20, fontFamily:F.main, letterSpacing:1.5, textTransform:"uppercase" }}>
+              Champions and top predictors from past events
+            </div>
+            <div style={{ display:"grid", gap:14, gridTemplateColumns:"repeat(auto-fill, minmax(280px, 1fr))" }}>
+              {HALL_OF_FAME.map(h=>{
+                return (
+                  <div key={h.event} style={{ background:C.surface, borderRadius:8, padding:"20px", border:`1px solid ${C.line}`, borderTop:`2px solid ${C.gold}`, boxShadow:"0 1px 2px rgba(0,0,0,0.3)" }}>
+                    <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:C.gold, letterSpacing:1.8, textTransform:"uppercase" }}>{h.event}</div>
+                    <div style={{ display:"flex", alignItems:"center", gap:10, marginTop:14 }}>
+                      <TeamBadge name={h.team} size="lg" />
+                      <div>
+                        <div style={{ fontSize:9, color:C.dim, fontFamily:F.main, letterSpacing:1.2, textTransform:"uppercase" }}>Champion</div>
+                        <div style={{ fontSize:16, fontWeight:700, fontFamily:F.main, color:C.white, letterSpacing:0.5 }}>{h.team}</div>
+                      </div>
+                    </div>
+                    <div style={{ display:"flex", alignItems:"center", gap:10, marginTop:16, paddingTop:14, borderTop:`1px solid ${C.line}` }}>
+                      <div style={{ width:36, height:36, borderRadius:7, background:"rgba(200,168,106,0.12)", border:`1px solid ${C.gold}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:17, flexShrink:0 }}>🏆</div>
+                      <div>
+                        <div style={{ fontSize:9, color:C.dim, fontFamily:F.main, letterSpacing:1.2, textTransform:"uppercase" }}>Top Predictor</div>
+                        <div style={{ fontSize:16, fontWeight:700, fontFamily:F.main, color:C.goldLight, letterSpacing:0.5 }}>{h.predictor}</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         )}
 
         {/* ADMIN */}
