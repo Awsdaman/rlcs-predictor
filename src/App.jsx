@@ -26,33 +26,33 @@ const ADMIN_PASSWORD_HASH = '8a0f9e483b972cabad08519542740c3bf80d754474abbd7eab1
 const INVITE_BASE = "https://rlcs-predictor.vercel.app/join";
 const INVITE_TOKEN_RE = /^\/join\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
 
-// ─── BRAND COLORS — sampled from esportsworldcup.com ─────────────────────────
-// Champagne gold on near-black is the EWC signature; orange→gold is their hot
-// accent gradient. Names kept stable (red/blue/purple) so existing call sites
-// keep working — the values are now the EWC equivalents.
+// ─── BRAND COLORS — sampled from the Rocket League World Championship 2026 key art ──
+// Deep navy blue is the Worlds signature background, with a hot orange→gold
+// diagonal accent. Names kept stable (red/blue/purple) so existing call sites
+// keep working — the values are now the Worlds equivalents.
 // Surfaces step *up* in lightness with elevation (page → card → hover) so depth
-// reads from value, not from glow. Neutrals carry a faint warm cast to sit with
-// the gold rather than fight it.
+// reads from value, not from glow. Neutrals carry a faint cool/blue cast to sit
+// with the navy rather than fight it.
 const C = {
-  gold:      '#C8A86A',   // EWC primary — active nav, selected card, winner emphasis
-  goldLight: '#F2C575',   // winner names, highest-emphasis text
-  goldDark:  '#987C4B',
-  goldDeep:  '#4E442D',
+  gold:      '#D9A653',   // Worlds primary accent — active nav, selected card, winner emphasis
+  goldLight: '#F5C878',   // winner names, highest-emphasis text
+  goldDark:  '#A67C3D',
+  goldDeep:  '#3D2F18',
   orange:    '#FF5A1F',   // live / urgent only
   red:       '#F4425C',   // sub-hour countdown, wrong picks, destructive
-  blue:      '#5B8CFF',   // "you" markers
-  purple:    '#C8A86A',   // legacy alias → gold
-  // ink ramp — surfaces pulled down so gold and the page washes have headroom
-  bg:        '#17171A',   // page
-  bgDeep:    '#121214',   // header, wells, TBD card fill
-  surface:   '#1F1F23',   // standard cards
-  surfaceHi: '#28282D',   // raised / selected / live cards
-  navy:      '#17171A',   // legacy aliases
-  navyLight: '#1F1F23',
+  blue:      '#4C86FF',   // "you" markers, Worlds secondary brand blue
+  purple:    '#D9A653',   // legacy alias → gold
+  // ink ramp — deep navy blue base pulled from the key art
+  bg:        '#0E1526',   // page
+  bgDeep:    '#080C16',   // header, wells, TBD card fill
+  surface:   '#161F35',   // standard cards
+  surfaceHi: '#1E2A46',   // raised / selected / live cards
+  navy:      '#0E1526',   // legacy aliases
+  navyLight: '#161F35',
   line:      'rgba(255,255,255,0.09)',
   lineSoft:  'rgba(255,255,255,0.05)',
   lineStrong:'rgba(255,255,255,0.18)',   // emphasised border (predict panel)
-  conn:      'rgba(200,168,106,0.30)',   // bracket connector rules
+  conn:      'rgba(217,166,83,0.30)',    // bracket connector rules
   white:     '#F7F7F8',
   muted:     '#9C9CA3',   // secondary text, losing team names
   dim:       '#67676E',   // labels, metadata
@@ -74,10 +74,10 @@ const teamWash = (t1, t2, strength = 0.10) => {
 };
 // Directional light rather than a symmetric halo.
 const PAGE_BG = `
-  radial-gradient(1000px 520px at 15% -8%,  rgba(200,168,106,0.12) 0%, transparent 55%),
-  radial-gradient(900px 620px at 100% 30%,  rgba(255,90,31,0.05)   0%, transparent 60%),
-  radial-gradient(1100px 700px at 50% 120%, rgba(200,168,106,0.06) 0%, transparent 60%),
-  linear-gradient(180deg, #18181B 0%, #101012 100%)`;
+  radial-gradient(1000px 520px at 15% -8%,  rgba(217,166,83,0.12) 0%, transparent 55%),
+  radial-gradient(900px 620px at 100% 30%,  rgba(255,90,31,0.07)  0%, transparent 60%),
+  radial-gradient(1100px 700px at 50% 120%, rgba(76,134,255,0.06) 0%, transparent 60%),
+  linear-gradient(180deg, #101A2E 0%, #070B14 100%)`;
 
 // ─── TEAMS — EWC 2026 (16 teams) ─────────────────────────────────────────────
 const TEAMS = {
@@ -369,7 +369,7 @@ function CountdownPill({ lockTime, now, startTime }) {
 function ScoreChip({ score }) {
   const map = {
     3: { color:C.green, bg:"rgba(62,207,142,0.14)" },
-    1: { color:C.gold,  bg:"rgba(200,168,106,0.14)" },
+    1: { color:C.gold,  bg:"rgba(217,166,83,0.14)" },
     0: { color:C.dim,   bg:"transparent" },
   }[score];
   return (
@@ -427,7 +427,7 @@ function BracketTeamRow({ name, score, isWinner, isPick, hasResult, tbdCard, las
     <div style={{
       padding:"9px 12px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:10,
       borderTop: last ? `1px ${tbdCard ? "dashed" : "solid"} ${C.lineSoft}` : "none",
-      background: isWinner ? "rgba(200,168,106,0.06)" : "transparent",
+      background: isWinner ? "rgba(217,166,83,0.06)" : "transparent",
     }}>
       <div style={{ display:"flex", alignItems:"center", gap:10, minWidth:0 }}>
         {tbd ? (
@@ -450,7 +450,7 @@ function BracketTeamRow({ name, score, isWinner, isPick, hasResult, tbdCard, las
       <div style={{ display:"flex", alignItems:"center", gap:9, flexShrink:0 }}>
         {!hasResult && isPick && (
           <span style={{ fontSize:9, fontWeight:700, fontFamily:F.main, letterSpacing:1, color:C.gold,
-                         border:"1px solid rgba(200,168,106,0.45)", borderRadius:3, padding:"3px 7px", textTransform:"uppercase" }}>{pickLabel}</span>
+                         border:"1px solid rgba(217,166,83,0.45)", borderRadius:3, padding:"3px 7px", textTransform:"uppercase" }}>{pickLabel}</span>
         )}
         {hasResult && (
           <span style={{ ...NUM, fontSize:22, fontWeight:700, fontFamily:F.main, lineHeight:1,
@@ -479,7 +479,7 @@ function BracketCard({ match, result, pred, onClick, isSelected, now, isAdmin })
       tbd        ? `1px dashed ${C.lineSoft}`
     : isSelected ? `1.5px solid ${C.gold}`
     : score===3  ? "1px solid rgba(62,207,142,0.4)"
-    : score===1  ? "1px solid rgba(200,168,106,0.4)"
+    : score===1  ? "1px solid rgba(217,166,83,0.4)"
     : live       ? "1px solid rgba(255,90,31,0.4)"
     : hovering   ? `1px solid ${C.lineStrong}`
     :              `1px solid ${C.line}`;
@@ -656,7 +656,7 @@ function MomentumStrip({ now, results, totalMatches }) {
             const next    = i === currentIdx + 1;
             const dot = current
               ? { width:11, height:11, background:C.gold, border:"none",
-                  boxShadow:"0 0 0 3px rgba(200,168,106,0.22)", animation:"ewcPulse 1.8s ease-in-out infinite" }
+                  boxShadow:"0 0 0 3px rgba(217,166,83,0.22)", animation:"ewcPulse 1.8s ease-in-out infinite" }
               : past
                 ? { width:9, height:9, background:C.gold, border:"none" }
                 : { width:9, height:9, background:"transparent",
@@ -763,9 +763,9 @@ function BracketBanner({ text, color }) {
 
 function QualifyTag({ settled }) {
   return (
-    <div style={{ border:`1px dashed ${settled ? "rgba(200,168,106,0.4)" : C.lineSoft}`, borderRadius:4,
+    <div style={{ border:`1px dashed ${settled ? "rgba(217,166,83,0.4)" : C.lineSoft}`, borderRadius:4,
                   padding:"8px 10px", textAlign:"center", width:"100%",
-                  background: settled ? "rgba(200,168,106,0.05)" : "transparent" }}>
+                  background: settled ? "rgba(217,166,83,0.05)" : "transparent" }}>
       <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color: settled ? C.gold : C.dimmer,
                     letterSpacing:1.2, textTransform:"uppercase", whiteSpace:"nowrap" }}>
         {settled ? "Qualified" : "Pending"}
@@ -818,7 +818,7 @@ function GroupStagePage({ groupMatches, startInSchedule, predictions, results, p
           {[{id:"bracket",label:"Bracket"},{id:"schedule",label:"Schedule"}].map(v => (
             <button key={v.id} onClick={()=>{ setView(v.id); setSelected(null); }} style={{
               padding:"6px 18px", borderRadius:6, border:"none", cursor:"pointer",
-              background:view===v.id?"rgba(200,168,106,0.16)":"transparent",
+              background:view===v.id?"rgba(217,166,83,0.16)":"transparent",
               color:view===v.id?C.gold:C.muted, fontFamily:F.main, fontWeight:700, fontSize:11,
               letterSpacing:1.5, textTransform:"uppercase" }}>{v.label}</button>
           ))}
@@ -832,7 +832,7 @@ function GroupStagePage({ groupMatches, startInSchedule, predictions, results, p
           </div>
 
           <BracketBanner text="Upper Bracket" color={C.gold} />
-          <div style={washStyle("radial-gradient(700px 300px at 0% 0%, rgba(200,168,106,0.07) 0%, transparent 65%)")}>
+          <div style={washStyle("radial-gradient(700px 300px at 0% 0%, rgba(217,166,83,0.07) 0%, transparent 65%)")}>
             <div style={{ display:"flex", alignItems:"stretch", minWidth:900, padding:6 }}>
               <RoundCol label="Quarter Finals" sub="Aug 12">
                 {ubqf.map(m => <Slot key={m.id}><BracketCard {...cp(m)} /></Slot>)}
@@ -1013,7 +1013,7 @@ function FinalCard({ match, result, pred, onClick, isSelected, now, headerLabel,
       boxShadow: "0 6px 20px rgba(0,0,0,0.4)",
       transition:"border-color 0.12s",
     }}>
-      <div style={{ padding:"8px 14px", background:"rgba(200,168,106,0.08)", borderBottom:`1px solid ${C.lineSoft}`,
+      <div style={{ padding:"8px 14px", background:"rgba(217,166,83,0.08)", borderBottom:`1px solid ${C.lineSoft}`,
                     display:"flex", justifyContent:"space-between", alignItems:"center", gap:8 }}>
         <span style={{ fontSize:10, fontWeight:700, fontFamily:F.main, color:accent, letterSpacing:1.5, textTransform:"uppercase" }}>
           {headerLabel}
@@ -1056,7 +1056,7 @@ function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredic
         Playoffs · Aug 15–16 · Single elimination · Bo7 (3rd place Bo5) · <span style={{color:C.gold}}>Click any match to predict</span>
       </div>
 
-      <div style={washStyle("radial-gradient(900px 400px at 100% 0%, rgba(200,168,106,0.08) 0%, transparent 60%)")}>
+      <div style={washStyle("radial-gradient(900px 400px at 100% 0%, rgba(217,166,83,0.08) 0%, transparent 60%)")}>
         <div style={{ display:"flex", alignItems:"stretch", minWidth:1100, padding:6 }}>
           <RoundCol label="Quarter Finals" sub="Aug 15" w={PO_CARD_W}>
             {qf.map(m => <Slot key={m.id} pad={6}><BracketCard {...cp(m)} /></Slot>)}
@@ -1136,8 +1136,8 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
 
   const liveWinner = impliedWinner(match, s1, s2) || pred?.winner || null;
 
-  const borderColor = score===3 ? "rgba(19,196,111,0.4)" : score===1 ? "rgba(190,158,89,0.4)" : score===0&&result ? "rgba(140,140,140,0.3)" : hovered ? "rgba(15,88,244,0.4)" : "rgba(255,255,255,0.08)";
-  const glowShadow  = score===3 ? "0 0 15px rgba(19,196,111,0.2)" : score===1 ? "0 0 15px rgba(190,158,89,0.15)" : hovered && !result ? "0 0 20px rgba(15,88,244,0.15)" : "none";
+  const borderColor = score===3 ? "rgba(19,196,111,0.4)" : score===1 ? "rgba(217,166,83,0.4)" : score===0&&result ? "rgba(140,140,140,0.3)" : hovered ? "rgba(76,134,255,0.4)" : "rgba(255,255,255,0.08)";
+  const glowShadow  = score===3 ? "0 0 15px rgba(19,196,111,0.2)" : score===1 ? "0 0 15px rgba(217,166,83,0.15)" : hovered && !result ? "0 0 20px rgba(76,134,255,0.15)" : "none";
 
   return (
     <div
@@ -1227,10 +1227,10 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
         <div style={{ marginTop:10,paddingTop:10,borderTop:"1px solid rgba(255,255,255,0.06)",display:"flex",alignItems:"center",gap:6,flexWrap:"wrap" }}>
           <span style={{ fontSize:10,color:result?C.red:C.muted,fontFamily:F.main,letterSpacing:1 }}>{result?"✎ EDIT:":"SET:"}</span>
           <input type="number" min={0} max={cap} value={as1} onChange={e=>onAdminScore(1, e.target.value)} placeholder="T1"
-            style={{ ...inputStyle({ width:42, fontSize:13, padding:"4px 6px", border:`1px solid ${result?"rgba(190,158,89,0.4)":"rgba(255,255,255,0.1)"}` }) }} />
+            style={{ ...inputStyle({ width:42, fontSize:13, padding:"4px 6px", border:`1px solid ${result?"rgba(217,166,83,0.4)":"rgba(255,255,255,0.1)"}` }) }} />
           <span style={{ color:"rgba(255,255,255,0.1)" }}>–</span>
           <input type="number" min={0} max={cap} value={as2} onChange={e=>onAdminScore(2, e.target.value)} placeholder="T2"
-            style={{ ...inputStyle({ width:42, fontSize:13, padding:"4px 6px", border:`1px solid ${result?"rgba(190,158,89,0.4)":"rgba(255,255,255,0.1)"}` }) }} />
+            style={{ ...inputStyle({ width:42, fontSize:13, padding:"4px 6px", border:`1px solid ${result?"rgba(217,166,83,0.4)":"rgba(255,255,255,0.1)"}` }) }} />
           <button onClick={submitResult} style={{ padding:"5px 12px",borderRadius:5,border:"none",cursor:"pointer",background:GOLD_GRAD,color:"#151515",fontFamily:F.main,fontWeight:700,fontSize:11,letterSpacing:1 }}>{result?"UPDATE ✓":"SET ✓"}</button>
           {result&&<button onClick={()=>onSetResult(match.id,null)} style={{ padding:"5px 10px",borderRadius:5,border:`1px solid rgba(244,15,48,0.35)`,cursor:"pointer",background:"rgba(244,15,48,0.1)",color:C.red,fontFamily:F.main,fontWeight:700,fontSize:11 }}>CLEAR ✕</button>}
         </div>
@@ -1349,7 +1349,7 @@ function BracketEditor({ matches, results, onUpdateTeams, onSaved }) {
           {header&&(
             <div style={{ display:"flex",alignItems:"center",gap:10,margin:"18px 0 10px" }}>
               <span style={{ fontSize:11,fontWeight:700,color:C.blue,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase",flexShrink:0 }}>{header}</span>
-              <div style={{ height:1,flex:1,background:"rgba(15,88,244,0.2)" }} />
+              <div style={{ height:1,flex:1,background:"rgba(76,134,255,0.2)" }} />
             </div>
           )}
           {(() => {
@@ -1365,8 +1365,8 @@ function BracketEditor({ matches, results, onUpdateTeams, onSaved }) {
                 onChange={e=>{ if(auto) return; setTeams(t=>({...t,[m.id]:{...t[m.id],[`team${n}`]:e.target.value}})); }}
                 placeholder={`Team ${n} (or TBD)`} list={auto?undefined:"ewc-teams"}
                 style={{ ...inputStyle({ flex:1, minWidth:140, padding:"8px 12px", fontSize:13,
-                  background: auto ? "rgba(200,168,106,0.07)" : "rgba(255,255,255,0.05)",
-                  border: `1px solid ${auto ? "rgba(200,168,106,0.3)" : "rgba(255,255,255,0.1)"}`,
+                  background: auto ? "rgba(217,166,83,0.07)" : "rgba(255,255,255,0.05)",
+                  border: `1px solid ${auto ? "rgba(217,166,83,0.3)" : "rgba(255,255,255,0.1)"}`,
                   color: auto ? C.goldLight : C.white,
                   cursor: auto ? "not-allowed" : "text" }) }} />
             );
@@ -1376,7 +1376,7 @@ function BracketEditor({ matches, results, onUpdateTeams, onSaved }) {
                   <span style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase" }}>{m.label} · {fmtTime(m.startTime)} KSA</span>
                   {(auto1||auto2) && (
                     <span style={{ fontSize:9,fontWeight:700,fontFamily:F.main,color:C.gold,letterSpacing:1,
-                                   border:"1px solid rgba(200,168,106,0.35)",borderRadius:3,padding:"2px 6px",textTransform:"uppercase" }}>
+                                   border:"1px solid rgba(217,166,83,0.35)",borderRadius:3,padding:"2px 6px",textTransform:"uppercase" }}>
                       {auto1&&auto2 ? "Auto" : "Part auto"}
                     </span>
                   )}
@@ -1598,16 +1598,16 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
   return (
     <div style={{ minHeight:"100vh", background:PAGE_BG, backgroundAttachment:"fixed", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:20, position:"relative" }}>
       <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
-      <style>{`::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:#121214}::-webkit-scrollbar-thumb{background:#5c4d31;border-radius:4px}@keyframes ewcPulse{0%,100%{opacity:1}50%{opacity:0.35}}@keyframes fwParticle{0%{transform:translate(0,0) scale(1);opacity:1}70%{opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(0.25);opacity:0}}@keyframes champIn{0%{transform:scale(0.86) translateY(14px);opacity:0}100%{transform:scale(1) translateY(0);opacity:1}}@keyframes champFade{from{opacity:0}to{opacity:1}}@media (prefers-reduced-motion: reduce){[style*="fwParticle"]{animation:none!important;opacity:0!important}[style*="champIn"]{animation:none!important}}`}</style>
+      <style>{`::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:#0A0F1C}::-webkit-scrollbar-thumb{background:#4A3D24;border-radius:4px}@keyframes ewcPulse{0%,100%{opacity:1}50%{opacity:0.35}}`}</style>
       {/* Streaks */}
-      <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"15%",left:"-10%",width:600,height:3,background:"linear-gradient(90deg,transparent,rgba(190,158,89,0.45),transparent)",transform:"rotate(-35deg)",filter:"blur(8px)" }} />
+      <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"15%",left:"-10%",width:600,height:3,background:"linear-gradient(90deg,transparent,rgba(217,166,83,0.45),transparent)",transform:"rotate(-35deg)",filter:"blur(8px)" }} />
       <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"10%",right:"-5%",width:500,height:2,background:"linear-gradient(90deg,transparent,rgba(255,54,0,0.35),transparent)",transform:"rotate(35deg)",filter:"blur(6px)" }} />
-      <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"55%",left:"5%",width:400,height:2,background:"linear-gradient(90deg,transparent,rgba(190,158,89,0.45),transparent)",transform:"rotate(-20deg)",filter:"blur(6px)" }} />
+      <div style={{ position:"fixed",pointerEvents:"none",zIndex:0,top:"55%",left:"5%",width:400,height:2,background:"linear-gradient(90deg,transparent,rgba(217,166,83,0.45),transparent)",transform:"rotate(-20deg)",filter:"blur(6px)" }} />
 
-      <div style={{ position:"relative",zIndex:1,textAlign:"center",marginBottom:32 }}>
-        <div style={{ fontSize:36,fontWeight:700,fontFamily:F.main,background:`linear-gradient(90deg, ${C.white} 0%, ${C.goldLight} 55%, ${C.gold} 100%)`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:4,textTransform:"uppercase" }}>EWC 2026</div>
-        <div style={{ fontSize:16,fontWeight:700,fontFamily:F.main,color:"rgba(255,255,255,0.4)",letterSpacing:4,marginTop:4,textTransform:"uppercase" }}>Rocket League Predictor</div>
-        <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:3,marginTop:8,textTransform:"uppercase" }}>Aug 12–16 · Riyadh · $1,000,000 · 16 Teams</div>
+      <div style={{ position:"relative",zIndex:1,textAlign:"center",marginBottom:32,maxWidth:440 }}>
+        <div style={{ fontSize:24,fontWeight:700,fontFamily:F.main,background:`linear-gradient(90deg, ${C.white} 0%, ${C.goldLight} 55%, ${C.gold} 100%)`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:1,lineHeight:1.25 }}>Next up is the final Tournament which is Rocket League Worlds</div>
+        <div style={{ fontSize:16,fontWeight:700,fontFamily:F.main,color:"rgba(255,255,255,0.4)",letterSpacing:4,marginTop:10,textTransform:"uppercase" }}>Rocket League Predictor</div>
+        <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:3,marginTop:8,textTransform:"uppercase" }}>Sep 18–20 · Fort Worth, TX · Dickies Arena</div>
       </div>
 
       <div style={{ position:"relative",zIndex:1,background:C.surface,border:"1px solid rgba(255,255,255,0.08)",borderRadius:16,padding:32,width:"100%",maxWidth:400,boxShadow:"0 0 60px rgba(0,0,0,0.25)" }}>
@@ -1615,7 +1615,7 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
         <div style={{ display:"flex",marginBottom:24,background:"rgba(255,255,255,0.04)",borderRadius:10,padding:4 }}>
           {TABS.map(t=>(
             <button key={t.id} onClick={()=>{ setTab(t.id); setRegErrs({}); setRegMsg(null); setLoginErr(""); setAdminErr(""); }}
-              style={{ flex:1,padding:"8px 0",borderRadius:7,border:"none",cursor:"pointer",background:tab===t.id?"rgba(190,158,89,0.15)":"transparent",color:tab===t.id?C.gold:C.muted,fontFamily:F.main,fontWeight:700,fontSize:12,letterSpacing:0.5,transition:"all 0.15s" }}>
+              style={{ flex:1,padding:"8px 0",borderRadius:7,border:"none",cursor:"pointer",background:tab===t.id?"rgba(217,166,83,0.15)":"transparent",color:tab===t.id?C.gold:C.muted,fontFamily:F.main,fontWeight:700,fontSize:12,letterSpacing:0.5,transition:"all 0.15s" }}>
               {t.label}
             </button>
           ))}
@@ -1630,7 +1630,7 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
               <div style={{ position:"relative" }}>
                 <input value={regUser} onChange={e=>{ setRegUser(e.target.value); setRegErrs(v=>({...v,user:null})); }}
                   placeholder="e.g. rocketlord_99" maxLength={20}
-                  style={{ ...inputStyle({ width:"100%", padding:"11px 100px 11px 14px", fontSize:14, boxSizing:"border-box", border:`1px solid ${regErrs.user?"rgba(190,158,89,0.5)":"rgba(255,255,255,0.1)"}` }) }} autoFocus />
+                  style={{ ...inputStyle({ width:"100%", padding:"11px 100px 11px 14px", fontSize:14, boxSizing:"border-box", border:`1px solid ${regErrs.user?"rgba(217,166,83,0.5)":"rgba(255,255,255,0.1)"}` }) }} autoFocus />
                 <div style={{ position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",fontSize:11,fontFamily:F.main,fontWeight:700,pointerEvents:"none",
                   color:avail==="available"?C.green:avail==="taken"?C.red:C.dim }}>
                   {avail==="checking"?"…":avail==="available"?"✓ Available":avail==="taken"?"✗ Taken":""}
@@ -1645,7 +1645,7 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
               <div style={{ position:"relative" }}>
                 <input type={regShowP?"text":"password"} value={regPass} onChange={e=>{ setRegPass(e.target.value); setRegErrs(v=>({...v,pass:null})); }}
                   placeholder="Min 8 characters"
-                  style={{ ...inputStyle({ width:"100%", padding:"11px 40px 11px 14px", fontSize:14, boxSizing:"border-box", border:`1px solid ${regErrs.pass?"rgba(190,158,89,0.5)":"rgba(255,255,255,0.1)"}` }) }} />
+                  style={{ ...inputStyle({ width:"100%", padding:"11px 40px 11px 14px", fontSize:14, boxSizing:"border-box", border:`1px solid ${regErrs.pass?"rgba(217,166,83,0.5)":"rgba(255,255,255,0.1)"}` }) }} />
                 <PwToggle show={regShowP} onToggle={()=>setRegShowP(v=>!v)} />
               </div>
               {regPass&&(
@@ -1665,7 +1665,7 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
               <div style={{ position:"relative" }}>
                 <input type={regShowC?"text":"password"} value={regConfirm} onChange={e=>{ setRegConfirm(e.target.value); setRegErrs(v=>({...v,confirm:null})); }}
                   placeholder="Re-enter password"
-                  style={{ ...inputStyle({ width:"100%", padding:"11px 40px 11px 14px", fontSize:14, boxSizing:"border-box", border:`1px solid ${regErrs.confirm?"rgba(190,158,89,0.5)":"rgba(255,255,255,0.1)"}` }) }} />
+                  style={{ ...inputStyle({ width:"100%", padding:"11px 40px 11px 14px", fontSize:14, boxSizing:"border-box", border:`1px solid ${regErrs.confirm?"rgba(217,166,83,0.5)":"rgba(255,255,255,0.1)"}` }) }} />
                 <PwToggle show={regShowC} onToggle={()=>setRegShowC(v=>!v)} />
               </div>
               <FieldErr msg={regErrs.confirm} />
@@ -1675,7 +1675,7 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
             <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between" }}>
               <span style={{ fontSize:12,color:C.muted,fontFamily:F.main,letterSpacing:0.5 }}>Join a private group?</span>
               <div onClick={()=>setRegGroup(v=>!v)}
-                style={{ width:40,height:22,borderRadius:11,background:regGroup?"rgba(190,158,89,0.3)":"rgba(255,255,255,0.08)",border:`1px solid ${regGroup?"rgba(190,158,89,0.5)":"rgba(255,255,255,0.12)"}`,cursor:"pointer",position:"relative",transition:"all 0.2s",flexShrink:0 }}>
+                style={{ width:40,height:22,borderRadius:11,background:regGroup?"rgba(217,166,83,0.3)":"rgba(255,255,255,0.08)",border:`1px solid ${regGroup?"rgba(217,166,83,0.5)":"rgba(255,255,255,0.12)"}`,cursor:"pointer",position:"relative",transition:"all 0.2s",flexShrink:0 }}>
                 <div style={{ position:"absolute",top:2,left:regGroup?18:2,width:16,height:16,borderRadius:8,background:regGroup?C.red:"rgba(255,255,255,0.35)",transition:"all 0.2s",boxShadow:regGroup?`0 0 6px ${C.red}80`:"none" }} />
               </div>
             </div>
@@ -1687,14 +1687,14 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
                   <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:1,marginBottom:4,textTransform:"uppercase" }}>Group Code</div>
                   <input value={regGCode} onChange={e=>{ setRegGCode(e.target.value); setRegErrs(v=>({...v,gcode:null})); }}
                     placeholder="e.g. squad2026"
-                    style={{ ...inputStyle({ width:"100%", padding:"11px 14px", fontSize:14, boxSizing:"border-box", border:`1px solid ${regErrs.gcode?"rgba(190,158,89,0.5)":"rgba(255,255,255,0.1)"}` }) }} />
+                    style={{ ...inputStyle({ width:"100%", padding:"11px 14px", fontSize:14, boxSizing:"border-box", border:`1px solid ${regErrs.gcode?"rgba(217,166,83,0.5)":"rgba(255,255,255,0.1)"}` }) }} />
                   <FieldErr msg={regErrs.gcode} />
                 </div>
                 <div>
                   <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:1,marginBottom:4,textTransform:"uppercase" }}>Group Password</div>
                   <input type="password" value={regGPass} onChange={e=>{ setRegGPass(e.target.value); setRegErrs(v=>({...v,gpass:null})); }}
                     placeholder="Group password"
-                    style={{ ...inputStyle({ width:"100%", padding:"11px 14px", fontSize:14, boxSizing:"border-box", border:`1px solid ${regErrs.gpass?"rgba(190,158,89,0.5)":"rgba(255,255,255,0.1)"}` }) }} />
+                    style={{ ...inputStyle({ width:"100%", padding:"11px 14px", fontSize:14, boxSizing:"border-box", border:`1px solid ${regErrs.gpass?"rgba(217,166,83,0.5)":"rgba(255,255,255,0.1)"}` }) }} />
                   <FieldErr msg={regErrs.gpass} />
                 </div>
               </>
@@ -1703,7 +1703,7 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
             {regMsg&&<div style={{ fontSize:12,fontFamily:F.main,letterSpacing:0.5,color:regMsg.ok?C.green:C.red }}>{regMsg.ok?"✓":"⚠"} {regMsg.text}</div>}
 
             <button onClick={handleRegister} disabled={regLoading||rlCountdown>0}
-              style={{ padding:"13px 0",background:(regLoading||rlCountdown>0)?"rgba(190,158,89,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#151515",fontWeight:700,fontFamily:F.main,fontSize:14,cursor:(regLoading||rlCountdown>0)?"default":"pointer",letterSpacing:2,textTransform:"uppercase",marginTop:2 }}>
+              style={{ padding:"13px 0",background:(regLoading||rlCountdown>0)?"rgba(217,166,83,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#151515",fontWeight:700,fontFamily:F.main,fontSize:14,cursor:(regLoading||rlCountdown>0)?"default":"pointer",letterSpacing:2,textTransform:"uppercase",marginTop:2 }}>
               {regLoading?"Creating account…":rlCountdown>0?`Wait ${Math.ceil(rlCountdown/60)}m ${rlCountdown%60}s`:"Create Account →"}
             </button>
           </div>
@@ -1732,7 +1732,7 @@ function LoginScreen({ players, onLogin, onAdminLogin, adminHash }) {
             {loginErr&&<div style={{ color:C.red,fontSize:12,fontFamily:F.main,letterSpacing:0.5 }}>⚠ {loginErr}</div>}
 
             <button onClick={handleLogin} disabled={loginLoading}
-              style={{ padding:"13px 0",background:loginLoading?"rgba(190,158,89,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#151515",fontWeight:700,fontFamily:F.main,fontSize:14,cursor:loginLoading?"default":"pointer",letterSpacing:2,textTransform:"uppercase" }}>
+              style={{ padding:"13px 0",background:loginLoading?"rgba(217,166,83,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#151515",fontWeight:700,fontFamily:F.main,fontSize:14,cursor:loginLoading?"default":"pointer",letterSpacing:2,textTransform:"uppercase" }}>
               {loginLoading?"Logging in…":"Let's Predict →"}
             </button>
           </div>
@@ -1766,7 +1766,7 @@ function LoadingScreen() {
   return (
     <div style={{ minHeight:"100vh", background:PAGE_BG, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:20 }}>
       <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap" rel="stylesheet" />
-      <div style={{ fontSize:22,fontWeight:700,fontFamily:F.main,background:`linear-gradient(90deg, ${C.white} 0%, ${C.goldLight} 55%, ${C.gold} 100%)`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:4,textTransform:"uppercase" }}>EWC 2026 · Rocket League</div>
+      <div style={{ fontSize:22,fontWeight:700,fontFamily:F.main,background:`linear-gradient(90deg, ${C.white} 0%, ${C.goldLight} 55%, ${C.gold} 100%)`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:2,textTransform:"uppercase" }}>Rocket League Worlds · Next Up</div>
       <div style={{ width:36,height:36,border:`3px solid rgba(255,255,255,0.08)`,borderTop:`3px solid ${C.red}`,borderRadius:"50%",animation:"spin 0.8s linear infinite" }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <div style={{ color:C.muted,fontSize:11,fontFamily:F.main,letterSpacing:3,textTransform:"uppercase" }}>Loading…</div>
@@ -1781,8 +1781,8 @@ function StandingsRow({ p, i, isMe, groupLabel, predCount, totalMatches, tintMe 
       display:"flex", alignItems:"center", gap:18,
       padding: i===0 ? "18px 20px" : "16px 20px",
       borderTop: i===0 ? "none" : `1px solid ${C.lineSoft}`,
-      background: i===0 ? "linear-gradient(90deg, rgba(200,168,106,0.10), transparent)"
-                : (isMe && tintMe) ? "rgba(91,140,255,0.05)" : "transparent",
+      background: i===0 ? "linear-gradient(90deg, rgba(217,166,83,0.10), transparent)"
+                : (isMe && tintMe) ? "rgba(76,134,255,0.05)" : "transparent",
       borderLeft: (isMe && tintMe) ? `2px solid ${C.blue}` : "2px solid transparent",
     }}>
       <span style={{ ...NUM, width:34, textAlign:"center", fontFamily:F.main, fontWeight:700,
@@ -1792,8 +1792,8 @@ function StandingsRow({ p, i, isMe, groupLabel, predCount, totalMatches, tintMe 
       <div style={{ flex:1, minWidth:0 }}>
         <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
           <span style={{ fontFamily:F.main, fontWeight:700, fontSize: i===0?16:15, color:C.white }}>{p.nickname}</span>
-          {isMe && <Badge text="You" color={C.blue} fill="rgba(91,140,255,0.15)" line="rgba(91,140,255,0.35)" />}
-          {groupLabel && <Badge text={groupLabel} color={C.gold} fill="rgba(200,168,106,0.15)" line="rgba(200,168,106,0.3)" />}
+          {isMe && <Badge text="You" color={C.blue} fill="rgba(76,134,255,0.15)" line="rgba(76,134,255,0.35)" />}
+          {groupLabel && <Badge text={groupLabel} color={C.gold} fill="rgba(217,166,83,0.15)" line="rgba(217,166,83,0.3)" />}
         </div>
         <div style={{ fontSize:11.5, fontFamily:F.body, color:C.muted, marginTop:3 }}>
           {predCount}/{totalMatches} predicted
@@ -1901,7 +1901,7 @@ function MyGroupPage({ myGroup, members, rows, authId, predictions, results, all
               onClick={()=>{ if(!link) return; navigator.clipboard.writeText(link); setCopied(true); setTimeout(()=>setCopied(false),2000); }}
               style={{ flexShrink:0, padding:"8px 14px", borderRadius:5, cursor: link?"pointer":"default",
                        border:`1px solid ${C.gold}`,
-                       background: hoverCopy && link ? C.gold : "rgba(200,168,106,0.14)",
+                       background: hoverCopy && link ? C.gold : "rgba(217,166,83,0.14)",
                        color: hoverCopy && link ? "#151515" : C.goldLight,
                        fontFamily:F.main, fontWeight:700, fontSize:11, letterSpacing:1,
                        textTransform:"uppercase", opacity: link?1:0.4,
@@ -2016,7 +2016,7 @@ function MyGroupPage({ myGroup, members, rows, authId, predictions, results, all
                       );
                     }
                     const sc = pr && rs ? calcScore(pr, rs) : null;
-                    const tint = mine ? (sc===3 ? "rgba(62,207,142,0.07)" : "rgba(91,140,255,0.05)") : "transparent";
+                    const tint = mine ? (sc===3 ? "rgba(62,207,142,0.07)" : "rgba(76,134,255,0.05)") : "transparent";
                     return (
                       <div key={mem.id} style={{ padding:"11px 0", textAlign:"center", background:tint,
                                                  borderBottom: last ? "none" : `1px solid ${C.lineSoft}` }}>
@@ -2045,9 +2045,9 @@ function PlayerChip({ p, selected, points, onClick }) {
       style={{ display:"flex", alignItems:"center", gap:9, padding:"8px 15px 8px 9px", borderRadius:6,
                cursor:"pointer", transition:"background-color 0.12s ease, border-color 0.12s ease",
                border:`1px solid ${selected ? C.gold : hover ? C.lineStrong : C.line}`,
-               background: selected ? "rgba(200,168,106,0.14)" : hover ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)" }}>
+               background: selected ? "rgba(217,166,83,0.14)" : hover ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)" }}>
       <span style={{ width:24, height:24, borderRadius:4, display:"flex", alignItems:"center", justifyContent:"center",
-                     background: selected ? "rgba(200,168,106,0.22)" : "rgba(255,255,255,0.06)",
+                     background: selected ? "rgba(217,166,83,0.22)" : "rgba(255,255,255,0.06)",
                      fontFamily:F.main, fontWeight:700, fontSize:11,
                      color: selected ? C.goldLight : C.muted }}>
         {p.nickname[0].toUpperCase()}
@@ -2065,7 +2065,7 @@ function PickCard({ match, result, pred, now }) {
     ? (pred.score1 != null ? `Predicted ${pred.score1}–${pred.score2}` : `Predicted ${pred.winner}`)
     : "No prediction";
   const border = score===3 ? "1px solid rgba(62,207,142,0.4)"
-               : score===1 ? "1px solid rgba(200,168,106,0.4)"
+               : score===1 ? "1px solid rgba(217,166,83,0.4)"
                : `1px solid ${C.line}`;
   return (
     <div style={{ width:300, background:C.surface, border, borderRadius:5, overflow:"hidden",
@@ -2423,150 +2423,6 @@ function UpNextPage({ matches, predictions, results, playerId, onPredict, now, o
   );
 }
 
-// ─── CHAMPION CELEBRATION ────────────────────────────────────────────────────
-// Fires once the Grand Final result is in. Pure CSS keyframes with custom
-// properties for each particle's vector — no canvas, no dependency, and it
-// stops itself after a few seconds so it never becomes a battery drain.
-
-const FW_COLORS = ["#F2C575", "#C8A86A", "#FF5A1F", "#3ECF8E", "#5B8CFF", "#F4425C", "#FFFFFF"];
-
-function Burst({ left, top, delay, color, size }) {
-  const particles = 14;
-  return (
-    <div style={{ position:"absolute", left:`${left}%`, top:`${top}%`, width:0, height:0 }}>
-      {Array.from({ length: particles }).map((_, i) => {
-        const angle = (i / particles) * Math.PI * 2;
-        const dist  = size * (0.7 + (i % 3) * 0.15);
-        return (
-          <span key={i} style={{
-            position:"absolute", width:4, height:4, borderRadius:"50%", background:color,
-            boxShadow:`0 0 6px ${color}`,
-            "--dx": `${Math.cos(angle) * dist}px`,
-            "--dy": `${Math.sin(angle) * dist}px`,
-            animation:`fwParticle 1.5s ease-out ${delay}s infinite`,
-            opacity:0,
-          }} />
-        );
-      })}
-    </div>
-  );
-}
-
-function Fireworks({ dense }) {
-  // Positions are fixed rather than random so re-renders don't reshuffle them.
-  const bursts = [
-    { left:14, top:22, delay:0.0, size:70 }, { left:82, top:18, delay:0.5, size:85 },
-    { left:48, top:12, delay:1.0, size:60 }, { left:26, top:52, delay:1.6, size:75 },
-    { left:70, top:46, delay:2.1, size:65 }, { left:90, top:66, delay:0.9, size:55 },
-    { left:8,  top:70, delay:1.3, size:60 }, { left:56, top:74, delay:2.5, size:80 },
-  ].slice(0, dense ? 8 : 4);
-  return (
-    <div style={{ position:"absolute", inset:0, overflow:"hidden", pointerEvents:"none", zIndex:0 }}>
-      {bursts.map((b, i) => (
-        <Burst key={i} {...b} color={FW_COLORS[i % FW_COLORS.length]} />
-      ))}
-    </div>
-  );
-}
-
-function ChampionOverlay({ team, topPlayer, myId, onClose }) {
-  const [imgErr, setImgErr] = useState(false);
-  const t = teamStyle(team);
-  const iWon = topPlayer && topPlayer.id === myId;
-  return (
-    <div onClick={onClose} style={{
-      position:"fixed", inset:0, zIndex:400, display:"flex", alignItems:"center", justifyContent:"center",
-      padding:20, background:"rgba(0,0,0,0.82)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)",
-      animation:"champFade 0.4s ease",
-    }}>
-      <Fireworks dense />
-      <div onClick={e=>e.stopPropagation()} style={{
-        position:"relative", zIndex:1, width:"100%", maxWidth:420, textAlign:"center",
-        background:`linear-gradient(160deg, ${t.color}1F 0%, transparent 55%), ${C.surface}`,
-        border:`1px solid rgba(200,168,106,0.45)`, borderTop:`2px solid ${C.gold}`,
-        borderRadius:10, padding:"30px 26px 24px", boxShadow:"0 20px 60px rgba(0,0,0,0.6)",
-        animation:"champIn 0.5s cubic-bezier(0.2,0.9,0.3,1.2)",
-      }}>
-        <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:C.gold, letterSpacing:3, textTransform:"uppercase" }}>
-          Esports World Cup 2026
-        </div>
-
-        <div style={{ margin:"18px auto 14px", width:96, height:96, borderRadius:12,
-                      background:t.bg, border:`2px solid ${t.color}`, display:"flex",
-                      alignItems:"center", justifyContent:"center", overflow:"hidden",
-                      boxShadow:`0 0 30px ${t.color}55` }}>
-          {t.logo && !imgErr
-            ? <img src={t.logo} alt={team} style={{ width:"84%", height:"84%", objectFit:"contain" }} onError={()=>setImgErr(true)} />
-            : <span style={{ fontSize:26, fontWeight:700, color:t.color, fontFamily:F.main }}>{t.abbr}</span>}
-        </div>
-
-        <div style={{ fontSize:11, fontWeight:700, fontFamily:F.main, color:C.muted, letterSpacing:2.5, textTransform:"uppercase" }}>
-          Champions
-        </div>
-        <div style={{ fontSize:28, fontWeight:700, fontFamily:F.main, color:C.goldLight,
-                      letterSpacing:1, textTransform:"uppercase", marginTop:6, lineHeight:1.15 }}>
-          {team}
-        </div>
-
-        {topPlayer && (
-          <div style={{ marginTop:22, paddingTop:18, borderTop:`1px solid ${C.lineSoft}` }}>
-            <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:C.dim, letterSpacing:2, textTransform:"uppercase" }}>
-              {iWon ? "You won the predictor" : "Predictor winner"}
-            </div>
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10, marginTop:8 }}>
-              <span style={{ fontSize:20, fontWeight:700, fontFamily:F.main, color: iWon ? C.blue : C.white, letterSpacing:0.5 }}>
-                {topPlayer.nickname}
-              </span>
-              <span style={{ ...NUM, fontSize:20, fontWeight:700, fontFamily:F.main, color:C.gold }}>
-                {topPlayer.score}<span style={{ fontSize:10, color:C.dim, marginLeft:3, letterSpacing:1 }}>PTS</span>
-              </span>
-            </div>
-          </div>
-        )}
-
-        <button onClick={onClose} style={{
-          marginTop:22, width:"100%", padding:"11px 0", borderRadius:6, border:"none", cursor:"pointer",
-          background:GOLD_GRAD, color:"#151515", fontFamily:F.main, fontWeight:700,
-          fontSize:12, letterSpacing:1.5, textTransform:"uppercase" }}>
-          Close
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// Persistent strip once the overlay has been dismissed, so the result stays
-// visible without the celebration replaying on every visit.
-function ChampionBanner({ team, onReplay }) {
-  const [imgErr, setImgErr] = useState(false);
-  const t = teamStyle(team);
-  return (
-    <div style={{ position:"relative", overflow:"hidden", borderBottom:`1px solid ${C.lineSoft}`,
-                  background:`linear-gradient(90deg, ${t.color}1A 0%, transparent 60%), rgba(0,0,0,0.2)`,
-                  padding:"12px 20px" }}>
-      <Fireworks />
-      <div style={{ position:"relative", zIndex:1, maxWidth:1440, margin:"0 auto",
-                    display:"flex", alignItems:"center", gap:12, flexWrap:"wrap" }}>
-        <div style={{ width:30, height:30, borderRadius:6, background:t.bg, border:`1px solid ${t.color}`,
-                      display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", flexShrink:0 }}>
-          {t.logo && !imgErr
-            ? <img src={t.logo} alt="" style={{ width:"84%", height:"84%", objectFit:"contain" }} onError={()=>setImgErr(true)} />
-            : <span style={{ fontSize:10, fontWeight:700, color:t.color, fontFamily:F.main }}>{t.abbr}</span>}
-        </div>
-        <div style={{ minWidth:0 }}>
-          <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:C.gold, letterSpacing:2, textTransform:"uppercase" }}>Champions</div>
-          <div style={{ fontSize:15, fontWeight:700, fontFamily:F.main, color:C.goldLight, letterSpacing:0.5, textTransform:"uppercase" }}>{team}</div>
-        </div>
-        <button onClick={onReplay} style={{ marginLeft:"auto", padding:"6px 12px", borderRadius:5,
-          border:`1px solid ${C.line}`, background:"rgba(255,255,255,0.03)", color:C.muted,
-          fontFamily:F.main, fontWeight:700, fontSize:10, letterSpacing:1.2, textTransform:"uppercase", cursor:"pointer" }}>
-          Celebrate
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App() {
   const [loading,        setLoading]        = useState(true);
@@ -2584,8 +2440,6 @@ export default function App() {
   const [isAdmin,        setIsAdmin]        = useState(()=>localStorage.getItem("rlcs_admin")==="1");
   const [page,           setPage]           = useState("next");
   const [scheduleFirst,  setScheduleFirst]  = useState(false);
-  // Celebration shows once per device, then collapses to a banner you can replay.
-  const [champSeen,      setChampSeen]      = useState(()=>localStorage.getItem("rlcs_champ_seen")==="1");
   const [filterGroup,    setFilterGroup]    = useState("all");
   const [viewingPlayer,  setViewingPlayer]  = useState(null);
   const [newNick,        setNewNick]        = useState("");
@@ -2894,20 +2748,20 @@ export default function App() {
   return (
     <div style={{ minHeight:"100vh", background:PAGE_BG, backgroundAttachment:"fixed", color:C.white, fontFamily:F.body, position:"relative" }}>
       <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
-      <style>{`::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:#121214}::-webkit-scrollbar-thumb{background:#5c4d31;border-radius:4px}@keyframes ewcPulse{0%,100%{opacity:1}50%{opacity:0.35}}@keyframes fwParticle{0%{transform:translate(0,0) scale(1);opacity:1}70%{opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(0.25);opacity:0}}@keyframes champIn{0%{transform:scale(0.86) translateY(14px);opacity:0}100%{transform:scale(1) translateY(0);opacity:1}}@keyframes champFade{from{opacity:0}to{opacity:1}}@media (prefers-reduced-motion: reduce){[style*="fwParticle"]{animation:none!important;opacity:0!important}[style*="champIn"]{animation:none!important}}`}</style>
+      <style>{`::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:#0A0F1C}::-webkit-scrollbar-thumb{background:#4A3D24;border-radius:4px}@keyframes ewcPulse{0%,100%{opacity:1}50%{opacity:0.35}}`}</style>
 
       {/* HEADER */}
-      <div style={{ position:"sticky",top:0,zIndex:100,background:"rgba(18,18,20,0.94)",backdropFilter:"blur(18px)",WebkitBackdropFilter:"blur(18px)",borderBottom:`1px solid rgba(200,168,106,0.28)`,padding:"14px 20px" }}>
+      <div style={{ position:"sticky",top:0,zIndex:100,background:"rgba(10,15,26,0.94)",backdropFilter:"blur(18px)",WebkitBackdropFilter:"blur(18px)",borderBottom:`1px solid rgba(217,166,83,0.28)`,padding:"14px 20px" }}>
         <div style={{ maxWidth:1440,margin:"0 auto" }}>
           <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexWrap:"wrap",gap:10 }}>
             <div>
-              <div style={{ fontSize:19,fontWeight:700,fontFamily:F.main,color:C.white,letterSpacing:1.5,textTransform:"uppercase" }}>EWC 2026 <span style={{ color:C.gold }}>·</span> Rocket League</div>
-              <div style={{ fontSize:10,color:C.dim,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase",marginTop:3 }}>Aug 12–16 · Riyadh · $1,000,000 · 16 Teams</div>
+              <div style={{ fontSize:19,fontWeight:700,fontFamily:F.main,color:C.white,letterSpacing:1.5,textTransform:"uppercase" }}>Rocket League Worlds <span style={{ color:C.gold }}>·</span> Next Up</div>
+              <div style={{ fontSize:10,color:C.dim,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase",marginTop:3 }}>Sep 18–20 · Fort Worth, TX · Dickies Arena</div>
             </div>
             {/* Profile Pill Dropdown */}
             <div ref={pillRef} style={{ position:"relative" }}>
-              <div onClick={()=>setPillOpen(v=>!v)} style={{ display:"flex",alignItems:"center",gap:8,background:"rgba(255,255,255,0.04)",border:`1px solid ${isAdmin?"rgba(190,158,89,0.4)":"rgba(15,88,244,0.3)"}`,borderRadius:8,padding:"6px 12px",cursor:"pointer",userSelect:"none" }}>
-                <div style={{ width:24,height:24,borderRadius:6,background:isAdmin?`rgba(190,158,89,0.2)`:`rgba(15,88,244,0.15)`,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:12,color:isAdmin?C.red:C.blue,fontFamily:F.main }}>{isAdmin?"A":myPlayer?.nickname[0].toUpperCase()}</div>
+              <div onClick={()=>setPillOpen(v=>!v)} style={{ display:"flex",alignItems:"center",gap:8,background:"rgba(255,255,255,0.04)",border:`1px solid ${isAdmin?"rgba(217,166,83,0.4)":"rgba(76,134,255,0.3)"}`,borderRadius:8,padding:"6px 12px",cursor:"pointer",userSelect:"none" }}>
+                <div style={{ width:24,height:24,borderRadius:6,background:isAdmin?`rgba(217,166,83,0.2)`:`rgba(76,134,255,0.15)`,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:12,color:isAdmin?C.red:C.blue,fontFamily:F.main }}>{isAdmin?"A":myPlayer?.nickname[0].toUpperCase()}</div>
                 <span style={{ fontSize:12,fontFamily:F.main,fontWeight:700,color:isAdmin?C.red:C.white,letterSpacing:1 }}>{isAdmin?"ADMIN":myPlayer?.nickname}</span>
                 <span style={{ fontSize:9,color:C.dim }}>{pillOpen?"▲":"▼"}</span>
               </div>
@@ -2916,7 +2770,7 @@ export default function App() {
                   {/* User info */}
                   <div style={{ padding:"10px 12px",borderBottom:"1px solid rgba(255,255,255,0.06)",marginBottom:6 }}>
                     <div style={{ display:"flex",alignItems:"center",gap:10 }}>
-                      <div style={{ width:36,height:36,borderRadius:8,background:isAdmin?"rgba(190,158,89,0.2)":"rgba(15,88,244,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:16,color:isAdmin?C.red:C.blue,fontFamily:F.main,flexShrink:0 }}>{isAdmin?"A":myPlayer?.nickname[0].toUpperCase()}</div>
+                      <div style={{ width:36,height:36,borderRadius:8,background:isAdmin?"rgba(217,166,83,0.2)":"rgba(76,134,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:16,color:isAdmin?C.red:C.blue,fontFamily:F.main,flexShrink:0 }}>{isAdmin?"A":myPlayer?.nickname[0].toUpperCase()}</div>
                       <div>
                         <div style={{ fontSize:13,fontWeight:700,fontFamily:F.main,color:C.white,letterSpacing:0.5 }}>{isAdmin?"ADMIN":myPlayer?.nickname}</div>
                         {isAdmin
@@ -2925,7 +2779,7 @@ export default function App() {
                         }
                       </div>
                       {!isAdmin&&(
-                        <div style={{ marginLeft:"auto",background:"rgba(15,88,244,0.15)",border:"1px solid rgba(15,88,244,0.3)",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:700,fontFamily:F.main,color:C.blue }}>{getTotalScore(authId)} pts</div>
+                        <div style={{ marginLeft:"auto",background:"rgba(76,134,255,0.15)",border:"1px solid rgba(76,134,255,0.3)",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:700,fontFamily:F.main,color:C.blue }}>{getTotalScore(authId)} pts</div>
                       )}
                     </div>
                   </div>
@@ -2937,7 +2791,7 @@ export default function App() {
                     </button>
                   )}
                   <button onClick={()=>{ setPillOpen(false); logout(); }} style={{ width:"100%",textAlign:"left",display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:"none",border:"none",color:C.red,fontFamily:F.main,fontWeight:600,fontSize:12,cursor:"pointer",borderRadius:7,transition:"background 0.1s" }}
-                    onMouseEnter={e=>e.currentTarget.style.background="rgba(190,158,89,0.08)"} onMouseLeave={e=>e.currentTarget.style.background="none"}>
+                    onMouseEnter={e=>e.currentTarget.style.background="rgba(217,166,83,0.08)"} onMouseLeave={e=>e.currentTarget.style.background="none"}>
                     🚪 Logout
                   </button>
                 </div>
@@ -2946,23 +2800,11 @@ export default function App() {
           </div>
           <div style={{ display:"flex",gap:4,flexWrap:"wrap" }}>
             {NAV.map(n=>(
-              <button key={n.id} onClick={()=>setPage(n.id)} style={{ padding:"7px 14px",borderRadius:"5px 5px 0 0",border:"none",cursor:"pointer",background:page===n.id?"rgba(200,168,106,0.12)":"transparent",color:page===n.id?C.goldLight:C.muted,fontFamily:F.main,fontWeight:700,fontSize:11.5,letterSpacing:1.2,textTransform:"uppercase",borderBottom:page===n.id?`2px solid ${C.gold}`:"2px solid transparent",transition:"background-color 0.12s" }}>{n.label}</button>
+              <button key={n.id} onClick={()=>setPage(n.id)} style={{ padding:"7px 14px",borderRadius:"5px 5px 0 0",border:"none",cursor:"pointer",background:page===n.id?"rgba(217,166,83,0.12)":"transparent",color:page===n.id?C.goldLight:C.muted,fontFamily:F.main,fontWeight:700,fontSize:11.5,letterSpacing:1.2,textTransform:"uppercase",borderBottom:page===n.id?`2px solid ${C.gold}`:"2px solid transparent",transition:"background-color 0.12s" }}>{n.label}</button>
             ))}
           </div>
         </div>
       </div>
-
-      {/* CHAMPION — appears the moment the Grand Final result is set */}
-      {results.p_gf?.winner && (
-        <>
-          <ChampionBanner team={results.p_gf.winner}
-            onReplay={()=>{ localStorage.removeItem("rlcs_champ_seen"); setChampSeen(false); }} />
-          {!champSeen && (
-            <ChampionOverlay team={results.p_gf.winner} topPlayer={leaderboard[0]} myId={authId}
-              onClose={()=>{ localStorage.setItem("rlcs_champ_seen","1"); setChampSeen(true); }} />
-          )}
-        </>
-      )}
 
       {/* MOMENTUM STRIP */}
       {!results.p_gf?.winner && <MomentumStrip now={now} results={results} totalMatches={ALL_MATCHES.length} />}
@@ -3078,7 +2920,7 @@ export default function App() {
                       </div>
                     </div>
                     <div style={{ display:"flex", alignItems:"center", gap:10, marginTop:16, paddingTop:14, borderTop:`1px solid ${C.line}` }}>
-                      <div style={{ width:36, height:36, borderRadius:7, background:"rgba(200,168,106,0.12)", border:`1px solid ${C.gold}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:17, flexShrink:0 }}>🏆</div>
+                      <div style={{ width:36, height:36, borderRadius:7, background:"rgba(217,166,83,0.12)", border:`1px solid ${C.gold}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:17, flexShrink:0 }}>🏆</div>
                       <div>
                         <div style={{ fontSize:9, color:C.dim, fontFamily:F.main, letterSpacing:1.2, textTransform:"uppercase" }}>Top Predictor</div>
                         <div style={{ fontSize:16, fontWeight:700, fontFamily:F.main, color:C.goldLight, letterSpacing:0.5 }}>{h.predictor}</div>
@@ -3102,7 +2944,7 @@ export default function App() {
                 {icon:"🎯",label:"Total Predictions",val:Object.values(predictions).reduce((t,pm)=>t+Object.keys(pm).length,0)},
                 {icon:"✅",label:"Results Set",    val:Object.keys(results).length},
               ].map(({icon,label,val})=>(
-                <div key={label} style={{ background:C.surface,border:"1px solid rgba(190,158,89,0.2)",borderRadius:8,padding:16,flex:1,minWidth:110 }}>
+                <div key={label} style={{ background:C.surface,border:"1px solid rgba(217,166,83,0.2)",borderRadius:8,padding:16,flex:1,minWidth:110 }}>
                   <div style={{ fontSize:28,fontWeight:700,fontFamily:F.main,color:C.white }}>{val}</div>
                   <div style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:1,textTransform:"uppercase",marginTop:4 }}>{icon} {label}</div>
                 </div>
@@ -3112,7 +2954,7 @@ export default function App() {
             {/* Sub-tabs */}
             <div style={{ display:"flex",gap:4,marginBottom:24,background:C.surface,border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:4,flexWrap:"wrap" }}>
               {[{id:"players",label:"👥 Players"},{id:"groups",label:"🏠 Groups"},{id:"bracket",label:"🏆 Bracket"},{id:"results",label:"🎯 Results"},{id:"bonus",label:"⭐ Bonus"},{id:"activity",label:"📊 Activity"}].map(t=>(
-                <button key={t.id} onClick={()=>setAdminTab(t.id)} style={{ flex:1,padding:"9px 0",borderRadius:7,border:"none",cursor:"pointer",background:adminTab===t.id?"rgba(190,158,89,0.12)":"transparent",color:adminTab===t.id?C.gold:C.muted,fontFamily:F.main,fontWeight:700,fontSize:11,transition:"all 0.15s",minWidth:80,letterSpacing:0.5,textTransform:"uppercase" }}>{t.label}</button>
+                <button key={t.id} onClick={()=>setAdminTab(t.id)} style={{ flex:1,padding:"9px 0",borderRadius:7,border:"none",cursor:"pointer",background:adminTab===t.id?"rgba(217,166,83,0.12)":"transparent",color:adminTab===t.id?C.gold:C.muted,fontFamily:F.main,fontWeight:700,fontSize:11,transition:"all 0.15s",minWidth:80,letterSpacing:0.5,textTransform:"uppercase" }}>{t.label}</button>
               ))}
             </div>
 
@@ -3145,11 +2987,11 @@ export default function App() {
                     return (
                       <div key={p.id} style={{ background:C.surface,border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,padding:"10px 14px",marginBottom:8 }}>
                         <div style={{ display:"flex",alignItems:"center",gap:10,flexWrap:"wrap" }}>
-                          <div style={{ width:32,height:32,borderRadius:8,background:"rgba(190,158,89,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:14,color:C.red,fontFamily:F.main,flexShrink:0 }}>{p.nickname[0].toUpperCase()}</div>
+                          <div style={{ width:32,height:32,borderRadius:8,background:"rgba(217,166,83,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:14,color:C.red,fontFamily:F.main,flexShrink:0 }}>{p.nickname[0].toUpperCase()}</div>
                           <div style={{ flex:1,minWidth:120 }}>
                             <div style={{ display:"flex",alignItems:"center",gap:6,flexWrap:"wrap" }}>
                               <span style={{ fontSize:13,fontWeight:700,fontFamily:F.main,color:C.white }}>{p.nickname}</span>
-                              {pGrpObj&&<span style={{ fontSize:9,color:C.purple,background:"rgba(190,158,89,0.15)",padding:"1px 7px",borderRadius:4,border:"1px solid rgba(190,158,89,0.3)",letterSpacing:1,fontFamily:F.main,fontWeight:600 }}>🏠 {pGrpObj.name}</span>}
+                              {pGrpObj&&<span style={{ fontSize:9,color:C.purple,background:"rgba(217,166,83,0.15)",padding:"1px 7px",borderRadius:4,border:"1px solid rgba(217,166,83,0.3)",letterSpacing:1,fontFamily:F.main,fontWeight:600 }}>🏠 {pGrpObj.name}</span>}
                             </div>
                             <div style={{ fontSize:10,color:C.dim,fontFamily:F.main,marginTop:2,display:"flex",gap:10,flexWrap:"wrap",letterSpacing:0.5 }}>
                               <span style={{ color:C.muted }}>{getTotalScore(p.id)} pts</span>
@@ -3175,7 +3017,7 @@ export default function App() {
                                   {groups.filter(g=>g.id!=="public").map(g=><option key={g.id} value={g.id}>{g.name}</option>)}
                                 </select>
                               ):(
-                                <button onClick={()=>setMoveGrpOpen(p.id)} style={{ background:"rgba(190,158,89,0.1)",border:"1px solid rgba(190,158,89,0.25)",borderRadius:6,color:C.purple,fontFamily:F.main,fontWeight:700,fontSize:10,padding:"4px 8px",cursor:"pointer",letterSpacing:0.5 }}>🏠 Group</button>
+                                <button onClick={()=>setMoveGrpOpen(p.id)} style={{ background:"rgba(217,166,83,0.1)",border:"1px solid rgba(217,166,83,0.25)",borderRadius:6,color:C.purple,fontFamily:F.main,fontWeight:700,fontSize:10,padding:"4px 8px",cursor:"pointer",letterSpacing:0.5 }}>🏠 Group</button>
                               )}
                               <button onClick={()=>setEditNick(n=>({...n,[p.id]:p.nickname}))} style={{ background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:6,color:C.muted,fontFamily:F.main,fontWeight:700,fontSize:10,padding:"4px 8px",cursor:"pointer" }}>Rename</button>
                               <button onClick={()=>handleDeletePlayer(p.id)} style={{ background:"rgba(244,15,48,0.1)",border:"1px solid rgba(244,15,48,0.35)",borderRadius:6,color:C.red,fontFamily:F.main,fontWeight:700,fontSize:10,padding:"4px 8px",cursor:"pointer" }}>Delete</button>
@@ -3232,12 +3074,12 @@ export default function App() {
                         </button>
                         {g.invite_token&&(
                           <button onClick={()=>{ navigator.clipboard.writeText(`${INVITE_BASE}/${g.invite_token}`); toast("Invite link copied","success"); }}
-                            style={{ padding:"4px 10px",borderRadius:6,border:"1px solid rgba(190,158,89,0.3)",background:"rgba(190,158,89,0.08)",color:C.purple,fontFamily:F.main,fontWeight:700,fontSize:11,cursor:"pointer",letterSpacing:0.5 }}>
+                            style={{ padding:"4px 10px",borderRadius:6,border:"1px solid rgba(217,166,83,0.3)",background:"rgba(217,166,83,0.08)",color:C.purple,fontFamily:F.main,fontWeight:700,fontSize:11,cursor:"pointer",letterSpacing:0.5 }}>
                             🔗 Link
                           </button>
                         )}
                         <button onClick={()=>{ if(window.confirm(`Regenerate invite link for "${g.name}"?`))handleRegenerateInviteToken(g.id); }}
-                          style={{ padding:"4px 10px",borderRadius:6,border:"1px solid rgba(190,158,89,0.2)",background:"rgba(190,158,89,0.06)",color:C.red,fontFamily:F.main,fontWeight:700,fontSize:11,cursor:"pointer",letterSpacing:0.5 }}>
+                          style={{ padding:"4px 10px",borderRadius:6,border:"1px solid rgba(217,166,83,0.2)",background:"rgba(217,166,83,0.06)",color:C.red,fontFamily:F.main,fontWeight:700,fontSize:11,cursor:"pointer",letterSpacing:0.5 }}>
                           ↻
                         </button>
                         <button onClick={()=>handleDeleteGroup(g.id)}
@@ -3255,7 +3097,7 @@ export default function App() {
                             ? <div style={{ color:C.dim,fontSize:12,fontFamily:F.main }}>No members</div>
                             : <div style={{ display:"flex",flexWrap:"wrap",gap:6 }}>
                                 {members.map(m=>(
-                                  <span key={m.id} style={{ padding:"3px 10px",borderRadius:6,background:"rgba(190,158,89,0.1)",border:"1px solid rgba(190,158,89,0.2)",color:C.white,fontSize:12,fontFamily:F.main }}>
+                                  <span key={m.id} style={{ padding:"3px 10px",borderRadius:6,background:"rgba(217,166,83,0.1)",border:"1px solid rgba(217,166,83,0.2)",color:C.white,fontSize:12,fontFamily:F.main }}>
                                     {m.nickname}
                                   </span>
                                 ))}
@@ -3313,7 +3155,7 @@ export default function App() {
                       padding:"6px 14px",borderRadius:6,border:`1px solid ${filterGroup===g?"transparent":"rgba(255,255,255,0.1)"}`,cursor:"pointer",fontFamily:F.main,fontWeight:700,fontSize:12,letterSpacing:1,textTransform:"uppercase",transition:"all 0.15s",
                       background:filterGroup===g?C.red:"rgba(255,255,255,0.04)",
                       color:filterGroup===g?C.white:"#8C8C8C",
-                      boxShadow:filterGroup===g?"0 0 12px rgba(190,158,89,0.4)":"none",
+                      boxShadow:filterGroup===g?"0 0 12px rgba(217,166,83,0.4)":"none",
                     }}>
                       {g==="all"?"All":g==="Playoffs"?"Playoffs":`Group ${g}`}
                     </button>
@@ -3346,7 +3188,7 @@ export default function App() {
                       const nick=pred.players?.nickname||"Unknown";
                       return (
                         <div key={i} style={{ display:"flex",gap:10,alignItems:"flex-start",padding:"9px 12px",marginBottom:6,borderRadius:8,background:C.surface,borderLeft:`3px solid ${C.blue}` }}>
-                          <div style={{ width:28,height:28,borderRadius:6,background:"rgba(15,88,244,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:12,color:C.blue,fontFamily:F.main,flexShrink:0 }}>{nick[0].toUpperCase()}</div>
+                          <div style={{ width:28,height:28,borderRadius:6,background:"rgba(76,134,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:12,color:C.blue,fontFamily:F.main,flexShrink:0 }}>{nick[0].toUpperCase()}</div>
                           <div style={{ flex:1,minWidth:0 }}>
                             <div style={{ fontSize:12,fontWeight:700,fontFamily:F.main,color:C.white }}>{nick}</div>
                             <div style={{ fontSize:11,color:C.muted,fontFamily:F.body,marginTop:1 }}>
@@ -3414,7 +3256,7 @@ export default function App() {
       {/* JOIN GROUP MODAL — triggered by invite link */}
       {joinGroup&&authId&&(
         <div onClick={()=>{ if(!joinLoading){ setJoinGroup(null); setPendingJoinToken(null); sessionStorage.removeItem("rlcs_pending_join"); }}} style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:210,display:"flex",alignItems:"center",justifyContent:"center",padding:20 }}>
-          <div onClick={e=>e.stopPropagation()} style={{ background:C.surface,border:"1px solid rgba(190,158,89,0.35)",borderRadius:16,padding:32,width:"100%",maxWidth:360,boxShadow:"0 0 60px rgba(190,158,89,0.15)",textAlign:"center" }}>
+          <div onClick={e=>e.stopPropagation()} style={{ background:C.surface,border:"1px solid rgba(217,166,83,0.35)",borderRadius:16,padding:32,width:"100%",maxWidth:360,boxShadow:"0 0 60px rgba(217,166,83,0.15)",textAlign:"center" }}>
             <div style={{ fontSize:36,marginBottom:12 }}>🏠</div>
             <div style={{ fontSize:18,fontWeight:700,fontFamily:F.main,color:C.white,letterSpacing:2,textTransform:"uppercase",marginBottom:8 }}>Join Group?</div>
             <div style={{ fontSize:15,color:C.muted,fontFamily:F.body,marginBottom:6 }}>
@@ -3436,7 +3278,7 @@ export default function App() {
               </button>
               {(!myGroup||myGroup.id!==joinGroup.id)&&(
                 <button onClick={handleJoinByToken} disabled={joinLoading}
-                  style={{ flex:2,padding:"11px 0",background:joinLoading?"rgba(190,158,89,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#151515",fontFamily:F.main,fontWeight:700,fontSize:13,cursor:joinLoading?"default":"pointer",letterSpacing:1,textTransform:"uppercase" }}>
+                  style={{ flex:2,padding:"11px 0",background:joinLoading?"rgba(217,166,83,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#151515",fontFamily:F.main,fontWeight:700,fontSize:13,cursor:joinLoading?"default":"pointer",letterSpacing:1,textTransform:"uppercase" }}>
                   {joinLoading?"Joining…":"Join Group →"}
                 </button>
               )}
@@ -3475,7 +3317,7 @@ export default function App() {
                 <button onClick={()=>setChangeGroupModal(false)} style={{ flex:1,padding:"10px 0",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,color:C.muted,fontFamily:F.main,fontWeight:700,fontSize:13,cursor:"pointer",letterSpacing:1 }}>
                   Cancel
                 </button>
-                <button onClick={handleChangeGroup} disabled={cgLoading} style={{ flex:2,padding:"10px 0",background:cgLoading?"rgba(190,158,89,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#151515",fontFamily:F.main,fontWeight:700,fontSize:13,cursor:cgLoading?"default":"pointer",letterSpacing:1,textTransform:"uppercase" }}>
+                <button onClick={handleChangeGroup} disabled={cgLoading} style={{ flex:2,padding:"10px 0",background:cgLoading?"rgba(217,166,83,0.4)":GOLD_GRAD,border:"none",borderRadius:8,color:"#151515",fontFamily:F.main,fontWeight:700,fontSize:13,cursor:cgLoading?"default":"pointer",letterSpacing:1,textTransform:"uppercase" }}>
                   {cgLoading?"Joining…":"Join Group →"}
                 </button>
               </div>
@@ -3495,8 +3337,8 @@ export default function App() {
       </div>
 
       {/* FOOTER */}
-      <div style={{ position:"relative",zIndex:1,borderTop:`1px solid rgba(190,158,89,0.2)`,padding:16,textAlign:"center",fontSize:10,color:"rgba(255,255,255,0.15)",fontFamily:F.main,letterSpacing:2,textTransform:"uppercase" }}>
-        EWC 2026 Rocket League Predictor · Live Sync by Supabase
+      <div style={{ position:"relative",zIndex:1,borderTop:`1px solid rgba(217,166,83,0.2)`,padding:16,textAlign:"center",fontSize:10,color:"rgba(255,255,255,0.15)",fontFamily:F.main,letterSpacing:2,textTransform:"uppercase" }}>
+        Rocket League Worlds Predictor · Live Sync by Supabase
       </div>
     </div>
   );
