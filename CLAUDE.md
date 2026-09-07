@@ -1,6 +1,6 @@
 # RLCS Predictor — Developer Reference
 
-A single-page React app that lets a friend group predict match scores for Rocket League esports tournaments. Currently configured for the **Esports World Cup 2026** (Aug 12–16, Riyadh). All state lives in Supabase with realtime push to every connected browser. No build-step routing — everything is in one file (`src/App.jsx`).
+A single-page React app that lets a friend group predict match scores for Rocket League esports tournaments. Currently configured for the **RLCS World Championship 2026** (Sep 15–20, Fort Worth, TX). All state lives in Supabase with realtime push to every connected browser. No build-step routing — everything is in one file (`src/App.jsx`).
 
 ---
 
@@ -42,8 +42,9 @@ rlcs-predictor/
 | `TeamBadge`       | Renders team logo + name with team-color border                         |
 | `BracketCard`     | Compact match card used in all bracket grids                            |
 | `PredictPanel`    | Score-entry + winner-button panel shown below a selected bracket card   |
-| `GroupStagePage`  | Group A/B double-elim mini-brackets + a by-day Schedule list view       |
-| `PlayoffsPage`    | Single-elim playoff bracket: QF → SF → GF, plus 3rd-place match        |
+| `PlayInsPage`     | Single 8-team double-elim bracket (Bracket view) + Schedule list view    |
+| `GroupStagePage`  | Group A/B/C/D round-robin standings tables + per-group Schedule list     |
+| `PlayoffsPage`    | 12-team double-elim bracket: UB QF, LB R1→R2→QF, Semis, Grand Final     |
 | `MatchCard`       | List-style match card with prediction inputs and admin result setter    |
 | `BonusPointsPanel`| Admin UI to add/delete bonus/penalty point entries                      |
 | `BracketEditor`   | Admin UI to set team names for every group + playoff slot (datalist suggestions) |
@@ -109,7 +110,7 @@ Push to `main` → Vercel auto-deploys. Set `VITE_SUPABASE_URL` and `VITE_SUPABA
 | Column       | Type        | Notes                                   |
 |--------------|-------------|-----------------------------------------|
 | `player_id`  | text        | FK → players.id                         |
-| `match_id`   | text        | e.g. `a_ubqf1`, `p_gf` (see Match IDs) |
+| `match_id`   | text        | e.g. `pi_ubqf1`, `ga_m3`, `p_gf` (see Match IDs) |
 | `winner`     | text        | Full team name string                   |
 | `score1`     | int4        | Team 1 score (nullable if only winner picked) |
 | `score2`     | int4        | Team 2 score (nullable)                 |
@@ -142,7 +143,7 @@ Primary key: `(player_id, match_id)` — upserted on conflict.
 | `team1`    | text  | Team name or `"TBD"`                     |
 | `team2`    | text  | Team name or `"TBD"`                     |
 
-Upserted on conflict when admin saves bracket team names. Overrides the hardcoded `DEFAULT_GROUP_MATCHES` **and** `DEFAULT_PLAYOFF` constants at runtime — group-stage progression matches (LB rounds, UB semis) are TBD until the admin fills them in.
+Upserted on conflict when admin saves bracket team names. Overrides the hardcoded `DEFAULT_PLAYINS`, `DEFAULT_GROUPS`, **and** `DEFAULT_PLAYOFF` constants at runtime — Play-in progression matches, the Group Stage draw, and the Playoffs seeding are all TBD until the admin fills them in.
 
 ### `app_settings`
 | Column  | Type | Notes                                        |
@@ -169,37 +170,37 @@ Private groups: join at registration, via invite link (`/join/{uuid}`), or the C
 
 ---
 
-## Current Tournament — EWC 2026 (Rocket League)
+## Current Tournament — RLCS World Championship 2026 (Rocket League)
 
 ```
-EWC 2026 · ROCKET LEAGUE
-AUG 12–16 · RIYADH · $1,000,000 · 16 TEAMS
+ROCKET LEAGUE WORLDS
+SEP 15–20 · FORT WORTH, TX · DICKIES ARENA · $1,200,000 · 20 TEAMS
 ```
 
-All match times stored as UTC, displayed in **KSA time (UTC+3, Asia/Riyadh)** via `fmtTime`. Lock time = startTime − 5 min (derived from `LOCK_LEAD_MIN`, never stored).
+Sourced from [blast.tv](https://blast.tv/rl/tournaments/rlcs-world-championship-2026) (Liquipedia blocks automated fetches with a Cloudflare CAPTCHA). All match times stored as UTC, displayed in **KSA time (UTC+3, Asia/Riyadh)** via `fmtTime` — an app-wide holdover from EWC, unrelated to this tournament's actual venue. Lock time = startTime − 5 min (derived from `LOCK_LEAD_MIN`, never stored).
 
-### Format
-- **Group stage (Aug 12–14, all Bo5):** two groups of 8, each a **double-elimination bracket**:
-  - UB Quarter Finals (4) → UB Semi Finals (2, winners qualify)
-  - LB Round 1 (2, UB QF losers; losers eliminated) → LB Round 2 (2, vs UB SF losers; winners qualify)
-  - Top 4 per group advance.
-- **Playoffs (Aug 15–16, all Bo7):** single-elim 8-team bracket — QF ×4 (Aug 15), SF ×2, 3rd-place match, Grand Final (Aug 16).
+### Format — three stages
+1. **Play-ins (Sep 15, Bo5):** 8 teams, one double-elim bracket (UB QF ×4 → UB SF ×2 + LB R1 ×2 → LB R2 ×2). The 2 UB SF winners + 2 LB R2 winners (4 total) advance to the Group Stage; everyone else is eliminated (17th–20th).
+2. **Group Stage (Sep 16–17, Bo5):** the 4 Play-in survivors join the 12 teams that qualified directly, split into **4 groups of 4** playing a **single round robin** (6 matches/group, no elimination). 1st place per group advances to the Playoffs Upper Bracket; 2nd/3rd advance to the Lower Bracket; 4th is eliminated (13th–16th). **The draw hasn't happened yet — group assignments are TBD until Play-ins conclude**, so `DEFAULT_GROUPS` ships as 24 fully-TBD slots for the admin to fill in via the Bracket editor.
+3. **Playoffs (Sep 18–20, Bo7):** 12 teams, double-elim — 4 UB byes (group winners) start at UB Quarter Final; 8 LB entrants (group runners-up) start at LB Round 1 → LB Round 2 → LB Quarter Final (merging with UB QF losers) → Semi Finals (merging with UB QF winners) → Grand Final.
 
-### Groups
-- **Group A:** Twisted Minds, FUT Esports, Shopify Rebellion, Ninjas in Pyjamas, Vitality, FURIA Esports, NRG Esports, TSM
-- **Group B:** Karmine Corp, Wildcard, MIBR, Spacestation Gaming, R8 Esports, Team Falcons, Gentle Mates, Five Fears
+### Teams (20)
+- **Direct to Group Stage (12):** Karmine Corp, Gentle Mates, Vitality, Ninjas in Pyjamas, Manchester City (EU) · NRG Esports, Shopify Rebellion, Spacestation Gaming (NA) · MIBR, FURIA Esports (SAM) · Twisted Minds (MENA) · Wildcard (OCE)
+- **Play-ins (8):** Virtus.Pro vs Bigodes · Five Fears vs Mate y Tapa · Team Falcons vs FUT Esports · TSM vs R8 Esports (UB Quarter Finals, Sep 15)
 
-Day 1 (Aug 12) times are confirmed (from blast.tv + @ZEEZ0_rl); day 2–5 times are estimates on the correct days.
+Play-in Day 1 matchups + times are confirmed (blast.tv). Group Stage times (Sep 16–17) are rough placeholders — blast.tv hasn't published exact times either, only the day pairing. Playoff bracket wiring (who plays whom beyond "group winners" / "runners-up") is this app's best reconstruction from blast.tv's schedule + prize-tier breakdown, not an official bracket graphic — expect to adjust it once seeding is announced after groups conclude.
 
 ### Match IDs
-- Group stage: `{a|b}_{ubqf1..4 | ubsf1..2 | lbr1m1..2 | lbr2m1..2}` — e.g. `a_ubqf1`, `b_lbr2m2`
-- Playoffs: `p_qf1..4`, `p_sf1`, `p_sf2`, `p_3rd`, `p_gf`
+- Play-ins: `pi_{ubqf1..4 | ubsf1..2 | lbr1m1..2 | lbr2m1..2}` — e.g. `pi_ubqf1`, `pi_lbr2m2`
+- Group Stage: `g{a|b|c|d}_m{1..6}` — e.g. `ga_m1`, `gd_m6`
+- Playoffs: `p_ubqf1..2`, `p_lbr1m1..4`, `p_lbr2m1..2`, `p_lbqf1..2`, `p_sf1..2`, `p_gf`
 
 ### Key constants (top of App.jsx)
-- `TEAMS` — 16 team entries `{ abbr, color, bg, logo }`; logos in `public/logos/`.
-- `DEFAULT_GROUP_MATCHES` — 20 group matches with `{ id, group, round, label, team1, team2, startTime, bo:5 }`. TBD progression slots.
-- `DEFAULT_PLAYOFF` — 8 playoff matches, `bo:7`, all TBD.
-- Both arrays live in state (`groupMatches` / `playoffMatches`) and get team-name overrides from `bracket_teams`.
+- `TEAMS` — 20 team entries `{ abbr, color, bg, logo }`; logos in `public/logos/` (4 newly-qualified teams have `logo:null` and fall back to the abbr badge).
+- `DEFAULT_PLAYINS` — 10 matches, `bo:5`, TBD progression slots past UB QF.
+- `DEFAULT_GROUPS` — 24 matches (4 groups × 6), `bo:5`, all TBD (no draw yet).
+- `DEFAULT_PLAYOFF` — 13 matches, `bo:7`, all TBD (no seeding yet).
+- All three arrays live in state (`playInMatches` / `groupMatches` / `playoffMatches`) and get team-name overrides from `bracket_teams`. `groupAdvancement(g)` generates the Play-in routing (reused from EWC's per-group shape); `playoffAdvancement` is the new 12-team routing.
 - `maxWins(m)` — score input cap: Bo5 → 3, Bo7 → 4.
 
 ---
@@ -215,13 +216,13 @@ Calculated by `calcScore(pred, result)`:
 | Wrong winner          | **0 pts** |
 | No prediction         | **0 pts** |
 
-Total score = prediction points across all 28 matches + sum of `bonus_points.amount`.
+Total score = prediction points across all 47 matches (10 Play-in + 24 Group Stage + 13 Playoffs) + sum of `bonus_points.amount`.
 
 ---
 
 ## Realtime Sync
 
-A single Supabase channel `"rlcs-live"` subscribes to `postgres_changes` on: `players`, `predictions`, `results`, `bonus_points`, `bracket_teams` (updates **both** groupMatches and playoffMatches), `groups`, `app_settings`.
+A single Supabase channel `"rlcs-live"` subscribes to `postgres_changes` on: `players`, `predictions`, `results`, `bonus_points`, `bracket_teams` (updates **all three** of playInMatches, groupMatches, and playoffMatches), `groups`, `app_settings`.
 
 **Critical quirk:** The predictions listener skips events where `p.player_id === myIdRef.current` to avoid the realtime echo clobbering the user's optimistic local update. `myIdRef` is a ref so the subscription closure always sees the current value.
 
@@ -242,11 +243,13 @@ A single Supabase channel `"rlcs-live"` subscribes to `postgres_changes` on: `pl
 
 | Page          | Key          | Description                                                |
 |---------------|--------------|------------------------------------------------------------|
-| Group Stage   | `predict`    | Group A/B double-elim brackets (click card → PredictPanel) + Schedule view (by-day MatchCard list) |
-| Playoffs      | `playoffs`   | Single-elim bracket QF→SF→GF + 3rd-place match            |
+| Play-Ins      | `playins`    | Single 8-team double-elim bracket (click card → PredictPanel) + Schedule view |
+| Group Stage   | `predict`    | Group A/B/C/D tabs — standings table (computed from results) + round-robin Schedule list |
+| Playoffs      | `playoffs`   | 12-team double-elim bracket: UB QF, LB R1→R2→QF, Semis, Grand Final |
 | My Group      | `mygroup`    | Only for private-group members: group standings, breakdown, members' picks, invite link |
 | Standings     | `leaderboard`| Ranked list + (admin) match-by-match breakdown table       |
 | Others' Picks | `others`     | View any player's predictions (locked matches only)        |
+| Hall of Fame  | `halloffame` | Past events' champions + top predictors (static list)      |
 | Admin         | `admin`      | Six sub-tabs: Players, Groups, Bracket, Results, Bonus, Activity |
 
 ---
@@ -254,7 +257,7 @@ A single Supabase channel `"rlcs-live"` subscribes to `postgres_changes` on: `pl
 ## How to Update for a New Tournament
 
 1. **Teams** — edit `TEAMS`; drop logo PNGs in `public/logos/`.
-2. **Matches** — replace `DEFAULT_GROUP_MATCHES` and `DEFAULT_PLAYOFF` (keep unique IDs; `group`/`round` drive the bracket layouts — if the format changes, `GroupStagePage`/`PlayoffsPage` layouts need matching edits).
+2. **Matches** — replace `DEFAULT_PLAYINS`, `DEFAULT_GROUPS`, and `DEFAULT_PLAYOFF` (keep unique IDs; `group`/`round` drive the bracket layouts — if the format changes, `PlayInsPage`/`GroupStagePage`/`PlayoffsPage` layouts need matching edits, and `ADVANCEMENT` needs matching win/lose routing for any elimination stage).
 3. **UI strings** — search App.jsx for the tournament name/dates/venue/prize (header, LoginScreen, LoadingScreen, footer).
 4. **Reset Supabase data:**
    ```sql
