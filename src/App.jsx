@@ -783,15 +783,25 @@ function BracketBanner({ text, color }) {
   );
 }
 
-function QualifyTag({ settled }) {
+// Shows which team actually qualified, not just that the slot is done — the
+// winner deserves the same visible name-propagation the loser already gets
+// by dropping into the next round's card.
+function QualifyTag({ team }) {
+  const settled = !isTBDTeam(team);
   return (
     <div style={{ border:`1px dashed ${settled ? "rgba(217,166,83,0.4)" : C.lineSoft}`, borderRadius:4,
                   padding:"8px 10px", textAlign:"center", width:"100%",
                   background: settled ? "rgba(217,166,83,0.05)" : "transparent" }}>
-      <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color: settled ? C.gold : C.dimmer,
+      <div style={{ fontSize:8, fontWeight:700, fontFamily:F.main, color: settled ? C.gold : C.dimmer,
                     letterSpacing:1.2, textTransform:"uppercase", whiteSpace:"nowrap" }}>
         {settled ? "Qualified" : "Pending"}
       </div>
+      {settled && (
+        <div style={{ fontSize:11, fontWeight:700, fontFamily:F.main, color:C.goldLight, marginTop:3,
+                      whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+          {team}
+        </div>
+      )}
     </div>
   );
 }
@@ -849,7 +859,7 @@ function PlayInsPage({ playInMatches, predictions, results, playerId, onPredict,
               </RoundCol>
               <LineCol count={2} />
               <RoundCol label="Advance" w={QUALIFY_W}>
-                {ubsf.map(m => <Slot key={m.id}><QualifyTag settled={!!results[m.id]} /></Slot>)}
+                {ubsf.map(m => <Slot key={m.id}><QualifyTag team={results[m.id]?.winner} /></Slot>)}
               </RoundCol>
             </div>
           </div>
@@ -868,7 +878,7 @@ function PlayInsPage({ playInMatches, predictions, results, playerId, onPredict,
               </RoundCol>
               <LineCol count={2} />
               <RoundCol label="Advance" w={QUALIFY_W}>
-                {lbr2.map(m => <Slot key={m.id}><QualifyTag settled={!!results[m.id]} /></Slot>)}
+                {lbr2.map(m => <Slot key={m.id}><QualifyTag team={results[m.id]?.winner} /></Slot>)}
               </RoundCol>
             </div>
           </div>
@@ -1157,7 +1167,7 @@ function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredic
           </RoundCol>
           <LineCol count={2} />
           <RoundCol label="Advance" w={QUALIFY_W}>
-            {ubqf.map(m => <Slot key={m.id}><QualifyTag settled={!!results[m.id]} /></Slot>)}
+            {ubqf.map(m => <Slot key={m.id}><QualifyTag team={results[m.id]?.winner} /></Slot>)}
           </RoundCol>
         </div>
       </div>
@@ -1180,7 +1190,7 @@ function PlayoffsPage({ playoffMatches, predictions, results, playerId, onPredic
           </RoundCol>
           <LineCol count={2} />
           <RoundCol label="Advance" w={QUALIFY_W}>
-            {lbqf.map(m => <Slot key={m.id}><QualifyTag settled={!!results[m.id]} /></Slot>)}
+            {lbqf.map(m => <Slot key={m.id}><QualifyTag team={results[m.id]?.winner} /></Slot>)}
           </RoundCol>
         </div>
       </div>
