@@ -97,9 +97,12 @@ const TEAMS = {
   "Spacestation Gaming": { abbr:"SSG",  color:"#F5A623", bg:"#1a1000", logo:"/logos/spacestation.png" },
   "R8 Esports":          { abbr:"R8",   color:"#00BFFF", bg:"#001520", logo:"/logos/r8.png" },
   "FURIA Esports":       { abbr:"FUR",  color:"#FFFFFF", bg:"#0a0a0a", logo:"/logos/furia.png" },
-  // Newly qualified for the World Championship — no local logo yet, falls back to the abbr badge.
-  "Manchester City":     { abbr:"MCFC", color:"#6CABDD", bg:"#0a1f33", logo:null },
-  "Virtus.Pro":          { abbr:"VP",   color:"#FF4500", bg:"#1a0d00", logo:null },
+  // Newly qualified for the World Championship.
+  "Manchester City":     { abbr:"MCFC", color:"#6CABDD", bg:"#0a1f33", logo:"/logos/manchester-city.png" },
+  "Virtus.Pro":          { abbr:"VP",   color:"#FF4500", bg:"#1a0d00", logo:"/logos/virtus-pro.png" },
+  // Mate y Tapa and Bigodes are EU/SAM LCQ-winner teams with no published logo yet —
+  // even Liquipedia's own infobox falls back to its "TeamImageMissing" placeholder for
+  // both, so this stays null rather than showing a fake/generic badge as their logo.
   "Mate y Tapa":         { abbr:"MYT",  color:"#4CAF50", bg:"#08140a", logo:null },
   "Bigodes":             { abbr:"BIG",  color:"#9B59B6", bg:"#160a1a", logo:null },
 };
@@ -640,26 +643,27 @@ function PredictPanel({ match, result, pred, onPredict, onClose }) {
 // current day pulsing, plus a progress line. Everything is derived from match
 // data and the shared clock — no new state.
 const EVENT_DAYS = [
-  { d: 12, label: "Aug 12", stage: "Group Stage" },
-  { d: 13, label: "Aug 13", stage: "Group Stage" },
-  { d: 14, label: "Aug 14", stage: "Group Stage" },
-  { d: 15, label: "Aug 15", stage: "Playoffs" },
-  { d: 16, label: "Aug 16", stage: "Playoffs" },
+  { d: 15, label: "Sep 15", stage: "Play-Ins" },
+  { d: 16, label: "Sep 16", stage: "Group Stage" },
+  { d: 17, label: "Sep 17", stage: "Group Stage" },
+  { d: 18, label: "Sep 18", stage: "Playoffs" },
+  { d: 19, label: "Sep 19", stage: "Playoffs" },
+  { d: 20, label: "Sep 20", stage: "Playoffs" },
 ];
 
 function MomentumStrip({ now, results, totalMatches }) {
   // Which tournament day are we on, in KSA terms?
   const ksaDay = Number(new Date(now).toLocaleDateString("en-US", { timeZone:"Asia/Riyadh", day:"numeric" }));
   const ksaMonth = Number(new Date(now).toLocaleDateString("en-US", { timeZone:"Asia/Riyadh", month:"numeric" }));
-  const beforeEvent = ksaMonth < 8 || (ksaMonth === 8 && ksaDay < 12);
-  const afterEvent  = ksaMonth > 8 || (ksaMonth === 8 && ksaDay > 16);
+  const beforeEvent = ksaMonth < 9 || (ksaMonth === 9 && ksaDay < 15);
+  const afterEvent  = ksaMonth > 9 || (ksaMonth === 9 && ksaDay > 20);
   const currentIdx  = beforeEvent ? -1 : afterEvent ? EVENT_DAYS.length : EVENT_DAYS.findIndex(x => x.d === ksaDay);
 
   const decided = Object.keys(results).length;
   const stage   = currentIdx >= 0 && currentIdx < EVENT_DAYS.length ? EVENT_DAYS[currentIdx].stage : null;
 
   const statusLine = beforeEvent
-    ? <>Starts <span style={{ color:C.white, fontWeight:600 }}>Aug 12</span> — {totalMatches} matches to predict</>
+    ? <>Starts <span style={{ color:C.white, fontWeight:600 }}>Sep 15</span> — {totalMatches} matches to predict</>
     : afterEvent
       ? <>Tournament complete — <span style={{ color:C.white, fontWeight:600 }}>{decided} of {totalMatches}</span> matches decided</>
       : <>Day {currentIdx+1} of {EVENT_DAYS.length} · <span style={{ color:C.white, fontWeight:600 }}>{stage}</span> — {decided} of {totalMatches} matches decided</>;
