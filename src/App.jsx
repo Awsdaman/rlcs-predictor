@@ -105,6 +105,14 @@ const TEAMS = {
   // both, so this stays null rather than showing a fake/generic badge as their logo.
   "Mate y Tapa":         { abbr:"MYT",  color:"#4CAF50", bg:"#08140a", logo:null },
   "Bigodes":             { abbr:"BIG",  color:"#9B59B6", bg:"#160a1a", logo:null },
+  // Worlds side-event entrants. Player/duo names use the badge fallback when
+  // they are not represented by an existing 3v3 organization.
+  "Nwpo":                { abbr:"NWP",  color:"#FF3D6E", bg:"#1a0010", logo:null },
+  "nass":                { abbr:"NAS",  color:"#FF6B35", bg:"#1a0800", logo:null },
+  "diaz":                { abbr:"DIA",  color:"#F5A623", bg:"#1a1000", logo:null },
+  "kv1":                 { abbr:"KV1",  color:"#54C571", bg:"#07170d", logo:null },
+  "No Miss Just Fake":   { abbr:"NMJF", color:"#9B7CFF", bg:"#120d24", logo:null },
+  "Backyardigans":       { abbr:"BYG",  color:"#FFB347", bg:"#1a1004", logo:null },
 };
 
 // ─── PLAY-INS — 8 teams, one mini double-elim bracket, all Bo5 ───────────────
@@ -159,7 +167,21 @@ const DEFAULT_PLAYOFF = [
   { id:"p_gf",     round:"GF",   label:"GRAND FINAL",        team1:"TBD", team2:"TBD", startTime:"2026-09-20T16:00:00Z", bo:7 },
 ];
 
-const ALL_MATCHES = [...DEFAULT_PLAYINS, ...DEFAULT_GROUPS, ...DEFAULT_PLAYOFF];
+// Exact side-event times are not published yet. `timeTbd` keeps predictions
+// open and makes every time surface say "Time TBD" instead of inventing one.
+const DEFAULT_1V1 = [
+  { id:"1v1_sf1", round:"SF", label:"SEMI FINAL 1", team1:"Nwpo", team2:"kv1", startTime:"2026-09-16T12:00:00Z", timeTbd:true, bo:7 },
+  { id:"1v1_sf2", round:"SF", label:"SEMI FINAL 2", team1:"nass", team2:"diaz", startTime:"2026-09-16T12:00:00Z", timeTbd:true, bo:7 },
+  { id:"1v1_gf",  round:"GF", label:"GRAND FINAL",  team1:"TBD", team2:"TBD", startTime:"2026-09-18T12:00:00Z", timeTbd:true, bo:7 },
+];
+
+const DEFAULT_2V2 = [
+  { id:"2v2_sf1", round:"SF", label:"SEMI FINAL 1", team1:"Team Falcons",        team2:"Backyardigans",         startTime:"2026-09-17T12:00:00Z", timeTbd:true, bo:7 },
+  { id:"2v2_sf2", round:"SF", label:"SEMI FINAL 2", team1:"No Miss Just Fake", team2:"Spacestation Gaming", startTime:"2026-09-17T12:00:00Z", timeTbd:true, bo:7 },
+  { id:"2v2_gf",  round:"GF", label:"GRAND FINAL",  team1:"TBD", team2:"TBD", startTime:"2026-09-19T12:00:00Z", timeTbd:true, bo:7 },
+];
+
+const ALL_MATCHES = [...DEFAULT_PLAYINS, ...DEFAULT_GROUPS, ...DEFAULT_1V1, ...DEFAULT_2V2, ...DEFAULT_PLAYOFF];
 
 // ─── HALL OF FAME — champions & top predictors of past events ───────────────
 const HALL_OF_FAME = [
@@ -209,6 +231,10 @@ const playoffAdvancement = {
 
 const ADVANCEMENT = {
   ...groupAdvancement("pi"),
+  "1v1_sf1": { win:["1v1_gf",1] },
+  "1v1_sf2": { win:["1v1_gf",2] },
+  "2v2_sf1": { win:["2v2_gf",1] },
+  "2v2_sf2": { win:["2v2_gf",2] },
   ...playoffAdvancement,
 };
 
@@ -281,13 +307,19 @@ const LOCK_LEAD_MIN = 5;
 // A match may override the lead with `lockLeadMin`. Negative values push the
 // lock past kickoff, which is how a match gets reopened after the fact.
 const getLockTime = (m) => new Date(new Date(m.startTime).getTime() - (m.lockLeadMin ?? LOCK_LEAD_MIN) * 60 * 1000);
-const isLocked    = (m, now) => (now !== undefined ? now : Date.now()) >= getLockTime(m).getTime();
+const isLocked    = (m, now) => !m.timeTbd && (now !== undefined ? now : Date.now()) >= getLockTime(m).getTime();
 const fmtTime     = (iso) => new Date(iso).toLocaleString("en-US", { timeZone:"Asia/Riyadh", month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" });
+const fmtMatchTime = (m) => m.timeTbd ? "Time TBD" : `${fmtTime(m.startTime)} KSA`;
 const timeAgo   = (iso) => { if(!iso)return"–"; const s=Math.floor((Date.now()-new Date(iso))/1000); if(s<60)return`${s}s ago`; const m=Math.floor(s/60); if(m<60)return`${m} min ago`; const h=Math.floor(m/60); if(h<24)return`${h} hr ago`; return`${Math.floor(h/24)}d ago`; };
 const teamStyle = (n)   => TEAMS[n] || { abbr:(n||"?").slice(0,3).toUpperCase(), color:"#888", bg:"#111", logo:null };
 const isTBDTeam = (n)   => !n || n === "TBD";
 const maxWins   = (m)   => ((m.bo || 5) === 7 ? 4 : 3);   // Bo5 → first to 3, Bo7 → first to 4
 const hasTBD    = (m)   => isTBDTeam(m.team1) || isTBDTeam(m.team2);
+const matchStageLabel = (m) => m.group ? `Group ${m.group}`
+  : m.id.startsWith("pi_") ? "Play-Ins"
+  : m.id.startsWith("1v1_") ? "1v1 Worlds"
+  : m.id.startsWith("2v2_") ? "2v2 Worlds"
+  : "Playoffs";
 // Predictable = still open: teams known, not locked, no result yet.
 const isPredictable = (m, res, now) => !hasTBD(m) && !res && !isLocked(m, now);
 const F = { main:"'Rajdhani', sans-serif", body:"'Inter', sans-serif" };
@@ -525,14 +557,18 @@ function BracketCard({ match, result, pred, onClick, isSelected, now, isAdmin })
                        fontWeight:700, letterSpacing:1, textTransform:"uppercase",
                        whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{match.label}</span>
         {score !== null && <ScoreChip score={score} />}
-        {score === null && !res && !tbd && (
+        {score === null && !res && !tbd && !match.timeTbd && (
           <CountdownPill lockTime={getLockTime(match).toISOString()} now={now} startTime={match.startTime} />
+        )}
+        {score === null && !res && !tbd && match.timeTbd && (
+          <span style={{ fontSize:9.5, fontWeight:700, fontFamily:F.main, letterSpacing:1,
+                         textTransform:"uppercase", color:C.blue, whiteSpace:"nowrap" }}>Time TBD</span>
         )}
       </div>
       {isAdmin && !tbd && (
         <div style={{ fontSize:8, color:C.dimmer, fontFamily:"monospace", padding:"3px 12px",
                       borderBottom:`1px solid ${C.lineSoft}` }}>
-          {match.startTime} · locks {fmtTime(getLockTime(match).toISOString())}
+          {match.timeTbd ? `${match.startTime.slice(0,10)} · time TBD` : `${match.startTime} · locks ${fmtTime(getLockTime(match).toISOString())}`}
         </div>
       )}
       <BracketTeamRow name={t1} score={res?.score1} isWinner={res?.winner===t1} isPick={pred?.winner===t1} hasResult={!!res} tbdCard={tbd} />
@@ -582,7 +618,7 @@ function PredictPanel({ match, result, pred, onPredict, onClose }) {
         <button onClick={onClose} style={{ background:"none", border:"none", color:C.muted, cursor:"pointer", fontSize:16 }}>✕</button>
       </div>
       <div style={{ fontSize:10, color:C.dim, fontFamily:F.main, letterSpacing:1, marginBottom:16 }}>
-        Starts {fmtTime(match.startTime)} KSA · Locks {fmtTime(getLockTime(match).toISOString())} KSA
+        {match.timeTbd ? "Exact match time TBD · predictions remain open" : `Starts ${fmtTime(match.startTime)} KSA · Locks ${fmtTime(getLockTime(match).toISOString())} KSA`}
       </div>
 
       {result ? (
@@ -1040,19 +1076,19 @@ function ScheduleView({ matches, results, now, selected, onSelect }) {
             <span style={{ fontSize:12, fontWeight:700, color:C.white, fontFamily:F.main, letterSpacing:2, textTransform:"uppercase", flexShrink:0 }}>{d.day}</span>
             <div style={{ height:1, flex:1, background:C.lineSoft }} />
             <span style={{ fontSize:9, color:C.dim, fontFamily:F.main, letterSpacing:1.5, textTransform:"uppercase", flexShrink:0 }}>
-              {d.matches.length} matches · KSA
+              {d.matches.length} matches · {d.matches.every(m=>m.timeTbd) ? "times TBD" : "KSA"}
             </span>
           </div>
 
           {d.matches.map((m, i) => {
             const res    = results[m.id];
             const locked = isLocked(m, now);
-            const live   = !res && locked && now >= new Date(m.startTime).getTime();
+            const live   = !m.timeTbd && !res && locked && now >= new Date(m.startTime).getTime();
             const msLeft = getLockTime(m).getTime() - now;
             const urgent = !locked && msLeft < 3600000;
             const isSel  = selected === m.id;
 
-            const statusWord  = res ? "Final" : live ? "Live" : locked ? "Locked" : urgent ? "Locking" : "Upcoming";
+            const statusWord  = res ? "Final" : m.timeTbd ? "Time TBD" : live ? "Live" : locked ? "Locked" : urgent ? "Locking" : "Upcoming";
             const statusColor = res ? C.green : live ? C.orange : urgent ? C.red : C.muted;
             const timeColor   = res ? C.white : live ? C.orange : urgent ? C.red : C.white;
 
@@ -1063,7 +1099,7 @@ function ScheduleView({ matches, results, now, selected, onSelect }) {
                          borderBottom: i === d.matches.length-1 ? "none" : `1px solid ${C.lineSoft}` }}>
                 <div style={{ width:64, flexShrink:0, textAlign:"right" }}>
                   <div style={{ ...NUM, fontSize:16, fontWeight:700, fontFamily:F.main, color:timeColor, lineHeight:1.2 }}>
-                    {fmtHour(m.startTime)}
+                    {m.timeTbd ? "TBD" : fmtHour(m.startTime)}
                   </div>
                   <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, letterSpacing:1,
                                 textTransform:"uppercase", color:statusColor, marginTop:3 }}>
@@ -1121,8 +1157,11 @@ function FinalCard({ match, result, pred, onClick, isSelected, now, headerLabel,
           {headerLabel}
         </span>
         {score !== null && <ScoreChip score={score} />}
-        {score === null && !res && !tbd && (
+        {score === null && !res && !tbd && !match.timeTbd && (
           <CountdownPill lockTime={getLockTime(match).toISOString()} now={now} startTime={match.startTime} />
+        )}
+        {score === null && !res && !tbd && match.timeTbd && (
+          <span style={{ fontSize:9.5, fontWeight:700, fontFamily:F.main, letterSpacing:1, textTransform:"uppercase", color:C.blue }}>Time TBD</span>
         )}
       </div>
       <div style={{ padding:"3px 0" }}>
@@ -1135,6 +1174,65 @@ function FinalCard({ match, result, pred, onClick, isSelected, now, headerLabel,
             isPick={pred?.winner===match.team2} hasResult={!!res} tbdCard={tbd} chip={chip} nameSize={nameSize} last />
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── 1V1 / 2V2 WORLD CHAMPIONSHIP ───────────────────────────────────────────
+function SideEventPage({ title, dates, prize, matches, participantNotes, predictions, results, playerId, onPredict, now, isAdmin }) {
+  const [selected, setSelected] = useState(null);
+  const [semisDate, finalDay] = dates.split("–");
+  const finalDate = `${semisDate.split(" ")[0]} ${finalDay}`;
+  const semifinals = matches.filter(m => m.round === "SF");
+  const final = matches.filter(m => m.round === "GF");
+  const selectedMatch = matches.find(m => m.id === selected);
+  const cp = (m) => ({
+    match:m, result:results[m.id], pred:predictions[playerId]?.[m.id],
+    onClick:()=>{ if(isPredictable(m, results[m.id], now)) setSelected(selected===m.id?null:m.id); },
+    isSelected:selected===m.id, now, isAdmin,
+  });
+
+  return (
+    <div>
+      <div style={{ fontSize:10, color:C.dim, marginBottom:20, fontFamily:F.main, letterSpacing:1.5, textTransform:"uppercase" }}>
+        {title} · {dates} · 4 entrants · Single elimination · All Bo7 · {prize} prize pool · <span style={{color:C.gold}}>Exact times TBD</span>
+      </div>
+
+      <BracketBanner text={`${title} bracket`} color={C.blue} />
+      <div style={washStyle("radial-gradient(800px 360px at 0% 0%, rgba(61,107,255,0.10) 0%, transparent 65%)")}>
+        <div style={{ display:"flex", alignItems:"stretch", minWidth:700, padding:6 }}>
+          <RoundCol label="Semi Finals" sub={semisDate} w={PO_CARD_W}>
+            {semifinals.map(m => <Slot key={m.id} pad={6}><BracketCard {...cp(m)} /></Slot>)}
+          </RoundCol>
+          <ElbowCol pairs={1} />
+          <div style={{ flex:`0 0 ${PO_FINAL_W}px`, width:PO_FINAL_W, display:"flex", flexDirection:"column" }}>
+            <div style={{ height:HEAD_H, display:"flex", flexDirection:"column", justifyContent:"flex-end", paddingBottom:10 }}>
+              <span style={{ fontSize:13, fontWeight:700, color:C.white, fontFamily:F.main, letterSpacing:0.4, textTransform:"uppercase" }}>Grand Final</span>
+              <span style={{ fontSize:9, color:C.dim, fontFamily:F.main, letterSpacing:1.5, textTransform:"uppercase", marginTop:3 }}>{finalDate}</span>
+            </div>
+            <div style={{ flex:1, display:"flex", flexDirection:"column", justifyContent:"center" }}>
+              {final.map(m => <FinalCard key={m.id} {...cp(m)} headerLabel="Grand Final · Bo7" accent={C.gold} nameSize={17} chip={28} />)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(220px, 1fr))", gap:10, marginTop:18 }}>
+        {participantNotes.map(p => (
+          <div key={p.name} style={{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:7, padding:"12px 14px" }}>
+            <div style={{ fontSize:12, fontWeight:700, color:C.white, fontFamily:F.main, letterSpacing:0.5 }}>{p.name}</div>
+            <div style={{ fontSize:10, color:C.dim, fontFamily:F.body, marginTop:3 }}>{p.detail}</div>
+          </div>
+        ))}
+      </div>
+
+      {selected && selectedMatch && playerId && (
+        <PredictPanel match={selectedMatch} result={results[selected]} pred={predictions[playerId]?.[selected]}
+          onPredict={onPredict} onClose={()=>setSelected(null)} />
+      )}
+      {selected && !playerId && (
+        <div style={{ textAlign:"center", color:C.muted, fontFamily:F.main, fontSize:12, marginTop:12, letterSpacing:1 }}>Log in as a player to predict</div>
+      )}
     </div>
   );
 }
@@ -1284,13 +1382,13 @@ function MatchCard({ match, playerId, predictions, results, onPredict, onSetResu
     >
       {/* Score badge / countdown pill */}
       {score!==null&&<div style={{ position:"absolute",top:10,right:10,borderRadius:5,padding:"2px 9px",background:score===3?C.green:score===1?C.red:"rgba(140,140,140,0.4)",color:score===1?C.white:"#000",fontWeight:700,fontSize:11,fontFamily:F.main,letterSpacing:1 }}>+{score} PTS</div>}
-      {score===null&&!result&&!isAdmin&&!readOnly&&!tbd&&<div style={{ position:"absolute",top:10,right:10 }}><CountdownPill lockTime={getLockTime(match).toISOString()} now={now} startTime={match.startTime} /></div>}
+      {score===null&&!result&&!isAdmin&&!readOnly&&!tbd&&!match.timeTbd&&<div style={{ position:"absolute",top:10,right:10 }}><CountdownPill lockTime={getLockTime(match).toISOString()} now={now} startTime={match.startTime} /></div>}
 
       {/* Match info */}
       <div style={{ fontSize:10,color:C.muted,marginBottom:2,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase" }}>
-        {match.group?`Group ${match.group} · `:""}{match.label?`${match.label} · `:""}Bo{match.bo||5} · Starts {fmtTime(match.startTime)} KSA · Locks {fmtTime(getLockTime(match).toISOString())} KSA
+        {match.group?`Group ${match.group} · `:""}{match.label?`${match.label} · `:""}Bo{match.bo||5} · {match.timeTbd ? "Time TBD · Predictions remain open" : `Starts ${fmtTime(match.startTime)} KSA · Locks ${fmtTime(getLockTime(match).toISOString())} KSA`}
       </div>
-      {isAdmin&&<div style={{ fontSize:9,color:"rgba(255,100,0,0.6)",fontFamily:"monospace",letterSpacing:0,marginBottom:8 }}>⚙ UTC: {match.startTime}</div>}
+      {isAdmin&&<div style={{ fontSize:9,color:"rgba(255,100,0,0.6)",fontFamily:"monospace",letterSpacing:0,marginBottom:8 }}>⚙ {match.timeTbd ? `Date anchor: ${match.startTime.slice(0,10)} · time TBD` : `UTC: ${match.startTime}`}</div>}
 
       {/* Teams row */}
       <div style={{ display:"flex",alignItems:"center",gap:8 }}>
@@ -1467,7 +1565,11 @@ function BracketEditor({ matches, results, onUpdateTeams, onSaved }) {
     onSaved?.();
   };
 
-  const sectionOf = (m) => m.group ? `Group ${m.group}` : m.id.startsWith("pi_") ? "Play-Ins" : "Playoffs";
+  const sectionOf = (m) => m.group ? `Group ${m.group}`
+    : m.id.startsWith("pi_") ? "Play-Ins"
+    : m.id.startsWith("1v1_") ? "1v1 Worlds"
+    : m.id.startsWith("2v2_") ? "2v2 Worlds"
+    : "Playoffs";
   const rows = matches.map((m, i) => ({ m, header: i === 0 || sectionOf(m) !== sectionOf(matches[i-1]) ? sectionOf(m) : null }));
 
   return (
@@ -1510,7 +1612,7 @@ function BracketEditor({ matches, results, onUpdateTeams, onSaved }) {
             return (
               <div style={{ background:C.surface,border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,padding:"12px 16px",marginBottom:10 }}>
                 <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:8,flexWrap:"wrap" }}>
-                  <span style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase" }}>{m.label} · {fmtTime(m.startTime)} KSA</span>
+                  <span style={{ fontSize:10,color:C.muted,fontFamily:F.main,letterSpacing:2,textTransform:"uppercase" }}>{m.label} · {fmtMatchTime(m)}</span>
                   {(auto1||auto2) && (
                     <span style={{ fontSize:9,fontWeight:700,fontFamily:F.main,color:C.gold,letterSpacing:1,
                                    border:"1px solid rgba(217,166,83,0.35)",borderRadius:3,padding:"2px 6px",textTransform:"uppercase" }}>
@@ -2352,7 +2454,7 @@ function MatchSlide({ match, result, pred, playerId, onPredict, now }) {
 
   const open   = isPredictable(match, result, now) && !!playerId;
   const locked = isLocked(match, now);
-  const live   = !result && locked && now >= new Date(match.startTime).getTime();
+  const live   = !match.timeTbd && !result && locked && now >= new Date(match.startTime).getTime();
   const score  = pred && result ? calcScore(pred, result) : null;
 
   const save = (winner, a, b) => onPredict(match.id, { winner, score1:numOrNull(a), score2:numOrNull(b) });
@@ -2382,13 +2484,14 @@ function MatchSlide({ match, result, pred, playerId, onPredict, now }) {
           {match.group ? `Group ${match.group} · ` : ""}{match.label} · Bo{match.bo || 5}
         </span>
         {score !== null ? <ScoreChip score={score} />
+          : !result && match.timeTbd ? <span style={{ fontSize:9.5, fontWeight:700, fontFamily:F.main, letterSpacing:1, textTransform:"uppercase", color:C.blue }}>Time TBD</span>
           : !result ? <CountdownPill lockTime={getLockTime(match).toISOString()} now={now} startTime={match.startTime} />
           : null}
       </div>
 
       <div style={{ fontSize:10, color:C.dimmer, fontFamily:F.main, letterSpacing:1 }}>
-        {fmtTime(match.startTime)} KSA
-        {!locked && ` · locks ${fmtTime(getLockTime(match).toISOString())}`}
+        {fmtMatchTime(match)}
+        {!match.timeTbd && !locked && ` · locks ${fmtTime(getLockTime(match).toISOString())}`}
       </div>
 
       {/* teams */}
@@ -2521,7 +2624,7 @@ function UpNextPage({ matches, predictions, results, playerId, onPredict, now, o
         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
           {arrow(-1, idx === 0)}
           {arrow(1, idx === list.length - 1)}
-          <button onClick={onOpenSchedule} style={{
+          <button onClick={()=>onOpenSchedule(cur)} style={{
             padding:"8px 14px", borderRadius:6, cursor:"pointer", border:`1px solid ${C.line}`,
             background:"rgba(255,255,255,0.03)", color:C.muted, fontFamily:F.main, fontWeight:700,
             fontSize:11, letterSpacing:1.2, textTransform:"uppercase" }}>Full schedule</button>
@@ -2554,7 +2657,7 @@ function UpNextPage({ matches, predictions, results, playerId, onPredict, now, o
       </div>
 
       <div style={{ textAlign:"center", marginTop:12, fontSize:10, color:C.dimmer, fontFamily:F.main, letterSpacing:1 }}>
-        {cur.group ? `Group ${cur.group}` : "Playoffs"} · {new Date(cur.startTime).toLocaleDateString("en-US", { timeZone:"Asia/Riyadh", weekday:"long", month:"short", day:"numeric" })}
+        {matchStageLabel(cur)} · {new Date(cur.startTime).toLocaleDateString("en-US", { timeZone:"Asia/Riyadh", weekday:"long", month:"short", day:"numeric" })}
       </div>
     </div>
   );
@@ -2572,6 +2675,8 @@ export default function App() {
   const [bracketOverrides, setBracketOverrides] = useState({});
   const playInMatches  = useMemo(() => resolveBracket(DEFAULT_PLAYINS, results, bracketOverrides), [results, bracketOverrides]);
   const groupMatches   = useMemo(() => resolveBracket(DEFAULT_GROUPS,  results, bracketOverrides), [results, bracketOverrides]);
+  const oneVOneMatches = useMemo(() => resolveBracket(DEFAULT_1V1,      results, bracketOverrides), [results, bracketOverrides]);
+  const twoVTwoMatches = useMemo(() => resolveBracket(DEFAULT_2V2,      results, bracketOverrides), [results, bracketOverrides]);
   const playoffMatches = useMemo(() => resolveBracket(DEFAULT_PLAYOFF, results, bracketOverrides), [results, bracketOverrides]);
   const [adminHash,      setAdminHash]      = useState(ADMIN_PASSWORD_HASH);
   const [authId,         setAuthId]         = useState(()=>localStorage.getItem("rlcs_auth")||null);
@@ -2861,7 +2966,7 @@ export default function App() {
     if(!error){ setGroups(prev=>prev.map(g=>g.id===groupId?{...g,invite_token:newToken}:g)); toast("Invite link regenerated","success"); }
   };
 
-  const resolvedMatches = useMemo(() => [...playInMatches, ...groupMatches, ...playoffMatches], [playInMatches, groupMatches, playoffMatches]);
+  const resolvedMatches = useMemo(() => [...playInMatches, ...groupMatches, ...oneVOneMatches, ...twoVTwoMatches, ...playoffMatches], [playInMatches, groupMatches, oneVOneMatches, twoVTwoMatches, playoffMatches]);
   const getPredScore =(pid)=>ALL_MATCHES.reduce((t,m)=>t+calcScore(predictions[pid]?.[m.id],results[m.id]),0);
   const getBonusTotal=(pid)=>bonusPoints.filter(b=>b.player_id===pid).reduce((t,b)=>t+b.amount,0);
   const getTotalScore=(pid)=>getPredScore(pid)+getBonusTotal(pid);
@@ -2876,6 +2981,8 @@ export default function App() {
     {id:"next",        label:"Up Next"},
     {id:"playins",     label:"Play-Ins"},
     {id:"predict",     label:"Group Stage"},
+    {id:"onevone",     label:"1v1"},
+    {id:"twovtwo",     label:"2v2"},
     {id:"playoffs",    label:"Playoffs"},
     ...(myGroup&&!isAdmin?[{id:"mygroup",label:"My Group"}]:[]),
     {id:"leaderboard", label:"Standings"},
@@ -2955,7 +3062,13 @@ export default function App() {
         {page==="next"&&(
           <UpNextPage matches={resolvedMatches} predictions={predictions} results={results}
             playerId={isAdmin?null:authId} onPredict={handlePredict} now={now}
-            onOpenSchedule={()=>{ setScheduleFirst(true); setPage("predict"); }} />
+            onOpenSchedule={(match)=>{
+              if(match.id.startsWith("pi_")) setPage("playins");
+              else if(match.id.startsWith("1v1_")) setPage("onevone");
+              else if(match.id.startsWith("2v2_")) setPage("twovtwo");
+              else if(match.id.startsWith("p_")) setPage("playoffs");
+              else { setScheduleFirst(true); setPage("predict"); }
+            }} />
         )}
 
         {/* PLAY-INS */}
@@ -2968,6 +3081,32 @@ export default function App() {
         {page==="predict"&&(
           <GroupStagePage groupMatches={groupMatches} startInSchedule={scheduleFirst} predictions={predictions} results={results}
             playerId={isAdmin?null:authId} onPredict={handlePredict} now={now} isAdmin={isAdmin} />
+        )}
+
+        {/* 1V1 WORLD CHAMPIONSHIP */}
+        {page==="onevone"&&(
+          <SideEventPage title="1v1 World Championship" dates="Sep 16–18" prize="$85,000"
+            matches={oneVOneMatches} predictions={predictions} results={results}
+            playerId={isAdmin?null:authId} onPredict={handlePredict} now={now} isAdmin={isAdmin}
+            participantNotes={[
+              {name:"Nwpo", detail:"Twisted Minds · MENA qualifier"},
+              {name:"nass", detail:"Gentle Mates · Europe qualifier"},
+              {name:"diaz", detail:"Spacestation Gaming · North America qualifier"},
+              {name:"kv1", detail:"BS+COMPETITION · South America qualifier"},
+            ]} />
+        )}
+
+        {/* 2V2 WORLD CHAMPIONSHIP */}
+        {page==="twovtwo"&&(
+          <SideEventPage title="2v2 World Championship" dates="Sep 17–19" prize="$170,000"
+            matches={twoVTwoMatches} predictions={predictions} results={results}
+            playerId={isAdmin?null:authId} onPredict={handlePredict} now={now} isAdmin={isAdmin}
+            participantNotes={[
+              {name:"Team Falcons", detail:"Rw9 & Kiileerrz · MENA qualifier"},
+              {name:"No Miss Just Fake", detail:"zen & Atow. · Europe qualifier"},
+              {name:"Spacestation Gaming", detail:"reveal & zach · North America qualifier"},
+              {name:"Backyardigans", detail:"yANXNZ & swiftt. · South America qualifier"},
+            ]} />
         )}
 
         {/* PLAYOFFS */}
@@ -2983,7 +3122,7 @@ export default function App() {
           return (
             <MyGroupPage myGroup={myGroup} members={grpMembers} rows={grpLb} authId={authId}
               predictions={predictions} results={results}
-              allMatches={[...playInMatches,...groupMatches,...playoffMatches]} now={now} inviteBase={INVITE_BASE} />
+              allMatches={resolvedMatches} now={now} inviteBase={INVITE_BASE} />
           );
         })()}
 
@@ -3041,7 +3180,7 @@ export default function App() {
         {/* OTHERS' PICKS */}
         {page==="others"&&(
           <OthersPicksPage players={players} authId={authId} predictions={predictions} results={results}
-            allMatches={[...playInMatches,...groupMatches,...playoffMatches]} now={now} totalFor={getTotalScore}
+            allMatches={resolvedMatches} now={now} totalFor={getTotalScore}
             search={othersSearch} setSearch={setOthersSearch}
             selectedId={viewingPlayer} setSelectedId={setViewingPlayer} />
         )}
@@ -3287,7 +3426,7 @@ export default function App() {
 
             {/* Bracket Teams */}
             {adminTab==="bracket"&&(
-              <BracketEditor matches={[...playInMatches,...groupMatches,...playoffMatches]} results={results} onUpdateTeams={handleUpdateBracketTeams} onSaved={()=>toast("Bracket teams saved","success")} />
+              <BracketEditor matches={resolvedMatches} results={results} onUpdateTeams={handleUpdateBracketTeams} onSaved={()=>toast("Bracket teams saved","success")} />
             )}
 
             {/* Results */}
@@ -3295,21 +3434,23 @@ export default function App() {
               <div>
                 <div style={{ fontSize:11,color:C.muted,fontFamily:F.body,marginBottom:14 }}>Update any result even after it's set.</div>
                 <div style={{ display:"flex",gap:6,marginBottom:14,flexWrap:"wrap" }}>
-                  {["all","Play-Ins","A","B","C","D","Playoffs"].map(g=>(
+                  {["all","Play-Ins","A","B","C","D","1v1","2v2","Playoffs"].map(g=>(
                     <button key={g} onClick={()=>setFilterGroup(g)} style={{
                       padding:"6px 14px",borderRadius:6,border:`1px solid ${filterGroup===g?"transparent":"rgba(255,255,255,0.1)"}`,cursor:"pointer",fontFamily:F.main,fontWeight:700,fontSize:12,letterSpacing:1,textTransform:"uppercase",transition:"all 0.15s",
                       background:filterGroup===g?C.red:"rgba(255,255,255,0.04)",
                       color:filterGroup===g?C.white:"#8C8C8C",
                       boxShadow:filterGroup===g?"0 0 12px rgba(217,166,83,0.4)":"none",
                     }}>
-                      {g==="all"?"All":g==="Playoffs"||g==="Play-Ins"?g:`Group ${g}`}
+                      {g==="all"?"All":g==="Playoffs"||g==="Play-Ins"||g==="1v1"||g==="2v2"?g:`Group ${g}`}
                     </button>
                   ))}
                 </div>
                 <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
                   {(filterGroup==="Playoffs" ? playoffMatches
                     : filterGroup==="Play-Ins" ? playInMatches
-                    : filterGroup==="all" ? [...playInMatches, ...groupMatches, ...playoffMatches]
+                    : filterGroup==="1v1" ? oneVOneMatches
+                    : filterGroup==="2v2" ? twoVTwoMatches
+                    : filterGroup==="all" ? resolvedMatches
                     : groupMatches.filter(m=>m.group===filterGroup)
                   ).map(m=>(
                     <MatchCard key={m.id} match={m} playerId={null} predictions={predictions}
