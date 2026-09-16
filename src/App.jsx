@@ -2576,13 +2576,20 @@ function MatchSlide({ match, result, pred, playerId, onPredict, now }) {
 function UpNextPage({ matches, predictions, results, playerId, onPredict, now, onOpenSchedule }) {
   // Only what is still ahead. Finished matches are history and belong on the
   // schedule and breakdown screens, not in the strip you swipe to place a bet.
-  // If the whole tournament is done, fall back to everything so the page still
-  // has something in it.
+  // TBD matches stay visible only when they are due today or tomorrow; this
+  // keeps unresolved later rounds from crowding the immediately useful games.
   const list = useMemo(() => {
     const sorted = [...matches].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-    const ahead = sorted.filter(m => !results[m.id]);
-    return ahead.length ? ahead : sorted;
-  }, [matches, results]);
+    const dayKey = (value) => new Intl.DateTimeFormat("en-CA", {
+      timeZone:"Asia/Riyadh", year:"numeric", month:"2-digit", day:"2-digit",
+    }).format(new Date(value));
+    const tomorrowKey = dayKey(now + 24 * 60 * 60 * 1000);
+    return sorted.filter(m => {
+      if (results[m.id]) return false;
+      const tbd = hasTBD(m) || m.timeTbd;
+      return !tbd || dayKey(m.startTime) <= tomorrowKey;
+    });
+  }, [matches, results, now]);
 
   // The one to open on: soonest still-predictable match, else soonest unplayed,
   // else the most recent result.
