@@ -133,17 +133,42 @@ const DEFAULT_PLAYINS = [
 ];
 
 // ─── GROUP STAGE — 4 groups of 4, single round robin, all Bo5 ────────────────
-// The draw (which of the 12 direct qualifiers + 4 play-in survivors land in
-// which group) hasn't happened yet — it's set after Play-ins conclude — so
-// every slot starts TBD and gets filled in via the admin Bracket editor.
-// Sep 16–17 times are rough placeholders (blast.tv hasn't published exact
-// times either); only the day-pairing (3 rounds per day) is a real estimate.
-const DEFAULT_GROUPS = ["A","B","C","D"].flatMap(g => [1,2,3,4,5,6].map(n => ({
-  id:`g${g.toLowerCase()}_m${n}`, group:g, round:"RR", label:`MATCH ${n}`,
-  team1:"TBD", team2:"TBD",
-  startTime: n <= 3 ? `2026-09-16T${15+n}:00:00Z` : `2026-09-17T${12+n}:00:00Z`,
-  bo:5,
-})));
+// The draw and all 24 pairings are confirmed on blast.tv. Sep 16's detailed
+// stream order is confirmed by @RLEsports; Sep 17 uses date-only anchors until
+// its detailed schedule is published, so those matches stay open.
+const DEFAULT_GROUPS = [
+  // Group A
+  { id:"ga_m1", group:"A", round:"RR", label:"MATCH 1", team1:"Karmine Corp", team2:"Team Falcons",        startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
+  { id:"ga_m2", group:"A", round:"RR", label:"MATCH 2", team1:"MIBR",         team2:"Spacestation Gaming", startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
+  { id:"ga_m3", group:"A", round:"RR", label:"MATCH 3", team1:"Karmine Corp", team2:"Spacestation Gaming", startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
+  { id:"ga_m4", group:"A", round:"RR", label:"MATCH 4", team1:"Team Falcons", team2:"MIBR",                startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
+  { id:"ga_m5", group:"A", round:"RR", label:"MATCH 5", team1:"Karmine Corp", team2:"MIBR",                startTime:"2026-09-16T19:00:00Z", bo:5 },
+  { id:"ga_m6", group:"A", round:"RR", label:"MATCH 6", team1:"Team Falcons", team2:"Spacestation Gaming", startTime:"2026-09-16T19:00:00Z", bo:5 },
+
+  // Group B
+  { id:"gb_m1", group:"B", round:"RR", label:"MATCH 1", team1:"Twisted Minds",     team2:"Ninjas in Pyjamas", startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
+  { id:"gb_m2", group:"B", round:"RR", label:"MATCH 2", team1:"Twisted Minds",     team2:"FURIA Esports",      startTime:"2026-09-16T20:00:00Z", bo:5 },
+  { id:"gb_m3", group:"B", round:"RR", label:"MATCH 3", team1:"Twisted Minds",     team2:"FUT Esports",        startTime:"2026-09-16T16:00:00Z", bo:5 },
+  { id:"gb_m4", group:"B", round:"RR", label:"MATCH 4", team1:"Ninjas in Pyjamas", team2:"FURIA Esports",      startTime:"2026-09-16T16:00:00Z", bo:5 },
+  { id:"gb_m5", group:"B", round:"RR", label:"MATCH 5", team1:"Ninjas in Pyjamas", team2:"FUT Esports",        startTime:"2026-09-16T20:00:00Z", bo:5 },
+  { id:"gb_m6", group:"B", round:"RR", label:"MATCH 6", team1:"FURIA Esports",      team2:"FUT Esports",        startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
+
+  // Group C
+  { id:"gc_m1", group:"C", round:"RR", label:"MATCH 1", team1:"Manchester City",   team2:"NRG Esports",         startTime:"2026-09-16T21:00:00Z", bo:5 },
+  { id:"gc_m2", group:"C", round:"RR", label:"MATCH 2", team1:"Manchester City",   team2:"Shopify Rebellion",  startTime:"2026-09-16T17:00:00Z", bo:5 },
+  { id:"gc_m3", group:"C", round:"RR", label:"MATCH 3", team1:"Manchester City",   team2:"Bigodes",             startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
+  { id:"gc_m4", group:"C", round:"RR", label:"MATCH 4", team1:"NRG Esports",       team2:"Shopify Rebellion",  startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
+  { id:"gc_m5", group:"C", round:"RR", label:"MATCH 5", team1:"NRG Esports",       team2:"Bigodes",             startTime:"2026-09-16T17:00:00Z", bo:5 },
+  { id:"gc_m6", group:"C", round:"RR", label:"MATCH 6", team1:"Shopify Rebellion", team2:"Bigodes",             startTime:"2026-09-16T21:00:00Z", bo:5 },
+
+  // Group D
+  { id:"gd_m1", group:"D", round:"RR", label:"MATCH 1", team1:"Gentle Mates", team2:"Vitality",    startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
+  { id:"gd_m2", group:"D", round:"RR", label:"MATCH 2", team1:"Gentle Mates", team2:"Wildcard",    startTime:"2026-09-16T18:00:00Z", bo:5 },
+  { id:"gd_m3", group:"D", round:"RR", label:"MATCH 3", team1:"Gentle Mates", team2:"Virtus.Pro",  startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
+  { id:"gd_m4", group:"D", round:"RR", label:"MATCH 4", team1:"Vitality",     team2:"Wildcard",    startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
+  { id:"gd_m5", group:"D", round:"RR", label:"MATCH 5", team1:"Vitality",     team2:"Virtus.Pro",  startTime:"2026-09-16T18:00:00Z", bo:5 },
+  { id:"gd_m6", group:"D", round:"RR", label:"MATCH 6", team1:"Wildcard",     team2:"Virtus.Pro",  startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
+];
 
 // ─── PLAYOFFS — 12 teams (4 group winners + 8 runners-up), double-elim, Bo7 ──
 // Group winners get a bye straight to the Upper Bracket; 2nd/3rd-place group
@@ -167,11 +192,11 @@ const DEFAULT_PLAYOFF = [
   { id:"p_gf",     round:"GF",   label:"GRAND FINAL",        team1:"TBD", team2:"TBD", startTime:"2026-09-20T16:00:00Z", bo:7 },
 ];
 
-// Exact side-event times are not published yet. `timeTbd` keeps predictions
-// open and makes every time surface say "Time TBD" instead of inventing one.
+// Sep 16's 1v1 semifinal times are confirmed by @RLEsports. The later side
+// events retain date-only anchors; `timeTbd` keeps their predictions open.
 const DEFAULT_1V1 = [
-  { id:"1v1_sf1", round:"SF", label:"SEMI FINAL 1", team1:"Nwpo", team2:"kv1", startTime:"2026-09-16T12:00:00Z", timeTbd:true, bo:7 },
-  { id:"1v1_sf2", round:"SF", label:"SEMI FINAL 2", team1:"nass", team2:"diaz", startTime:"2026-09-16T12:00:00Z", timeTbd:true, bo:7 },
+  { id:"1v1_sf1", round:"SF", label:"SEMI FINAL 1", team1:"kv1",  team2:"Nwpo", startTime:"2026-09-16T22:00:00Z", bo:7 },
+  { id:"1v1_sf2", round:"SF", label:"SEMI FINAL 2", team1:"diaz", team2:"nass", startTime:"2026-09-16T23:00:00Z", bo:7 },
   { id:"1v1_gf",  round:"GF", label:"GRAND FINAL",  team1:"TBD", team2:"TBD", startTime:"2026-09-18T12:00:00Z", timeTbd:true, bo:7 },
 ];
 
@@ -1183,6 +1208,9 @@ function SideEventPage({ title, dates, prize, matches, participantNotes, predict
   const [selected, setSelected] = useState(null);
   const [semisDate, finalDay] = dates.split("–");
   const finalDate = `${semisDate.split(" ")[0]} ${finalDay}`;
+  const timingNote = matches.every(m => m.timeTbd) ? "Exact times TBD"
+    : matches.some(m => m.timeTbd) ? "Later match times TBD"
+    : "Schedule confirmed";
   const semifinals = matches.filter(m => m.round === "SF");
   const final = matches.filter(m => m.round === "GF");
   const selectedMatch = matches.find(m => m.id === selected);
@@ -1195,7 +1223,7 @@ function SideEventPage({ title, dates, prize, matches, participantNotes, predict
   return (
     <div>
       <div style={{ fontSize:10, color:C.dim, marginBottom:20, fontFamily:F.main, letterSpacing:1.5, textTransform:"uppercase" }}>
-        {title} · {dates} · 4 entrants · Single elimination · All Bo7 · {prize} prize pool · <span style={{color:C.gold}}>Exact times TBD</span>
+        {title} · {dates} · 4 entrants · Single elimination · All Bo7 · {prize} prize pool · <span style={{color:C.gold}}>{timingNote}</span>
       </div>
 
       <BracketBanner text={`${title} bracket`} color={C.blue} />
