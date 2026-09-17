@@ -205,8 +205,6 @@ const DEFAULT_2V2 = [
   { id:"2v2_gf",  round:"GF", label:"GRAND FINAL",  team1:"TBD", team2:"TBD", startTime:"2026-09-19T12:00:00Z", timeTbd:true, bo:7 },
 ];
 
-const ALL_MATCHES = [...DEFAULT_PLAYINS, ...DEFAULT_GROUPS, ...DEFAULT_1V1, ...DEFAULT_2V2, ...DEFAULT_PLAYOFF];
-
 // ─── HALL OF FAME — champions & top predictors of past events ───────────────
 const HALL_OF_FAME = [
   { event: "2026 Boston Major", team: "Gentle Mates",  predictor: "SuhaibDaman" },
@@ -2127,7 +2125,7 @@ function MyGroupPage({ myGroup, members, rows, authId, predictions, results, all
     if (sc===3) exact++; else if (sc===1) winner++; else missed++;
   });
   const decided   = exact + winner + missed;
-  const predCount = Object.keys(myPreds).length;
+  const predCount = allMatches.filter(m => myPreds[m.id]).length;
   const pct = (n) => decided ? (n / decided) * 100 : 0;
 
   const link = myGroup.invite_token ? `${inviteBase}/${myGroup.invite_token}` : null;
@@ -2202,7 +2200,7 @@ function MyGroupPage({ myGroup, members, rows, authId, predictions, results, all
       <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:C.dim, letterSpacing:1.8, textTransform:"uppercase", marginBottom:10 }}>Group Standings</div>
       <div style={{ marginBottom:26 }}>
         <StandingsList rows={rows} authId={authId} tintMe
-          predCountFor={(p)=>Object.keys(predictions[p.id]||{}).length} totalMatches={allMatches.length} />
+          predCountFor={(p)=>allMatches.filter(m=>predictions[p.id]?.[m.id]).length} totalMatches={allMatches.length} />
       </div>
 
       {/* Per-match breakdown */}
@@ -2993,7 +2991,17 @@ export default function App() {
   };
 
   const resolvedMatches = useMemo(() => [...playInMatches, ...groupMatches, ...oneVOneMatches, ...twoVTwoMatches, ...playoffMatches], [playInMatches, groupMatches, oneVOneMatches, twoVTwoMatches, playoffMatches]);
-  const getPredScore =(pid)=>ALL_MATCHES.reduce((t,m)=>t+calcScore(predictions[pid]?.[m.id],results[m.id]),0);
+  // Only matches with two known teams belong in counts and scoring. A result
+  // must also name one of those teams, which prevents stale rows left behind
+  // under reused match IDs from awarding points in the current tournament.
+  const scorableMatches = useMemo(() => resolvedMatches.filter(m=>!hasTBD(m)), [resolvedMatches]);
+  const scorableMatchIds = useMemo(() => new Set(scorableMatches.map(m=>m.id)), [scorableMatches]);
+  const scorableResults = useMemo(() => Object.fromEntries(scorableMatches.flatMap(m => {
+    const r = results[m.id];
+    return r && (r.winner===m.team1 || r.winner===m.team2) ? [[m.id,r]] : [];
+  })), [scorableMatches, results]);
+  const getPredCount=(pid)=>Object.keys(predictions[pid]||{}).filter(id=>scorableMatchIds.has(id)).length;
+  const getPredScore =(pid)=>scorableMatches.reduce((t,m)=>t+calcScore(predictions[pid]?.[m.id],scorableResults[m.id]),0);
   const getBonusTotal=(pid)=>bonusPoints.filter(b=>b.player_id===pid).reduce((t,b)=>t+b.amount,0);
   const getTotalScore=(pid)=>getPredScore(pid)+getBonusTotal(pid);
   const leaderboard=[...players].map(p=>({...p,score:getTotalScore(p.id),predScore:getPredScore(p.id),bonus:getBonusTotal(p.id)})).sort((a,b)=>b.score-a.score);
@@ -3079,7 +3087,7 @@ export default function App() {
       </div>
 
       {/* MOMENTUM STRIP */}
-      {!results.p_gf?.winner && <MomentumStrip now={now} results={results} totalMatches={ALL_MATCHES.length} />}
+      {!scorableResults.p_gf?.winner && <MomentumStrip now={now} results={scorableResults} totalMatches={scorableMatches.length} />}
 
       {/* PAGE CONTENT */}
       <div style={{ position:"relative",zIndex:1,maxWidth:1440,margin:"0 auto",padding:"24px 20px 40px" }}>
@@ -3147,8 +3155,8 @@ export default function App() {
           const grpLb=[...grpMembers].map(p=>({...p,score:getTotalScore(p.id),predScore:getPredScore(p.id),bonus:getBonusTotal(p.id)})).sort((a,b)=>b.score-a.score);
           return (
             <MyGroupPage myGroup={myGroup} members={grpMembers} rows={grpLb} authId={authId}
-              predictions={predictions} results={results}
-              allMatches={resolvedMatches} now={now} inviteBase={INVITE_BASE} />
+              predictions={predictions} results={scorableResults}
+              allMatches={scorableMatches} now={now} inviteBase={INVITE_BASE} />
           );
         })()}
 
@@ -3166,9 +3174,9 @@ export default function App() {
               authId={authId}
               groupLabelFor={(p)=>{ const g=p.group_id&&p.group_id!=="public"?groups.find(x=>x.id===p.group_id):null;
                                     return g ? (isAdmin||p.group_id===myGroup?.id ? g.name : "Private") : null; }}
-              predCountFor={(p)=>Object.keys(predictions[p.id]||{}).length}
-              totalMatches={ALL_MATCHES.length} />
-            {isAdmin&&Object.keys(results).length>0&&(
+              predCountFor={(p)=>getPredCount(p.id)}
+              totalMatches={scorableMatches.length} />
+            {isAdmin&&Object.keys(scorableResults).length>0&&(
               <div style={{ marginTop:28 }}>
                 <div style={{ fontSize:10,color:C.muted,letterSpacing:2,marginBottom:10,fontFamily:F.main,textTransform:"uppercase" }}>Match Breakdown</div>
                 <div style={{ overflowX:"auto" }}>
@@ -3179,14 +3187,14 @@ export default function App() {
                       {players.map(p=><th key={p.id} style={{ textAlign:"center",padding:"5px 8px",color:p.id===authId?C.blue:C.muted,letterSpacing:0.5 }}>{p.nickname}</th>)}
                     </tr></thead>
                     <tbody>
-                      {resolvedMatches.filter(m=>results[m.id]).map(m=>(
+                      {scorableMatches.filter(m=>scorableResults[m.id]).map(m=>(
                         <tr key={m.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
                           <td style={{ padding:"5px 8px",color:C.dim,whiteSpace:"nowrap" }}>
                             {m.team1} vs {m.team2}
                             <span style={{ color:C.dimmer,marginLeft:8,fontSize:9,letterSpacing:1 }}>{m.group?`${m.group} · `:""}{m.label}</span>
                           </td>
-                          <td style={{ textAlign:"center",padding:"5px 8px",color:C.muted }}>{results[m.id].score1}–{results[m.id].score2}</td>
-                          {players.map(p=>{const s=calcScore(predictions[p.id]?.[m.id],results[m.id]);const has=!!predictions[p.id]?.[m.id];return<td key={p.id} style={{ textAlign:"center",padding:"5px 8px",fontWeight:700,color:!has?"rgba(255,255,255,0.1)":s===3?C.green:s===1?C.red:"rgba(255,255,255,0.25)" }}>{has?`+${s}`:"—"}</td>;})}
+                          <td style={{ textAlign:"center",padding:"5px 8px",color:C.muted }}>{scorableResults[m.id].score1}–{scorableResults[m.id].score2}</td>
+                          {players.map(p=>{const s=calcScore(predictions[p.id]?.[m.id],scorableResults[m.id]);const has=!!predictions[p.id]?.[m.id];return<td key={p.id} style={{ textAlign:"center",padding:"5px 8px",fontWeight:700,color:!has?"rgba(255,255,255,0.1)":s===3?C.green:s===1?C.red:"rgba(255,255,255,0.25)" }}>{has?`+${s}`:"—"}</td>;})}
                         </tr>
                       ))}
                       {players.some(p=>getBonusTotal(p.id)!==0)&&(
@@ -3251,8 +3259,8 @@ export default function App() {
               {[
                 {icon:"👥",label:"Total Players",  val:players.length},
                 {icon:"🏠",label:"Private Groups", val:groups.filter(g=>g.id!=="public").length},
-                {icon:"🎯",label:"Total Predictions",val:Object.values(predictions).reduce((t,pm)=>t+Object.keys(pm).length,0)},
-                {icon:"✅",label:"Results Set",    val:Object.keys(results).length},
+                {icon:"🎯",label:"Total Predictions",val:players.reduce((t,p)=>t+getPredCount(p.id),0)},
+                {icon:"✅",label:"Results Set",    val:Object.keys(scorableResults).length},
               ].map(({icon,label,val})=>(
                 <div key={label} style={{ background:C.surface,border:"1px solid rgba(217,166,83,0.2)",borderRadius:8,padding:16,flex:1,minWidth:110 }}>
                   <div style={{ fontSize:28,fontWeight:700,fontFamily:F.main,color:C.white }}>{val}</div>
@@ -3293,7 +3301,7 @@ export default function App() {
                   <div style={{ fontSize:10,color:C.dim,fontFamily:F.main,letterSpacing:1,marginBottom:8 }}>{sorted.length} player{sorted.length!==1?"s":""} total</div>
                   {sorted.map(p=>{
                     const pGrpObj=p.group_id&&p.group_id!=="public"?groups.find(g=>g.id===p.group_id):null;
-                    const predCount=Object.keys(predictions[p.id]||{}).length;
+                    const predCount=getPredCount(p.id);
                     return (
                       <div key={p.id} style={{ background:C.surface,border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,padding:"10px 14px",marginBottom:8 }}>
                         <div style={{ display:"flex",alignItems:"center",gap:10,flexWrap:"wrap" }}>
@@ -3305,7 +3313,7 @@ export default function App() {
                             </div>
                             <div style={{ fontSize:10,color:C.dim,fontFamily:F.main,marginTop:2,display:"flex",gap:10,flexWrap:"wrap",letterSpacing:0.5 }}>
                               <span style={{ color:C.muted }}>{getTotalScore(p.id)} pts</span>
-                              <span>{predCount}/{ALL_MATCHES.length} preds</span>
+                              <span>{predCount}/{scorableMatches.length} preds</span>
                               {p.joined_at&&<span>Joined {timeAgo(p.joined_at)}</span>}
                               {p.last_seen&&<span>Seen {timeAgo(p.last_seen)}</span>}
                             </div>

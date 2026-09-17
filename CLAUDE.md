@@ -225,7 +225,7 @@ Calculated by `calcScore(pred, result)`:
 | Wrong winner          | **0 pts** |
 | No prediction         | **0 pts** |
 
-Total score = prediction points across all 53 matches (10 Play-in + 24 Group Stage + 3 1v1 + 3 2v2 + 13 Playoffs) + sum of `bonus_points.amount`.
+Total score = prediction points from matches whose two teams are known and whose stored result names one of those teams, plus `bonus_points.amount`. TBD matches and stale results under reused match IDs are excluded from points, prediction totals, progress, and breakdown tables. The full tournament contains 53 matches (10 Play-in + 24 Group Stage + 3 1v1 + 3 2v2 + 13 Playoffs).
 
 ---
 
