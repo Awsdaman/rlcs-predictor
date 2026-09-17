@@ -181,19 +181,19 @@ Sourced from [blast.tv](https://blast.tv/rl/tournaments/rlcs-world-championship-
 
 ### Format — three stages
 1. **Play-ins (Sep 15, Bo5):** 8 teams, one double-elim bracket (UB QF ×4 → UB SF ×2 + LB R1 ×2 → LB R2 ×2). The 2 UB SF winners + 2 LB R2 winners (4 total) advance to the Group Stage; everyone else is eliminated (17th–20th).
-2. **Group Stage (Sep 16–17, Bo5):** the 4 Play-in survivors join the 12 teams that qualified directly, split into **4 groups of 4** playing a **single round robin** (6 matches/group, no elimination). 1st place per group advances to the Playoffs Upper Bracket; 2nd/3rd advance to the Lower Bracket; 4th is eliminated (13th–16th). The draw and all 24 pairings are confirmed in `DEFAULT_GROUPS`. September 16 has exact stream times; September 17 matches use `timeTbd:true` until the detailed daily schedule is published.
+2. **Group Stage (Sep 16–17, Bo5):** the 4 Play-in survivors join the 12 teams that qualified directly, split into **4 groups of 4** playing a **single round robin** (6 matches/group, no elimination). 1st place per group advances to the Playoffs Upper Bracket; 2nd/3rd advance to the Lower Bracket; 4th is eliminated (13th–16th). The draw, all 24 pairings, and both days' exact stream times are confirmed in `DEFAULT_GROUPS`.
 3. **Playoffs (Sep 18–20, Bo7):** 12 teams, double-elim — 4 UB byes (group winners) start at UB Quarter Final; 8 LB entrants (group runners-up) start at LB Round 1 → LB Round 2 → LB Quarter Final (merging with UB QF losers) → Semi Finals (merging with UB QF winners) → Grand Final.
 
 ### Side Events
 - **1v1 Worlds (Sep 16 & 18, Bo7):** Nwpo vs kv1 and nass vs diaz in the semifinals; both winners advance automatically to the Grand Final. Prize pool: $85,000.
 - **2v2 Worlds (Sep 17 & 19, Bo7):** Team Falcons (Rw9 & Kiileerrz) vs Backyardigans (yANXNZ & swiftt.), and No Miss Just Fake (zen & Atow.) vs Spacestation Gaming (reveal & zach); both winners advance automatically to the Grand Final. Prize pool: $170,000.
-- The September 16 1v1 semifinals are confirmed for 5 PM and 6 PM Central (22:00 and 23:00 UTC). The 1v1 final and all 2v2 matches still use `timeTbd:true`, display "Time TBD", and stay open for predictions until real start times are added.
+- The September 16 1v1 semifinals and September 17 2v2 semifinals are confirmed for 5 PM and 6 PM Central (22:00 and 23:00 UTC). The two Grand Finals still use `timeTbd:true`, display "Time TBD", and stay open for predictions until their exact start times are added.
 
 ### Teams (20)
 - **Direct to Group Stage (12):** Karmine Corp, Gentle Mates, Vitality, Ninjas in Pyjamas, Manchester City (EU) · NRG Esports, Shopify Rebellion, Spacestation Gaming (NA) · MIBR, FURIA Esports (SAM) · Twisted Minds (MENA) · Wildcard (OCE)
 - **Play-ins (8):** Virtus.Pro vs Bigodes · Five Fears vs Mate y Tapa · Team Falcons vs FUT Esports · TSM vs R8 Esports (UB Quarter Finals, Sep 15)
 
-Play-in Day 1 matchups + times are confirmed by blast.tv. The Group Stage draw and September 16 run order are confirmed by blast.tv and the official @RLEsports daily schedule; September 17 exact times are still pending. Playoff bracket wiring (who plays whom beyond "group winners" / "runners-up") is this app's best reconstruction from blast.tv's schedule + prize-tier breakdown, not an official bracket graphic — expect to adjust it once seeding is announced after groups conclude.
+Play-in Day 1 matchups + times are confirmed by blast.tv. The Group Stage draw and both daily run orders are confirmed by blast.tv and the official @RLEsports schedules. Playoff bracket wiring (who plays whom beyond "group winners" / "runners-up") is this app's best reconstruction from blast.tv's schedule + prize-tier breakdown, not an official bracket graphic — expect to adjust it once seeding is announced after groups conclude.
 
 ### Match IDs
 - Play-ins: `pi_{ubqf1..4 | ubsf1..2 | lbr1m1..2 | lbr2m1..2}` — e.g. `pi_ubqf1`, `pi_lbr2m2`
@@ -205,7 +205,7 @@ Play-in Day 1 matchups + times are confirmed by blast.tv. The Group Stage draw a
 ### Key constants (top of App.jsx)
 - `TEAMS` — 3v3 teams plus 1v1-player and 2v2-duo display entries `{ abbr, color, bg, logo }`; logos in `public/logos/` and missing artwork falls back to the abbreviation badge.
 - `DEFAULT_PLAYINS` — 10 matches, `bo:5`, TBD progression slots past UB QF.
-- `DEFAULT_GROUPS` — 24 confirmed matches (4 groups × 6), `bo:5`; September 16 times are exact and September 17 times are TBD.
+- `DEFAULT_GROUPS` — 24 confirmed matches (4 groups × 6), `bo:5`, with exact September 16–17 stream times.
 - `DEFAULT_1V1` — 2 semifinals + Grand Final, `bo:7`; exact times are TBD.
 - `DEFAULT_2V2` — 2 semifinals + Grand Final, `bo:7`; exact times are TBD.
 - `DEFAULT_PLAYOFF` — 13 matches, `bo:7`, all TBD (no seeding yet).

@@ -133,41 +133,40 @@ const DEFAULT_PLAYINS = [
 ];
 
 // ─── GROUP STAGE — 4 groups of 4, single round robin, all Bo5 ────────────────
-// The draw and all 24 pairings are confirmed on blast.tv. Sep 16's detailed
-// stream order is confirmed by @RLEsports; Sep 17 uses date-only anchors until
-// its detailed schedule is published, so those matches stay open.
+// The draw and all 24 pairings are confirmed on blast.tv. The detailed stream
+// order and exact times for Sep 16–17 are confirmed by @RLEsports.
 const DEFAULT_GROUPS = [
   // Group A
-  { id:"ga_m1", group:"A", round:"RR", label:"MATCH 1", team1:"Karmine Corp", team2:"Team Falcons",        startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
-  { id:"ga_m2", group:"A", round:"RR", label:"MATCH 2", team1:"MIBR",         team2:"Spacestation Gaming", startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
-  { id:"ga_m3", group:"A", round:"RR", label:"MATCH 3", team1:"Karmine Corp", team2:"Spacestation Gaming", startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
-  { id:"ga_m4", group:"A", round:"RR", label:"MATCH 4", team1:"Team Falcons", team2:"MIBR",                startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
+  { id:"ga_m1", group:"A", round:"RR", label:"MATCH 1", team1:"Karmine Corp", team2:"Team Falcons",        startTime:"2026-09-17T20:00:00Z", bo:5 },
+  { id:"ga_m2", group:"A", round:"RR", label:"MATCH 2", team1:"MIBR",         team2:"Spacestation Gaming", startTime:"2026-09-17T20:00:00Z", bo:5 },
+  { id:"ga_m3", group:"A", round:"RR", label:"MATCH 3", team1:"Karmine Corp", team2:"Spacestation Gaming", startTime:"2026-09-17T16:00:00Z", bo:5 },
+  { id:"ga_m4", group:"A", round:"RR", label:"MATCH 4", team1:"Team Falcons", team2:"MIBR",                startTime:"2026-09-17T16:00:00Z", bo:5 },
   { id:"ga_m5", group:"A", round:"RR", label:"MATCH 5", team1:"Karmine Corp", team2:"MIBR",                startTime:"2026-09-16T19:00:00Z", bo:5 },
   { id:"ga_m6", group:"A", round:"RR", label:"MATCH 6", team1:"Team Falcons", team2:"Spacestation Gaming", startTime:"2026-09-16T19:00:00Z", bo:5 },
 
   // Group B
-  { id:"gb_m1", group:"B", round:"RR", label:"MATCH 1", team1:"Twisted Minds",     team2:"Ninjas in Pyjamas", startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
+  { id:"gb_m1", group:"B", round:"RR", label:"MATCH 1", team1:"Twisted Minds",     team2:"Ninjas in Pyjamas", startTime:"2026-09-17T18:00:00Z", bo:5 },
   { id:"gb_m2", group:"B", round:"RR", label:"MATCH 2", team1:"Twisted Minds",     team2:"FURIA Esports",      startTime:"2026-09-16T20:00:00Z", bo:5 },
   { id:"gb_m3", group:"B", round:"RR", label:"MATCH 3", team1:"Twisted Minds",     team2:"FUT Esports",        startTime:"2026-09-16T16:00:00Z", bo:5 },
   { id:"gb_m4", group:"B", round:"RR", label:"MATCH 4", team1:"Ninjas in Pyjamas", team2:"FURIA Esports",      startTime:"2026-09-16T16:00:00Z", bo:5 },
   { id:"gb_m5", group:"B", round:"RR", label:"MATCH 5", team1:"Ninjas in Pyjamas", team2:"FUT Esports",        startTime:"2026-09-16T20:00:00Z", bo:5 },
-  { id:"gb_m6", group:"B", round:"RR", label:"MATCH 6", team1:"FURIA Esports",      team2:"FUT Esports",        startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
+  { id:"gb_m6", group:"B", round:"RR", label:"MATCH 6", team1:"FURIA Esports",      team2:"FUT Esports",        startTime:"2026-09-17T18:00:00Z", bo:5 },
 
   // Group C
   { id:"gc_m1", group:"C", round:"RR", label:"MATCH 1", team1:"Manchester City",   team2:"NRG Esports",         startTime:"2026-09-16T21:00:00Z", bo:5 },
   { id:"gc_m2", group:"C", round:"RR", label:"MATCH 2", team1:"Manchester City",   team2:"Shopify Rebellion",  startTime:"2026-09-16T17:00:00Z", bo:5 },
-  { id:"gc_m3", group:"C", round:"RR", label:"MATCH 3", team1:"Manchester City",   team2:"Bigodes",             startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
-  { id:"gc_m4", group:"C", round:"RR", label:"MATCH 4", team1:"NRG Esports",       team2:"Shopify Rebellion",  startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
+  { id:"gc_m3", group:"C", round:"RR", label:"MATCH 3", team1:"Manchester City",   team2:"Bigodes",             startTime:"2026-09-17T19:00:00Z", bo:5 },
+  { id:"gc_m4", group:"C", round:"RR", label:"MATCH 4", team1:"NRG Esports",       team2:"Shopify Rebellion",  startTime:"2026-09-17T19:00:00Z", bo:5 },
   { id:"gc_m5", group:"C", round:"RR", label:"MATCH 5", team1:"NRG Esports",       team2:"Bigodes",             startTime:"2026-09-16T17:00:00Z", bo:5 },
   { id:"gc_m6", group:"C", round:"RR", label:"MATCH 6", team1:"Shopify Rebellion", team2:"Bigodes",             startTime:"2026-09-16T21:00:00Z", bo:5 },
 
   // Group D
-  { id:"gd_m1", group:"D", round:"RR", label:"MATCH 1", team1:"Gentle Mates", team2:"Vitality",    startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
+  { id:"gd_m1", group:"D", round:"RR", label:"MATCH 1", team1:"Gentle Mates", team2:"Vitality",    startTime:"2026-09-17T21:00:00Z", bo:5 },
   { id:"gd_m2", group:"D", round:"RR", label:"MATCH 2", team1:"Gentle Mates", team2:"Wildcard",    startTime:"2026-09-16T18:00:00Z", bo:5 },
-  { id:"gd_m3", group:"D", round:"RR", label:"MATCH 3", team1:"Gentle Mates", team2:"Virtus.Pro",  startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
-  { id:"gd_m4", group:"D", round:"RR", label:"MATCH 4", team1:"Vitality",     team2:"Wildcard",    startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
+  { id:"gd_m3", group:"D", round:"RR", label:"MATCH 3", team1:"Gentle Mates", team2:"Virtus.Pro",  startTime:"2026-09-17T17:00:00Z", bo:5 },
+  { id:"gd_m4", group:"D", round:"RR", label:"MATCH 4", team1:"Vitality",     team2:"Wildcard",    startTime:"2026-09-17T17:00:00Z", bo:5 },
   { id:"gd_m5", group:"D", round:"RR", label:"MATCH 5", team1:"Vitality",     team2:"Virtus.Pro",  startTime:"2026-09-16T18:00:00Z", bo:5 },
-  { id:"gd_m6", group:"D", round:"RR", label:"MATCH 6", team1:"Wildcard",     team2:"Virtus.Pro",  startTime:"2026-09-17T16:00:00Z", timeTbd:true, bo:5 },
+  { id:"gd_m6", group:"D", round:"RR", label:"MATCH 6", team1:"Wildcard",     team2:"Virtus.Pro",  startTime:"2026-09-17T21:00:00Z", bo:5 },
 ];
 
 // ─── PLAYOFFS — 12 teams (4 group winners + 8 runners-up), double-elim, Bo7 ──
@@ -192,8 +191,8 @@ const DEFAULT_PLAYOFF = [
   { id:"p_gf",     round:"GF",   label:"GRAND FINAL",        team1:"TBD", team2:"TBD", startTime:"2026-09-20T16:00:00Z", bo:7 },
 ];
 
-// Sep 16's 1v1 semifinal times are confirmed by @RLEsports. The later side
-// events retain date-only anchors; `timeTbd` keeps their predictions open.
+// Sep 16's 1v1 and Sep 17's 2v2 semifinal times are confirmed by @RLEsports.
+// Their Grand Finals retain date-only anchors until exact times are published.
 const DEFAULT_1V1 = [
   { id:"1v1_sf1", round:"SF", label:"SEMI FINAL 1", team1:"kv1",  team2:"Nwpo", startTime:"2026-09-16T22:00:00Z", bo:7 },
   { id:"1v1_sf2", round:"SF", label:"SEMI FINAL 2", team1:"diaz", team2:"nass", startTime:"2026-09-16T23:00:00Z", bo:7 },
@@ -201,8 +200,8 @@ const DEFAULT_1V1 = [
 ];
 
 const DEFAULT_2V2 = [
-  { id:"2v2_sf1", round:"SF", label:"SEMI FINAL 1", team1:"Team Falcons",        team2:"Backyardigans",         startTime:"2026-09-17T12:00:00Z", timeTbd:true, bo:7 },
-  { id:"2v2_sf2", round:"SF", label:"SEMI FINAL 2", team1:"No Miss Just Fake", team2:"Spacestation Gaming", startTime:"2026-09-17T12:00:00Z", timeTbd:true, bo:7 },
+  { id:"2v2_sf1", round:"SF", label:"SEMI FINAL 1", team1:"Team Falcons",        team2:"Backyardigans",         startTime:"2026-09-17T22:00:00Z", bo:7 },
+  { id:"2v2_sf2", round:"SF", label:"SEMI FINAL 2", team1:"No Miss Just Fake", team2:"Spacestation Gaming", startTime:"2026-09-17T23:00:00Z", bo:7 },
   { id:"2v2_gf",  round:"GF", label:"GRAND FINAL",  team1:"TBD", team2:"TBD", startTime:"2026-09-19T12:00:00Z", timeTbd:true, bo:7 },
 ];
 
