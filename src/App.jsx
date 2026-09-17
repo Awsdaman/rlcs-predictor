@@ -337,6 +337,10 @@ const teamStyle = (n)   => TEAMS[n] || { abbr:(n||"?").slice(0,3).toUpperCase(),
 const isTBDTeam = (n)   => !n || n === "TBD";
 const maxWins   = (m)   => ((m.bo || 5) === 7 ? 4 : 3);   // Bo5 → first to 3, Bo7 → first to 4
 const hasTBD    = (m)   => isTBDTeam(m.team1) || isTBDTeam(m.team2);
+const resultRecordedAt = (m, result) => {
+  const time = new Date(result?.set_at || m.startTime).getTime();
+  return Number.isFinite(time) ? time : 0;
+};
 const matchStageLabel = (m) => m.group ? `Group ${m.group}`
   : m.id.startsWith("pi_") ? "Play-Ins"
   : m.id.startsWith("1v1_") ? "1v1 Worlds"
@@ -2132,7 +2136,14 @@ function MyGroupPage({ myGroup, members, rows, authId, predictions, results, all
 
   // Breakdown: decided matches plus anything currently live
   const liveOf = (m) => !results[m.id] && isLocked(m, now) && now >= new Date(m.startTime).getTime();
-  const gridRows = allMatches.filter(m => results[m.id] || liveOf(m));
+  const gridRows = allMatches
+    .filter(m => results[m.id] || liveOf(m))
+    .sort((a, b) => {
+      const aResult = results[a.id];
+      const bResult = results[b.id];
+      if (!!aResult !== !!bResult) return bResult ? 1 : -1;
+      return resultRecordedAt(b, bResult) - resultRecordedAt(a, aResult);
+    });
 
   return (
     <div>
@@ -2204,7 +2215,7 @@ function MyGroupPage({ myGroup, members, rows, authId, predictions, results, all
       </div>
 
       {/* Per-match breakdown */}
-      <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:C.dim, letterSpacing:1.8, textTransform:"uppercase", marginBottom:8 }}>Per-match breakdown</div>
+      <div style={{ fontSize:9, fontWeight:700, fontFamily:F.main, color:C.dim, letterSpacing:1.8, textTransform:"uppercase", marginBottom:8 }}>Per-match breakdown · Latest result first</div>
       <div style={{ fontSize:11.5, fontFamily:F.body, color:C.dim, marginBottom:12 }}>
         <span style={{ color:C.green, fontWeight:600 }}>+3</span> exact ·{" "}
         <span style={{ color:C.gold, fontWeight:600 }}>+1</span> winner ·{" "}
@@ -3178,7 +3189,7 @@ export default function App() {
               totalMatches={scorableMatches.length} />
             {isAdmin&&Object.keys(scorableResults).length>0&&(
               <div style={{ marginTop:28 }}>
-                <div style={{ fontSize:10,color:C.muted,letterSpacing:2,marginBottom:10,fontFamily:F.main,textTransform:"uppercase" }}>Match Breakdown</div>
+                <div style={{ fontSize:10,color:C.muted,letterSpacing:2,marginBottom:10,fontFamily:F.main,textTransform:"uppercase" }}>Match Breakdown · Latest result first</div>
                 <div style={{ overflowX:"auto" }}>
                   <table style={{ width:"100%",borderCollapse:"collapse",fontSize:11,fontFamily:F.main }}>
                     <thead><tr style={{ borderBottom:"1px solid rgba(255,255,255,0.08)" }}>
@@ -3187,7 +3198,10 @@ export default function App() {
                       {players.map(p=><th key={p.id} style={{ textAlign:"center",padding:"5px 8px",color:p.id===authId?C.blue:C.muted,letterSpacing:0.5 }}>{p.nickname}</th>)}
                     </tr></thead>
                     <tbody>
-                      {scorableMatches.filter(m=>scorableResults[m.id]).map(m=>(
+                      {scorableMatches
+                        .filter(m=>scorableResults[m.id])
+                        .sort((a,b)=>resultRecordedAt(b,scorableResults[b.id])-resultRecordedAt(a,scorableResults[a.id]))
+                        .map(m=>(
                         <tr key={m.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
                           <td style={{ padding:"5px 8px",color:C.dim,whiteSpace:"nowrap" }}>
                             {m.team1} vs {m.team2}
