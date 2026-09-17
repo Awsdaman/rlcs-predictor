@@ -599,6 +599,7 @@ function BracketCard({ match, result, pred, onClick, isSelected, now, isAdmin })
       )}
       <BracketTeamRow name={t1} score={res?.score1} isWinner={res?.winner===t1} isPick={pred?.winner===t1} hasResult={!!res} tbdCard={tbd} />
       <BracketTeamRow name={t2} score={res?.score2} isWinner={res?.winner===t2} isPick={pred?.winner===t2} hasResult={!!res} tbdCard={tbd} last />
+      {res && !isAdmin && <PredictionResultStrip pred={pred} result={res} compact />}
     </div>
   );
 }
@@ -1082,7 +1083,7 @@ function ScheduleFixtureSide({ name, align, dimmed }) {
   );
 }
 
-function PredictionResultStrip({ pred, result }) {
+function PredictionResultStrip({ pred, result, compact=false }) {
   const points = calcScore(pred, result);
   const color = points === 3 ? C.green : points === 1 ? C.goldLight : C.muted;
   const verdict = !pred ? "No pick" : points === 3 ? "Exact score" : points === 1 ? "Correct winner" : "Wrong pick";
@@ -1091,6 +1092,26 @@ function PredictionResultStrip({ pred, result }) {
     : pred.score1 != null && pred.score2 != null
       ? `${pred.score1}–${pred.score2} · ${pred.winner}`
       : pred.winner;
+
+  if (compact) {
+    const compactPrediction = !pred
+      ? "No prediction"
+      : pred.score1 != null && pred.score2 != null
+        ? `${pred.score1}–${pred.score2} · ${teamStyle(pred.winner).abbr}`
+        : teamStyle(pred.winner).abbr;
+    return (
+      <div style={{ padding:"7px 10px", borderTop:`1px solid ${C.lineSoft}`, background:"rgba(0,0,0,0.14)", fontFamily:F.main }}>
+        <div style={{ display:"flex", justifyContent:"space-between", gap:8, fontSize:9, color:C.dim,
+                      letterSpacing:0.7, textTransform:"uppercase" }}>
+          <span>Prediction <b style={{ ...NUM, color:pred ? C.white : C.dimmer, marginLeft:3 }}>{compactPrediction}</b></span>
+          <span>Final <b style={{ ...NUM, color:C.white, marginLeft:3 }}>{result.score1}–{result.score2}</b></span>
+        </div>
+        <div style={{ marginTop:4, color, fontSize:9, fontWeight:700, letterSpacing:0.8, textTransform:"uppercase" }}>
+          +{points} pts · {verdict}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display:"flex", alignItems:"center", gap:"7px 14px", flexWrap:"wrap", marginTop:10,
@@ -1193,7 +1214,7 @@ function ScheduleView({ matches, results, predictions, playerId, now, selected, 
 // ─── PLAYOFFS BRACKET PAGE ───────────────────────────────────────────────────
 // The Grand Final is the one card allowed extra weight: a gold top edge marks
 // the terminal match without resorting to glow.
-function FinalCard({ match, result, pred, onClick, isSelected, now, headerLabel, accent, nameSize, chip }) {
+function FinalCard({ match, result, pred, onClick, isSelected, now, isAdmin, headerLabel, accent, nameSize, chip }) {
   const res = result;
   const score = pred && res ? calcScore(pred, res) : null;
   const tbd = hasTBD(match);
@@ -1231,6 +1252,7 @@ function FinalCard({ match, result, pred, onClick, isSelected, now, headerLabel,
             isPick={pred?.winner===match.team2} hasResult={!!res} tbdCard={tbd} chip={chip} nameSize={nameSize} last />
         </div>
       </div>
+      {res && !isAdmin && <PredictionResultStrip pred={pred} result={res} compact />}
     </div>
   );
 }
