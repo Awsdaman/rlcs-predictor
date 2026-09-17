@@ -204,6 +204,7 @@ const DEFAULT_2V2 = [
   { id:"2v2_sf2", round:"SF", label:"SEMI FINAL 2", team1:"No Miss Just Fake", team2:"Spacestation Gaming", startTime:"2026-09-17T23:00:00Z", bo:7 },
   { id:"2v2_gf",  round:"GF", label:"GRAND FINAL",  team1:"TBD", team2:"TBD", startTime:"2026-09-19T12:00:00Z", timeTbd:true, bo:7 },
 ];
+const END_OF_DAY_MATCH_ID = "2v2_sf2";
 
 // ─── HALL OF FAME — champions & top predictors of past events ───────────────
 const HALL_OF_FAME = [
@@ -2096,23 +2097,23 @@ function LoadingScreen() {
 }
 
 // ─── STANDINGS ROW — shared by the global Standings screen and My Group ──────
-function StandingsRow({ p, i, isMe, groupLabel, predCount, totalMatches, tintMe }) {
+function StandingsRow({ p, rank=0, isMe, groupLabel, predCount, totalMatches, tintMe }) {
   return (
     <div style={{
       display:"flex", alignItems:"center", gap:18,
-      padding: i===0 ? "18px 20px" : "16px 20px",
-      borderTop: i===0 ? "none" : `1px solid ${C.lineSoft}`,
-      background: i===0 ? "linear-gradient(90deg, rgba(217,166,83,0.10), transparent)"
+      padding: rank===0 ? "18px 20px" : "16px 20px",
+      borderTop: rank===0 ? "none" : `1px solid ${C.lineSoft}`,
+      background: rank===0 ? "linear-gradient(90deg, rgba(217,166,83,0.10), transparent)"
                 : (isMe && tintMe) ? "rgba(61,107,255,0.05)" : "transparent",
       borderLeft: (isMe && tintMe) ? `2px solid ${C.blue}` : "2px solid transparent",
     }}>
       <span style={{ ...NUM, width:34, textAlign:"center", fontFamily:F.main, fontWeight:700,
-                     fontSize: i===0?26:22, color: i===0?C.gold : i<3?C.muted : C.dim }}>
-        {String(i+1).padStart(2,"0")}
+                     fontSize: rank===0?26:22, color: rank===0?C.gold : rank<3?C.muted : C.dim }}>
+        {String(rank+1).padStart(2,"0")}
       </span>
       <div style={{ flex:1, minWidth:0 }}>
         <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
-          <span style={{ fontFamily:F.main, fontWeight:700, fontSize: i===0?16:15, color:C.white }}>{p.nickname}</span>
+          <span style={{ fontFamily:F.main, fontWeight:700, fontSize: rank===0?16:15, color:C.white }}>{p.nickname}</span>
           {isMe && <Badge text="You" color={C.blue} fill="rgba(61,107,255,0.15)" line="rgba(61,107,255,0.35)" />}
           {groupLabel && <Badge text={groupLabel} color={C.gold} fill="rgba(217,166,83,0.15)" line="rgba(217,166,83,0.3)" />}
         </div>
@@ -2121,8 +2122,8 @@ function StandingsRow({ p, i, isMe, groupLabel, predCount, totalMatches, tintMe 
           {p.bonus !== 0 && <span> · {p.bonus > 0 ? "+" : "−"}{Math.abs(p.bonus)} bonus</span>}
         </div>
       </div>
-      <div style={{ ...NUM, fontFamily:F.main, fontWeight:700, fontSize: i===0?28:24,
-                    color: i===0?C.gold:C.white, flexShrink:0 }}>
+      <div style={{ ...NUM, fontFamily:F.main, fontWeight:700, fontSize: rank===0?28:24,
+                    color: rank===0?C.gold:C.white, flexShrink:0 }}>
         {p.score}<span style={{ fontSize:11, color:C.dim, marginLeft:4, letterSpacing:1 }}>PTS</span>
       </div>
     </div>
@@ -2137,11 +2138,87 @@ function Badge({ text, color, fill, line }) {
   );
 }
 
-function StandingsList({ rows, authId, groupLabelFor, predCountFor, totalMatches, tintMe }) {
+function StandingsPodium({ rows, authId }) {
+  const ordered = [rows[1], rows[0], rows[2]].filter(Boolean);
+  const rankFor = (player) => rows.findIndex(p => p.id === player.id) + 1;
+  const heightFor = (rank) => rank === 1 ? 148 : rank === 2 ? 118 : 98;
+  const colorFor = (rank) => rank === 1 ? C.goldLight : rank === 2 ? "#c7cedb" : "#c48a5a";
+
+  return (
+    <div style={{ display:"grid", gridTemplateColumns:`repeat(${ordered.length}, minmax(0, 1fr))`, alignItems:"end",
+                  gap:8, padding:"18px 12px 0", background:"linear-gradient(180deg, rgba(217,166,83,0.06), transparent)" }}>
+      {ordered.map(player => {
+        const rank = rankFor(player);
+        const isMe = player.id === authId;
+        const color = colorFor(rank);
+        return (
+          <div key={player.id} style={{ minWidth:0, textAlign:"center" }}>
+            <div style={{ fontSize:13, fontWeight:700, fontFamily:F.main, color:C.white,
+                          whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", padding:"0 4px" }}>
+              {player.nickname}
+            </div>
+            {isMe && <div style={{ fontSize:8, color:C.blue, fontFamily:F.main, fontWeight:700, letterSpacing:1, textTransform:"uppercase", marginTop:2 }}>You</div>}
+            <div style={{ ...NUM, fontSize:18, fontWeight:700, fontFamily:F.main, color, margin:"5px 0 8px" }}>
+              {player.score}<span style={{ fontSize:8, color:C.dim, marginLeft:3, letterSpacing:1 }}>PTS</span>
+            </div>
+            <div style={{ height:heightFor(rank), display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"flex-start",
+                          paddingTop:12, border:`1px solid ${color}55`, borderBottom:"none", borderRadius:"6px 6px 0 0",
+                          background:`linear-gradient(180deg, ${color}1f, rgba(255,255,255,0.025))` }}>
+              <span style={{ ...NUM, fontSize:rank===1?34:28, lineHeight:1, fontWeight:700, fontFamily:F.main, color }}>#{rank}</span>
+              <span style={{ fontSize:8, color:C.dim, fontFamily:F.main, fontWeight:700, letterSpacing:1.2, textTransform:"uppercase", marginTop:7 }}>
+                {rank===1?"Leader":rank===2?"Second":"Third"}
+              </span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function DayPodiumModal({ rows, authId, onClose, onViewStandings }) {
+  useEffect(() => {
+    const closeOnEscape = (event) => { if (event.key === "Escape") onClose(); };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [onClose]);
+
+  return (
+    <div role="dialog" aria-modal="true" aria-labelledby="day-podium-title" onClick={onClose}
+      style={{ position:"fixed", inset:0, zIndex:10020, display:"flex", alignItems:"center", justifyContent:"center",
+               padding:18, background:"rgba(4,8,18,0.84)", animation:"toastIn 0.2s ease" }}>
+      <div onClick={event=>event.stopPropagation()} style={{ width:"min(560px, 100%)", background:C.surfaceHi,
+            border:`1px solid rgba(217,166,83,0.38)`, borderRadius:10, overflow:"hidden",
+            boxShadow:"0 18px 60px rgba(0,0,0,0.55)" }}>
+        <div style={{ padding:"22px 22px 8px", textAlign:"center" }}>
+          <div id="day-podium-title" style={{ fontSize:22, fontWeight:700, color:C.white, fontFamily:F.main, letterSpacing:1, textTransform:"uppercase" }}>
+            Day complete
+          </div>
+          <div style={{ marginTop:5, fontSize:11, color:C.goldLight, fontFamily:F.main, letterSpacing:1.5, textTransform:"uppercase" }}>
+            Top three after the final 2v2 match
+          </div>
+        </div>
+        <StandingsPodium rows={rows.slice(0,3)} authId={authId} />
+        <div style={{ display:"flex", gap:8, padding:14, borderTop:`1px solid ${C.lineSoft}` }}>
+          <button onClick={onClose} style={{ flex:1, padding:"10px 12px", borderRadius:6, border:`1px solid ${C.line}`,
+                    background:"rgba(255,255,255,0.03)", color:C.muted, fontFamily:F.main, fontWeight:700,
+                    fontSize:11, letterSpacing:1, textTransform:"uppercase", cursor:"pointer" }}>Close</button>
+          <button onClick={onViewStandings} style={{ flex:2, padding:"10px 12px", borderRadius:6, border:"none",
+                    background:GOLD_GRAD, color:"#151515", fontFamily:F.main, fontWeight:700,
+                    fontSize:11, letterSpacing:1, textTransform:"uppercase", cursor:"pointer" }}>View full standings</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StandingsList({ rows, authId, groupLabelFor, predCountFor, totalMatches, tintMe, showPodium=false }) {
+  const listRows = showPodium ? rows.slice(3) : rows;
   return (
     <div style={{ background:C.surface, border:`1px solid ${C.line}`, borderRadius:8, overflow:"hidden" }}>
-      {rows.map((p,i) => (
-        <StandingsRow key={p.id} p={p} i={i} isMe={p.id===authId} tintMe={tintMe}
+      {showPodium && rows.length>0 && <StandingsPodium rows={rows.slice(0,3)} authId={authId} />}
+      {listRows.map((p,i) => (
+        <StandingsRow key={p.id} p={p} rank={showPodium?i+3:i} isMe={p.id===authId} tintMe={tintMe}
           groupLabel={groupLabelFor ? groupLabelFor(p) : null}
           predCount={predCountFor(p)} totalMatches={totalMatches} />
       ))}
@@ -2798,6 +2875,7 @@ export default function App() {
   const [expandedGrp,      setExpandedGrp]      = useState(null);
   // Toasts
   const [toasts,           setToasts]           = useState([]);
+  const [dayPodiumOpen,    setDayPodiumOpen]    = useState(false);
   // Admin players sub-tab
   const [playerSort,       setPlayerSort]       = useState("score");
   const [moveGrpOpen,      setMoveGrpOpen]      = useState(null);
@@ -2836,6 +2914,14 @@ export default function App() {
   },[pillOpen]);
 
   const toast = (msg, type="info") => { const id=Date.now(); setToasts(t=>[...t,{id,msg,type}]); setTimeout(()=>setToasts(t=>t.filter(x=>x.id!==id)),4000); };
+  const showDayPodium = useCallback((result) => {
+    if (result?.match_id !== END_OF_DAY_MATCH_ID) return;
+    const marker = result.set_at || `${result.winner}:${result.score1}-${result.score2}`;
+    const storageKey = `rlcs_day_podium_${END_OF_DAY_MATCH_ID}`;
+    if (localStorage.getItem(storageKey) === marker) return;
+    localStorage.setItem(storageKey, marker);
+    setDayPodiumOpen(true);
+  }, []);
 
   // ── Activity feed (admin only) ──
   useEffect(()=>{
@@ -2894,7 +2980,7 @@ export default function App() {
         }
       }
       const resMap={};
-      (res||[]).forEach(r=>{ resMap[r.match_id]={winner:r.winner,score1:r.score1,score2:r.score2}; });
+      (res||[]).forEach(r=>{ resMap[r.match_id]={winner:r.winner,score1:r.score1,score2:r.score2,set_at:r.set_at}; });
       setResults(resMap);
       setBonusPoints(bon||[]);
       await loadBracketTeams();
@@ -2923,7 +3009,10 @@ export default function App() {
         }
       })
       .on("postgres_changes",{event:"*",schema:"public",table:"results"},({eventType:et,new:r,old:o})=>{
-        if(et==="INSERT"||et==="UPDATE")setResults(prev=>({...prev,[r.match_id]:{winner:r.winner,score1:r.score1,score2:r.score2}}));
+        if(et==="INSERT"||et==="UPDATE"){
+          setResults(prev=>({...prev,[r.match_id]:{winner:r.winner,score1:r.score1,score2:r.score2,set_at:r.set_at}}));
+          showDayPodium(r);
+        }
         else setResults(prev=>{const n={...prev};delete n[o.match_id];return n;});
       })
       .on("postgres_changes",{event:"*",schema:"public",table:"bonus_points"},({eventType:et,new:b,old:o})=>{
@@ -2943,7 +3032,7 @@ export default function App() {
       })
       .subscribe();
     return()=>supabase.removeChannel(ch);
-  },[]);
+  },[showDayPodium]);
 
   useEffect(()=>{ if(authId)localStorage.setItem("rlcs_auth",authId); else localStorage.removeItem("rlcs_auth"); },[authId]);
   useEffect(()=>{ if(isAdmin)localStorage.setItem("rlcs_admin","1"); else localStorage.removeItem("rlcs_admin"); },[isAdmin]);
@@ -2970,8 +3059,14 @@ export default function App() {
 
   const handleSetResult=useCallback(async(matchId,result)=>{
     if(result===null){ setResults(prev=>{const n={...prev};delete n[matchId];return n;}); await supabase.from("results").delete().eq("match_id",matchId); toast("Result cleared","info"); }
-    else{ const c={winner:result.winner,score1:result.score1,score2:result.score2}; setResults(prev=>({...prev,[matchId]:c})); await supabase.from("results").upsert({match_id:matchId,...c,set_at:new Date().toISOString()},{onConflict:"match_id"}); toast(`Result set: ${result.score1}–${result.score2}`,"success"); }
-  },[toast]);
+    else{
+      const c={winner:result.winner,score1:result.score1,score2:result.score2,set_at:new Date().toISOString()};
+      setResults(prev=>({...prev,[matchId]:c}));
+      await supabase.from("results").upsert({match_id:matchId,...c},{onConflict:"match_id"});
+      showDayPodium({match_id:matchId,...c});
+      toast(`Result set: ${result.score1}–${result.score2}`,"success");
+    }
+  },[toast,showDayPodium]);
 
   const handleUpdateBracketTeams=async(matchId,team1,team2)=>{
     setBracketOverrides(prev=>({...prev,[matchId]:{team1,team2}}));
@@ -3239,7 +3334,8 @@ export default function App() {
               groupLabelFor={(p)=>{ const g=p.group_id&&p.group_id!=="public"?groups.find(x=>x.id===p.group_id):null;
                                     return g ? (isAdmin||p.group_id===myGroup?.id ? g.name : "Private") : null; }}
               predCountFor={(p)=>getPredCount(p.id)}
-              totalMatches={scorableMatches.length} />
+              totalMatches={scorableMatches.length}
+              showPodium={!lbSearch} />
             {isAdmin&&Object.keys(scorableResults).length>0&&(
               <div style={{ marginTop:28 }}>
                 <div style={{ fontSize:10,color:C.muted,letterSpacing:2,marginBottom:10,fontFamily:F.main,textTransform:"uppercase" }}>Match Breakdown · Latest result first</div>
@@ -3715,6 +3811,12 @@ export default function App() {
             </div>
           </div>
         </div>
+      )}
+
+      {dayPodiumOpen && (
+        <DayPodiumModal rows={leaderboard} authId={authId}
+          onClose={()=>setDayPodiumOpen(false)}
+          onViewStandings={()=>{ setDayPodiumOpen(false); setPage("leaderboard"); }} />
       )}
 
       {/* TOAST CONTAINER */}
