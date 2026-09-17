@@ -1082,7 +1082,36 @@ function ScheduleFixtureSide({ name, align, dimmed }) {
   );
 }
 
-function ScheduleView({ matches, results, now, selected, onSelect }) {
+function PredictionResultStrip({ pred, result }) {
+  const points = calcScore(pred, result);
+  const color = points === 3 ? C.green : points === 1 ? C.goldLight : C.muted;
+  const verdict = !pred ? "No pick" : points === 3 ? "Exact score" : points === 1 ? "Correct winner" : "Wrong pick";
+  const prediction = !pred
+    ? "No prediction"
+    : pred.score1 != null && pred.score2 != null
+      ? `${pred.score1}–${pred.score2} · ${pred.winner}`
+      : pred.winner;
+
+  return (
+    <div style={{ display:"flex", alignItems:"center", gap:"7px 14px", flexWrap:"wrap", marginTop:10,
+                  paddingTop:9, borderTop:`1px solid ${C.lineSoft}`, fontFamily:F.main }}>
+      <div style={{ fontSize:10, color:C.dim, letterSpacing:0.8, textTransform:"uppercase" }}>
+        Your prediction <span style={{ ...NUM, color:pred ? C.white : C.dimmer, fontWeight:700, marginLeft:5 }}>{prediction}</span>
+      </div>
+      <div style={{ fontSize:10, color:C.dim, letterSpacing:0.8, textTransform:"uppercase" }}>
+        Final <span style={{ ...NUM, color:C.white, fontWeight:700, marginLeft:5 }}>{result.score1}–{result.score2} · {result.winner}</span>
+      </div>
+      <div style={{ marginLeft:"auto", padding:"3px 8px", borderRadius:4,
+                    background:points === 3 ? "rgba(62,207,142,0.10)" : points === 1 ? "rgba(217,166,83,0.10)" : "rgba(255,255,255,0.04)",
+                    border:`1px solid ${points === 3 ? "rgba(62,207,142,0.25)" : points === 1 ? "rgba(217,166,83,0.25)" : C.lineSoft}`,
+                    color, fontSize:10, fontWeight:700, letterSpacing:0.8, textTransform:"uppercase", whiteSpace:"nowrap" }}>
+        +{points} pts · {verdict}
+      </div>
+    </div>
+  );
+}
+
+function ScheduleView({ matches, results, predictions, playerId, now, selected, onSelect }) {
   const fmtDay  = (iso) => new Date(iso).toLocaleDateString("en-US", { timeZone:"Asia/Riyadh", weekday:"long", month:"short", day:"numeric" });
   const fmtHour = (iso) => new Date(iso).toLocaleTimeString("en-US", { timeZone:"Asia/Riyadh", hour:"2-digit", minute:"2-digit", hour12:false });
 
@@ -1108,6 +1137,7 @@ function ScheduleView({ matches, results, now, selected, onSelect }) {
 
           {d.matches.map((m, i) => {
             const res    = results[m.id];
+            const pred   = playerId ? predictions[playerId]?.[m.id] : null;
             const locked = isLocked(m, now);
             const live   = !m.timeTbd && !res && locked && now >= new Date(m.startTime).getTime();
             const msLeft = getLockTime(m).getTime() - now;
@@ -1149,6 +1179,7 @@ function ScheduleView({ matches, results, now, selected, onSelect }) {
                     )}
                     <ScheduleFixtureSide name={m.team2} align="right" dimmed={!!res && res.winner!==m.team2} />
                   </div>
+                  {res && playerId && <PredictionResultStrip pred={pred} result={res} />}
                 </div>
               </div>
             );
