@@ -198,9 +198,9 @@ const DEFAULT_1V1 = [
 const DEFAULT_2V2 = [
   { id:"2v2_sf1", round:"SF", label:"SEMI FINAL 1", team1:"Team Falcons",        team2:"Backyardigans",         startTime:"2026-09-17T22:00:00Z", bo:7 },
   { id:"2v2_sf2", round:"SF", label:"SEMI FINAL 2", team1:"No Miss Just Fake", team2:"Spacestation Gaming", startTime:"2026-09-17T23:00:00Z", bo:7 },
-  { id:"2v2_gf",  round:"GF", label:"GRAND FINAL",  team1:"TBD", team2:"TBD", startTime:"2026-09-19T12:00:00Z", timeTbd:true, bo:7 },
+  { id:"2v2_gf",  round:"GF", label:"GRAND FINAL",  team1:"Team Falcons", team2:"No Miss Just Fake", startTime:"2026-09-19T12:00:00Z", timeTbd:true, bo:7 },
 ];
-const END_OF_DAY_MATCH_ID = "2v2_sf2";
+const END_OF_DAY_MATCH_ID = "2v2_gf";
 const WORLDS_START_MS = Date.parse("2026-09-15T00:00:00Z");
 const LEGACY_PLAYOFF_IDS = new Set(["p_qf1","p_qf2","p_qf3","p_qf4","p_sf1","p_sf2","p_gf","p_3rd"]);
 
@@ -2716,11 +2716,11 @@ function MatchSlide({ match, result, pred, playerId, onPredict, now }) {
 function UpNextPage({ matches, predictions, results, playerId, onPredict, now, onOpenSchedule }) {
   // Only what is still ahead. Finished matches are history and belong on the
   // schedule and breakdown screens, not in the strip you swipe to place a bet.
-  // Up Next only shows fully confirmed matches. Anything with an unresolved
-  // team or start time stays on its tournament schedule until it is confirmed.
+  // Up Next shows confirmed matchups on the active event day. A confirmed
+  // matchup can appear with Time TBD while its exact start time is pending.
   const list = useMemo(() => {
-    const sorted = [...matches].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-    const upcoming = sorted.filter(m => !results[m.id] && !hasTBD(m) && !m.timeTbd);
+    const sorted = [...matches].sort((a, b) => Number(Boolean(a.timeTbd)) - Number(Boolean(b.timeTbd)) || new Date(a.startTime) - new Date(b.startTime));
+    const upcoming = sorted.filter(m => !results[m.id] && !hasTBD(m));
     if (upcoming.length === 0) return [];
     const today = ksaEventDay(now);
     const activeDay = upcoming.some(m => ksaEventDay(m.startTime) === today)
