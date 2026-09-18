@@ -338,6 +338,10 @@ const resultRecordedAt = (m, result) => {
   const time = new Date(result?.set_at || m.startTime).getTime();
   return Number.isFinite(time) ? time : 0;
 };
+// Tournament broadcasts can run past midnight. Treat matches before 06:00 KSA
+// as part of the previous event day so a 01:00 final stays with that day's card.
+const ksaEventDay = (value) => new Date(new Date(value).getTime() - 6 * 60 * 60 * 1000)
+  .toLocaleDateString("en-US", { timeZone:"Asia/Riyadh", year:"numeric", month:"2-digit", day:"2-digit" });
 const matchStageLabel = (m) => m.group ? `Group ${m.group}`
   : m.id.startsWith("pi_") ? "Play-Ins"
   : m.id.startsWith("1v1_") ? "1v1 Worlds"
@@ -2714,8 +2718,14 @@ function UpNextPage({ matches, predictions, results, playerId, onPredict, now, o
   // team or start time stays on its tournament schedule until it is confirmed.
   const list = useMemo(() => {
     const sorted = [...matches].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-    return sorted.filter(m => !results[m.id] && !hasTBD(m) && !m.timeTbd);
-  }, [matches, results]);
+    const upcoming = sorted.filter(m => !results[m.id] && !hasTBD(m) && !m.timeTbd);
+    if (upcoming.length === 0) return [];
+    const today = ksaEventDay(now);
+    const activeDay = upcoming.some(m => ksaEventDay(m.startTime) === today)
+      ? today
+      : ksaEventDay(upcoming[0].startTime);
+    return upcoming.filter(m => ksaEventDay(m.startTime) === activeDay);
+  }, [matches, results, now]);
 
   // The one to open on: soonest still-predictable match, else soonest unplayed,
   // else the most recent result.
