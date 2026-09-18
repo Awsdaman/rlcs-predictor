@@ -170,18 +170,15 @@ const DEFAULT_GROUPS = [
 ];
 
 // ─── PLAYOFFS — 12 teams (4 group winners + 8 runners-up), double-elim, Bo7 ──
-// Group winners get a bye straight to the Upper Bracket; 2nd/3rd-place group
-// finishers start in the Lower Bracket. Everything here is TBD until the
-// Group Stage finishes (Sep 16–17) and the official seeding is published —
-// the win/lose routing below is our best reconstruction of the bracket shape
-// from blast.tv's schedule + prize-tier breakdown, cross-checked to match.
+// Playoff opening matches are confirmed by blast.tv. Sep 18's stream order was
+// cross-checked against the latest official schedule graphic shared by @i3zonii.
 const DEFAULT_PLAYOFF = [
-  { id:"p_ubqf1",  round:"UBQF", label:"UB QUARTER FINAL 1", team1:"TBD", team2:"TBD", startTime:"2026-09-19T16:00:00Z", bo:7 },
-  { id:"p_ubqf2",  round:"UBQF", label:"UB QUARTER FINAL 2", team1:"TBD", team2:"TBD", startTime:"2026-09-19T16:00:00Z", bo:7 },
-  { id:"p_lbr1m1", round:"LBR1", label:"LB ROUND 1 M1",      team1:"TBD", team2:"TBD", startTime:"2026-09-18T16:00:00Z", bo:7 },
-  { id:"p_lbr1m2", round:"LBR1", label:"LB ROUND 1 M2",      team1:"TBD", team2:"TBD", startTime:"2026-09-18T16:00:00Z", bo:7 },
-  { id:"p_lbr1m3", round:"LBR1", label:"LB ROUND 1 M3",      team1:"TBD", team2:"TBD", startTime:"2026-09-18T16:00:00Z", bo:7 },
-  { id:"p_lbr1m4", round:"LBR1", label:"LB ROUND 1 M4",      team1:"TBD", team2:"TBD", startTime:"2026-09-18T16:00:00Z", bo:7 },
+  { id:"p_ubqf1",  round:"UBQF", label:"UB QUARTER FINAL 1", team1:"Karmine Corp",       team2:"Virtus.Pro",          startTime:"2026-09-19T16:00:00Z", bo:7 },
+  { id:"p_ubqf2",  round:"UBQF", label:"UB QUARTER FINAL 2", team1:"FUT Esports",        team2:"NRG Esports",         startTime:"2026-09-19T16:00:00Z", bo:7 },
+  { id:"p_lbr1m1", round:"LBR1", label:"LB ROUND 1 M1",      team1:"Twisted Minds",      team2:"Spacestation Gaming", startTime:"2026-09-18T19:00:00Z", bo:7 },
+  { id:"p_lbr1m2", round:"LBR1", label:"LB ROUND 1 M2",      team1:"Manchester City",    team2:"Gentle Mates",        startTime:"2026-09-18T17:30:00Z", bo:7 },
+  { id:"p_lbr1m3", round:"LBR1", label:"LB ROUND 1 M3",      team1:"Team Falcons",       team2:"FURIA Esports",       startTime:"2026-09-18T16:00:00Z", bo:7 },
+  { id:"p_lbr1m4", round:"LBR1", label:"LB ROUND 1 M4",      team1:"Shopify Rebellion", team2:"Vitality",            startTime:"2026-09-18T20:30:00Z", bo:7 },
   { id:"p_lbr2m1", round:"LBR2", label:"LB ROUND 2 M1",      team1:"TBD", team2:"TBD", startTime:"2026-09-19T16:00:00Z", bo:7 },
   { id:"p_lbr2m2", round:"LBR2", label:"LB ROUND 2 M2",      team1:"TBD", team2:"TBD", startTime:"2026-09-19T16:00:00Z", bo:7 },
   { id:"p_lbqf1",  round:"LBQF", label:"LB QUARTER FINAL 1", team1:"TBD", team2:"TBD", startTime:"2026-09-20T16:00:00Z", bo:7 },
@@ -192,11 +189,10 @@ const DEFAULT_PLAYOFF = [
 ];
 
 // Sep 16's 1v1 and Sep 17's 2v2 semifinal times are confirmed by @RLEsports.
-// Their Grand Finals retain date-only anchors until exact times are published.
 const DEFAULT_1V1 = [
   { id:"1v1_sf1", round:"SF", label:"SEMI FINAL 1", team1:"kv1",  team2:"Nwpo", startTime:"2026-09-16T22:00:00Z", bo:7 },
   { id:"1v1_sf2", round:"SF", label:"SEMI FINAL 2", team1:"diaz", team2:"nass", startTime:"2026-09-16T23:00:00Z", bo:7 },
-  { id:"1v1_gf",  round:"GF", label:"GRAND FINAL",  team1:"TBD", team2:"TBD", startTime:"2026-09-18T12:00:00Z", timeTbd:true, bo:7 },
+  { id:"1v1_gf",  round:"GF", label:"GRAND FINAL",  team1:"Nwpo", team2:"nass", startTime:"2026-09-18T22:00:00Z", bo:7 },
 ];
 
 const DEFAULT_2V2 = [
