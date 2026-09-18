@@ -201,6 +201,8 @@ const DEFAULT_2V2 = [
   { id:"2v2_gf",  round:"GF", label:"GRAND FINAL",  team1:"TBD", team2:"TBD", startTime:"2026-09-19T12:00:00Z", timeTbd:true, bo:7 },
 ];
 const END_OF_DAY_MATCH_ID = "2v2_sf2";
+const WORLDS_START_MS = Date.parse("2026-09-15T00:00:00Z");
+const LEGACY_PLAYOFF_IDS = new Set(["p_qf1","p_qf2","p_qf3","p_qf4","p_sf1","p_sf2","p_gf","p_3rd"]);
 
 // ─── HALL OF FAME — champions & top predictors of past events ───────────────
 const HALL_OF_FAME = [
@@ -2972,7 +2974,12 @@ export default function App() {
       setGroups(grps||[]);
       setPlayers(pls||[]);
       const predMap={};
-      (preds||[]).forEach(p=>{ if(!predMap[p.player_id])predMap[p.player_id]={}; predMap[p.player_id][p.match_id]={winner:p.winner,score1:p.score1,score2:p.score2}; });
+      (preds||[]).forEach(p=>{
+        const oldPlayoffPick = p.match_id.startsWith("p_") && (!p.updated_at || Date.parse(p.updated_at) < WORLDS_START_MS);
+        if (oldPlayoffPick) return;
+        if(!predMap[p.player_id])predMap[p.player_id]={};
+        predMap[p.player_id][p.match_id]={winner:p.winner,score1:p.score1,score2:p.score2};
+      });
       setPredictions(predMap);
       const myId=localStorage.getItem("rlcs_auth");
       if(myId){
@@ -3047,7 +3054,11 @@ export default function App() {
     if(!authId||loading)return;
     const backup=localStorage.getItem(`rlcs_preds_${authId}`);
     if(!backup)return;
-    try{ const bp=JSON.parse(backup); setPredictions(prev=>({...prev,[authId]:{...bp,...(prev[authId]||{})}})); }catch{}
+    try{
+      const bp=JSON.parse(backup);
+      LEGACY_PLAYOFF_IDS.forEach(id=>delete bp[id]);
+      setPredictions(prev=>({...prev,[authId]:{...bp,...(prev[authId]||{})}}));
+    }catch{}
   },[authId,loading]);
 
   const logout=()=>{
@@ -3259,7 +3270,7 @@ export default function App() {
 
         {/* UP NEXT */}
         {page==="next"&&(
-          <UpNextPage matches={resolvedMatches} predictions={predictions} results={results}
+          <UpNextPage matches={resolvedMatches} predictions={predictions} results={scorableResults}
             playerId={isAdmin?null:authId} onPredict={handlePredict} now={now}
             onOpenSchedule={(match)=>{
               if(match.id.startsWith("pi_")) setPage("playins");
@@ -3272,20 +3283,20 @@ export default function App() {
 
         {/* PLAY-INS */}
         {page==="playins"&&(
-          <PlayInsPage playInMatches={playInMatches} predictions={predictions} results={results}
+          <PlayInsPage playInMatches={playInMatches} predictions={predictions} results={scorableResults}
             playerId={isAdmin?null:authId} onPredict={handlePredict} now={now} isAdmin={isAdmin} />
         )}
 
         {/* GROUP STAGE */}
         {page==="predict"&&(
-          <GroupStagePage groupMatches={groupMatches} startInSchedule={scheduleFirst} predictions={predictions} results={results}
+          <GroupStagePage groupMatches={groupMatches} startInSchedule={scheduleFirst} predictions={predictions} results={scorableResults}
             playerId={isAdmin?null:authId} onPredict={handlePredict} now={now} isAdmin={isAdmin} />
         )}
 
         {/* 1V1 WORLD CHAMPIONSHIP */}
         {page==="onevone"&&(
           <SideEventPage title="1v1 World Championship" dates="Sep 16–18" prize="$85,000"
-            matches={oneVOneMatches} predictions={predictions} results={results}
+            matches={oneVOneMatches} predictions={predictions} results={scorableResults}
             playerId={isAdmin?null:authId} onPredict={handlePredict} now={now} isAdmin={isAdmin}
             participantNotes={[
               {name:"Nwpo", detail:"Twisted Minds · MENA qualifier"},
@@ -3298,7 +3309,7 @@ export default function App() {
         {/* 2V2 WORLD CHAMPIONSHIP */}
         {page==="twovtwo"&&(
           <SideEventPage title="2v2 World Championship" dates="Sep 17–19" prize="$170,000"
-            matches={twoVTwoMatches} predictions={predictions} results={results}
+            matches={twoVTwoMatches} predictions={predictions} results={scorableResults}
             playerId={isAdmin?null:authId} onPredict={handlePredict} now={now} isAdmin={isAdmin}
             participantNotes={[
               {name:"Team Falcons", detail:"Rw9 & Kiileerrz · MENA qualifier"},
@@ -3310,7 +3321,7 @@ export default function App() {
 
         {/* PLAYOFFS */}
         {page==="playoffs"&&(
-          <PlayoffsPage playoffMatches={playoffMatches} predictions={predictions} results={results}
+          <PlayoffsPage playoffMatches={playoffMatches} predictions={predictions} results={scorableResults}
             playerId={isAdmin?null:authId} onPredict={handlePredict} now={now} isAdmin={isAdmin} />
         )}
 
@@ -3382,7 +3393,7 @@ export default function App() {
 
         {/* OTHERS' PICKS */}
         {page==="others"&&(
-          <OthersPicksPage players={players} authId={authId} predictions={predictions} results={results}
+          <OthersPicksPage players={players} authId={authId} predictions={predictions} results={scorableResults}
             allMatches={resolvedMatches} now={now} totalFor={getTotalScore}
             search={othersSearch} setSearch={setOthersSearch}
             selectedId={viewingPlayer} setSelectedId={setViewingPlayer} />
