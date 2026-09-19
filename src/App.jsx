@@ -170,17 +170,17 @@ const DEFAULT_GROUPS = [
 ];
 
 // ─── PLAYOFFS — 12 teams (4 group winners + 8 runners-up), double-elim, Bo7 ──
-// Playoff opening matches are confirmed by blast.tv. Sep 18's stream order was
-// cross-checked against the latest official schedule graphic shared by @i3zonii.
+// Playoff matches and UTC times are confirmed by blast.tv. The Sep 19 bracket
+// and the midnight 2v2 final were cross-checked against @ZEEZ0_rl's schedule.
 const DEFAULT_PLAYOFF = [
-  { id:"p_ubqf1",  round:"UBQF", label:"UB QUARTER FINAL 1", team1:"Karmine Corp",       team2:"Virtus.Pro",          startTime:"2026-09-19T16:00:00Z", bo:7 },
-  { id:"p_ubqf2",  round:"UBQF", label:"UB QUARTER FINAL 2", team1:"FUT Esports",        team2:"NRG Esports",         startTime:"2026-09-19T16:00:00Z", bo:7 },
+  { id:"p_ubqf1",  round:"UBQF", label:"UB QUARTER FINAL 1", team1:"Karmine Corp",       team2:"Virtus.Pro",          startTime:"2026-09-19T19:00:00Z", bo:7 },
+  { id:"p_ubqf2",  round:"UBQF", label:"UB QUARTER FINAL 2", team1:"FUT Esports",        team2:"NRG Esports",         startTime:"2026-09-19T20:30:00Z", bo:7 },
   { id:"p_lbr1m1", round:"LBR1", label:"LB ROUND 1 M1",      team1:"Twisted Minds",      team2:"Spacestation Gaming", startTime:"2026-09-18T19:00:00Z", bo:7 },
   { id:"p_lbr1m2", round:"LBR1", label:"LB ROUND 1 M2",      team1:"Manchester City",    team2:"Gentle Mates",        startTime:"2026-09-18T17:30:00Z", bo:7 },
   { id:"p_lbr1m3", round:"LBR1", label:"LB ROUND 1 M3",      team1:"Team Falcons",       team2:"FURIA Esports",       startTime:"2026-09-18T16:00:00Z", bo:7 },
   { id:"p_lbr1m4", round:"LBR1", label:"LB ROUND 1 M4",      team1:"Shopify Rebellion", team2:"Vitality",            startTime:"2026-09-18T20:30:00Z", bo:7 },
   { id:"p_lbr2m1", round:"LBR2", label:"LB ROUND 2 M1",      team1:"TBD", team2:"TBD", startTime:"2026-09-19T16:00:00Z", bo:7 },
-  { id:"p_lbr2m2", round:"LBR2", label:"LB ROUND 2 M2",      team1:"TBD", team2:"TBD", startTime:"2026-09-19T16:00:00Z", bo:7 },
+  { id:"p_lbr2m2", round:"LBR2", label:"LB ROUND 2 M2",      team1:"TBD", team2:"TBD", startTime:"2026-09-19T17:30:00Z", bo:7 },
   { id:"p_lbqf1",  round:"LBQF", label:"LB QUARTER FINAL 1", team1:"TBD", team2:"TBD", startTime:"2026-09-20T16:00:00Z", bo:7 },
   { id:"p_lbqf2",  round:"LBQF", label:"LB QUARTER FINAL 2", team1:"TBD", team2:"TBD", startTime:"2026-09-20T16:00:00Z", bo:7 },
   { id:"p_sf1",    round:"SF",   label:"SEMI FINAL 1",       team1:"TBD", team2:"TBD", startTime:"2026-09-20T16:00:00Z", bo:7 },
@@ -198,7 +198,7 @@ const DEFAULT_1V1 = [
 const DEFAULT_2V2 = [
   { id:"2v2_sf1", round:"SF", label:"SEMI FINAL 1", team1:"Team Falcons",        team2:"Backyardigans",         startTime:"2026-09-17T22:00:00Z", bo:7 },
   { id:"2v2_sf2", round:"SF", label:"SEMI FINAL 2", team1:"No Miss Just Fake", team2:"Spacestation Gaming", startTime:"2026-09-17T23:00:00Z", bo:7 },
-  { id:"2v2_gf",  round:"GF", label:"GRAND FINAL",  team1:"Team Falcons", team2:"No Miss Just Fake", startTime:"2026-09-19T12:00:00Z", timeTbd:true, bo:7 },
+  { id:"2v2_gf",  round:"GF", label:"GRAND FINAL",  team1:"Team Falcons", team2:"No Miss Just Fake", startTime:"2026-09-19T21:00:00Z", bo:7 },
 ];
 const END_OF_DAY_MATCH_ID = "2v2_gf";
 const WORLDS_START_MS = Date.parse("2026-09-15T00:00:00Z");
@@ -230,8 +230,8 @@ const groupAdvancement = (g) => ({
 });
 
 // Playoffs: 4 Upper Bracket byes (group winners) + 8 Lower Bracket entrants
-// (group runners-up), reconstructed from blast.tv's schedule + prize tiers
-// (see comment above DEFAULT_PLAYOFF). Group Stage itself is a round robin —
+// (group runners-up), wired to the confirmed Worlds playoff bracket. Group
+// Stage itself is a round robin —
 // standings, not a bracket — so it has no advancement entries; qualifiers
 // feed the slots below manually via the admin Bracket editor once known.
 const playoffAdvancement = {
